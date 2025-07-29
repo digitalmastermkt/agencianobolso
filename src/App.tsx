@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Agentes from "./pages/Agentes";
 import AgenteVendas from "./pages/agents/AgenteVendas";
@@ -25,15 +26,47 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/agentes" element={<Agentes />} />
-          <Route path="/agentes/vendas" element={<AgenteVendas />} />
-          <Route path="/agentes/storytelling" element={<AgenteStorytelling />} />
-          <Route path="/agentes/viral" element={<AgenteViral />} />
-          <Route path="/agentes/interacao" element={<AgenteInteracao />} />
-          <Route path="/agentes/conexao" element={<AgenteConexao />} />
-          <Route path="/agentes/banner" element={<AgenteBanner />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/agentes" element={
+            <ProtectedRoute>
+              <Agentes />
+            </ProtectedRoute>
+          } />
+          <Route path="/agentes/vendas" element={
+            <ProtectedRoute>
+              <AgenteVendas />
+            </ProtectedRoute>
+          } />
+          <Route path="/agentes/storytelling" element={
+            <ProtectedRoute>
+              <AgenteStorytelling />
+            </ProtectedRoute>
+          } />
+          <Route path="/agentes/viral" element={
+            <ProtectedRoute>
+              <AgenteViral />
+            </ProtectedRoute>
+          } />
+          <Route path="/agentes/interacao" element={
+            <ProtectedRoute>
+              <AgenteInteracao />
+            </ProtectedRoute>
+          } />
+          <Route path="/agentes/conexao" element={
+            <ProtectedRoute>
+              <AgenteConexao />
+            </ProtectedRoute>
+          } />
+          <Route path="/agentes/banner" element={
+            <ProtectedRoute>
+              <AgenteBanner />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

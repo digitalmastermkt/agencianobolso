@@ -10,7 +10,7 @@ import { LogIn, UserPlus, Mail, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -19,12 +19,16 @@ export default function Auth() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Pega a rota de onde o usuário veio (se foi redirecionado)
+  const from = location.state?.from || "/dashboard";
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      navigate(from, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, from]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -65,7 +69,7 @@ export default function Auth() {
         title: "Login realizado!",
         description: "Bem-vindo de volta ao SparkAgen."
       });
-      navigate("/dashboard");
+      navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Erro no login:', error);
       toast({
