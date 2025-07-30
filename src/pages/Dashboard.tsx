@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Layout } from "@/components/layout/Layout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,7 @@ import {
   BarChart3,
   Clock,
   Target,
-  Sparkles,
-  User,
-  LogOut
+  Sparkles
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,7 +33,7 @@ interface AgentStats {
 }
 
 export default function Dashboard() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [agentStats, setAgentStats] = useState<AgentStats[]>([]);
   const [totalGenerations, setTotalGenerations] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -142,23 +140,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso."
-      });
-      navigate("/");
-    } catch (error) {
-      console.error('Erro no logout:', error);
-      toast({
-        title: "Erro no logout",
-        description: "Erro ao fazer logout.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Nunca usado";
@@ -177,39 +158,31 @@ export default function Dashboard() {
 
   if (authLoading || loading) {
     return (
-      <Layout>
+      <DashboardLayout>
         <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
           <div className="text-center">
             <Sparkles className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
             <p className="text-muted-foreground">Carregando dashboard...</p>
           </div>
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
   const mostUsedAgent = getMostUsedAgent();
 
   return (
-    <Layout>
+    <DashboardLayout>
       <div className="min-h-screen bg-gradient-subtle py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                Dashboard
-              </h1>
-              <p className="text-muted-foreground">
-                Bem-vindo de volta, {user?.email}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-              </Button>
-            </div>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Bem-vindo de volta, {user?.email}
+            </p>
           </div>
 
           {/* Stats Overview */}
@@ -348,6 +321,6 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

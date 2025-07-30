@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ export default function AgenteVendas() {
   };
 
   return (
-    <Layout>
+    <DashboardLayout>
       <div className="min-h-screen py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -206,6 +206,6 @@ export default function AgenteVendas() {
           </div>
         </div>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

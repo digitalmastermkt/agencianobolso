@@ -1,3 +1,4 @@
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,7 +78,7 @@ const agents = [
 
 export default function Agentes() {
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <DashboardLayout>
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-creative py-20">
         <div className="absolute inset-0 bg-black/20"></div>
@@ -180,6 +181,6 @@ export default function Agentes() {
           </div>
         </div>
       </section>
-    </div>
+    </DashboardLayout>
   );
 }
