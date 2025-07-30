@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Zap, Sparkles, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,11 +15,13 @@ export default function AgenteViral() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [formData, setFormData] = useState({
-    tema: "",
-    publicoAlvo: "",
-    tipoConteudo: "",
-    duracaoSegundos: "",
-    palavrasChave: ""
+    nome_negocio: "",
+    produto: "",
+    localizacao: "",
+    publico_alvo: "",
+    beneficio: "",
+    oferta: "",
+    tom: "jovem"
   });
   const { toast } = useToast();
 
@@ -27,48 +30,17 @@ export default function AgenteViral() {
     setLoading(true);
 
     try {
-      const prompt = `Crie um roteiro viral para Reels/TikTok seguindo o estilo Camilo Coutinho.
-
-TEMA: ${formData.tema}
-PÚBLICO-ALVO: ${formData.publicoAlvo}
-TIPO DE CONTEÚDO: ${formData.tipoConteudo}
-DURAÇÃO: ${formData.duracaoSegundos} segundos
-PALAVRAS-CHAVE: ${formData.palavrasChave}
-
-ESTRUTURA VIRAL:
-1. HOOK VIRAL (0-3s): Gancho irresistível que prende atenção
-2. DESENVOLVIMENTO (3-20s): Conteúdo de valor com ritmo acelerado  
-3. CLÍMAX (20-25s): Momento mais impactante/revelação
-4. FECHAMENTO (25-30s): CTA viral ou convite para engagement
-
-DIRETRIZES PARA VIRALIZAÇÃO:
-- Hook nos primeiros 3 segundos que cause curiosidade extrema
-- Ritmo acelerado com cortes dinâmicos a cada 2-3 segundos
-- Use trends atuais e sons populares
-- Inclua elementos de surpresa ou plot twist
-- Linguagem jovem e descontraída
-- Momento de tensão seguido de alívio
-- Call to action que incentive compartilhamento
-
-TIMING DE CORTES:
-- Indique exatamente onde fazer os cortes para manter atenção
-- Sincronize com beats da música se aplicável
-- Use close-ups, zoom-ins e mudanças de ângulo
-
-HASHTAGS ESTRATÉGICAS:
-- Inclua 5-8 hashtags virais relevantes
-- Mix de hashtags grandes e de nicho
-- Inclua hashtags trending do momento
-
-Formato: Apresente o roteiro com timing exato, indicações de corte, sugestões de áudio e hashtags.`;
-
       const { data, error } = await supabase.functions.invoke('generate-ai-content', {
-        body: { prompt }
+        body: {
+          agentType: 'viral',
+          formData,
+          userId: null
+        }
       });
 
       if (error) throw error;
 
-      setResult(data.generatedText);
+      setResult(data.content);
       toast({
         title: "Roteiro viral criado!",
         description: "Seu conteúdo viral foi gerado."
@@ -121,15 +93,85 @@ Formato: Apresente o roteiro com timing exato, indicações de corte, sugestões
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="tema">Tema</Label>
+                    <Label htmlFor="nome_negocio">Nome do Negócio</Label>
                     <Input
-                      id="tema"
-                      value={formData.tema}
-                      onChange={(e) => setFormData({...formData, tema: e.target.value})}
-                      placeholder="Ex: Dicas de produtividade"
+                      id="nome_negocio"
+                      value={formData.nome_negocio}
+                      onChange={(e) => setFormData({...formData, nome_negocio: e.target.value})}
+                      placeholder="Ex: MinhaEmpresa"
                       required
                     />
                   </div>
+                  
+                  <div>
+                    <Label htmlFor="produto">Produto/Serviço</Label>
+                    <Input
+                      id="produto"
+                      value={formData.produto}
+                      onChange={(e) => setFormData({...formData, produto: e.target.value})}
+                      placeholder="Ex: Curso de marketing digital"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="localizacao">Localização</Label>
+                    <Input
+                      id="localizacao"
+                      value={formData.localizacao}
+                      onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
+                      placeholder="Ex: São Paulo, SP"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="publico_alvo">Público-Alvo</Label>
+                    <Input
+                      id="publico_alvo"
+                      value={formData.publico_alvo}
+                      onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})}
+                      placeholder="Ex: Jovens de 18-30 anos interessados em empreendedorismo"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="beneficio">Principal Benefício</Label>
+                    <Textarea
+                      id="beneficio"
+                      value={formData.beneficio}
+                      onChange={(e) => setFormData({...formData, beneficio: e.target.value})}
+                      placeholder="Ex: Aprenda a ganhar dinheiro online em 30 dias"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="oferta">Oferta</Label>
+                    <Input
+                      id="oferta"
+                      value={formData.oferta}
+                      onChange={(e) => setFormData({...formData, oferta: e.target.value})}
+                      placeholder="Ex: 50% de desconto por tempo limitado"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tom">Tom de Voz</Label>
+                    <Select value={formData.tom} onValueChange={(value) => setFormData({...formData, tom: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="jovem">Jovem e Descontraído</SelectItem>
+                        <SelectItem value="energetico">Energético</SelectItem>
+                        <SelectItem value="provocativo">Provocativo</SelectItem>
+                        <SelectItem value="inspirador">Inspirador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <Button type="submit" className="w-full" disabled={loading} variant="gradient">
                     {loading ? "Criando..." : "Gerar Conteúdo Viral"}
                   </Button>

@@ -15,10 +15,10 @@ export default function AgenteStorytelling() {
   const [result, setResult] = useState("");
   const [formData, setFormData] = useState({
     produto: "",
-    publicoAlvo: "",
-    situacaoVida: "",
-    valoresMarca: "",
-    objetivoEmocional: ""
+    publico_alvo: "",
+    situacao_vida: "",
+    valores_marca: "",
+    objetivo_emocional: ""
   });
   const { toast } = useToast();
 
@@ -27,36 +27,17 @@ export default function AgenteStorytelling() {
     setLoading(true);
 
     try {
-      const prompt = `Crie um mini-roteiro de storytelling para redes sociais seguindo o estilo Leandro Aguiari.
-
-PRODUTO/SERVIÇO: ${formData.produto}
-PÚBLICO-ALVO: ${formData.publicoAlvo}  
-SITUAÇÃO DE VIDA: ${formData.situacaoVida}
-VALORES DA MARCA: ${formData.valoresMarca}
-OBJETIVO EMOCIONAL: ${formData.objetivoEmocional}
-
-ESTRUTURA DO ROTEIRO:
-1. ABERTURA EMOCIONAL (Hook que conecta com sentimentos)
-2. MICROHISTÓRIA (Situação relatable em 30-45 segundos)
-3. CONEXÃO COM VALORES (Como a marca se conecta com a história)
-4. CALL TO ACTION SUAVE (Convite natural para ação)
-
-DIRETRIZES:
-- Use linguagem próxima e autêntica
-- Crie conexão emocional genuína
-- Mantenha entre 60-90 segundos
-- Inclua momentos de pausa para reflexão
-- Termine com esperança/transformação
-
-Formato: Apresente o roteiro em blocos numerados com indicações de tempo e emoção.`;
-
       const { data, error } = await supabase.functions.invoke('generate-ai-content', {
-        body: { prompt }
+        body: {
+          agentType: 'storytelling',
+          formData,
+          userId: null
+        }
       });
 
       if (error) throw error;
 
-      setResult(data.generatedText);
+      setResult(data.content);
       toast({
         title: "Roteiro criado com sucesso!",
         description: "Seu conteúdo de storytelling foi gerado."
@@ -132,8 +113,8 @@ Formato: Apresente o roteiro em blocos numerados com indicações de tempo e emo
                     <Label htmlFor="publicoAlvo">Público-Alvo</Label>
                     <Input
                       id="publicoAlvo"
-                      value={formData.publicoAlvo}
-                      onChange={(e) => setFormData({...formData, publicoAlvo: e.target.value})}
+                      value={formData.publico_alvo}
+                      onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})}
                       placeholder="Ex: Mulheres de 25-40 anos que buscam autoestima"
                       required
                     />
@@ -143,8 +124,8 @@ Formato: Apresente o roteiro em blocos numerados com indicações de tempo e emo
                     <Label htmlFor="situacaoVida">Situação de Vida (Contexto)</Label>
                     <Textarea
                       id="situacaoVida"
-                      value={formData.situacaoVida}
-                      onChange={(e) => setFormData({...formData, situacaoVida: e.target.value})}
+                      value={formData.situacao_vida}
+                      onChange={(e) => setFormData({...formData, situacao_vida: e.target.value})}
                       placeholder="Ex: Pessoas que se sentem perdidas na carreira, com baixa autoestima..."
                       rows={3}
                       required
@@ -155,8 +136,8 @@ Formato: Apresente o roteiro em blocos numerados com indicações de tempo e emo
                     <Label htmlFor="valoresMarca">Valores da Marca</Label>
                     <Input
                       id="valoresMarca"
-                      value={formData.valoresMarca}
-                      onChange={(e) => setFormData({...formData, valoresMarca: e.target.value})}
+                      value={formData.valores_marca}
+                      onChange={(e) => setFormData({...formData, valores_marca: e.target.value})}
                       placeholder="Ex: Autenticidade, empoderamento, transformação"
                       required
                     />
@@ -166,8 +147,8 @@ Formato: Apresente o roteiro em blocos numerados com indicações de tempo e emo
                     <Label htmlFor="objetivoEmocional">Objetivo Emocional</Label>
                     <Input
                       id="objetivoEmocional"
-                      value={formData.objetivoEmocional}
-                      onChange={(e) => setFormData({...formData, objetivoEmocional: e.target.value})}
+                      value={formData.objetivo_emocional}
+                      onChange={(e) => setFormData({...formData, objetivo_emocional: e.target.value})}
                       placeholder="Ex: Inspirar esperança e despertar coragem para mudança"
                       required
                     />

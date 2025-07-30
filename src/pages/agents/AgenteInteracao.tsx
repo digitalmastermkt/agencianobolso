@@ -14,11 +14,9 @@ export default function AgenteInteracao() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [formData, setFormData] = useState({
-    nicho: "",
-    objetivo: "",
-    publicoAlvo: "",
-    tipoEngajamento: "",
-    quantidadeStories: ""
+    publico_alvo: "",
+    produto: "",
+    acao_desejada: ""
   });
   const { toast } = useToast();
 
@@ -27,59 +25,17 @@ export default function AgenteInteracao() {
     setLoading(true);
 
     try {
-      const prompt = `Crie uma sequência de stories provocativos para engajamento seguindo o estilo Rafael Bem.
-
-NICHO: ${formData.nicho}
-OBJETIVO: ${formData.objetivo}
-PÚBLICO-ALVO: ${formData.publicoAlvo}
-TIPO DE ENGAJAMENTO: ${formData.tipoEngajamento}
-QUANTIDADE DE STORIES: ${formData.quantidadeStories}
-
-ESTRUTURA DA SEQUÊNCIA:
-1. STORY PROVOCATIVO (Desperta curiosidade inicial)
-2. DESENVOLVIMENTO (Aprofunda o tema com perguntas)
-3. INTERAÇÃO DIRETA (Enquetes, perguntas abertas, quiz)
-4. ENGAJAMENTO AVANÇADO (Convida para ação específica)
-5. FECHAMENTO (CTA para próximos stories/posts)
-
-DIRETRIZES PARA MÁXIMA INTERAÇÃO:
-- Use perguntas controversas mas respeitosas
-- Crie enquetes que dividem opiniões
-- Faça perguntas que geram identificação
-- Use "Responda nos comentários" estrategicamente
-- Inclua elementos de urgência e escassez
-- Crie senso de comunidade e pertencimento
-- Use gatilhos emocionais para respostas
-
-ELEMENTOS INTERATIVOS:
-- Enquetes polêmicas (sim/não, isso/aquilo)
-- Perguntas abertas que geram debate
-- Quiz com resultados personalizados
-- "Conte sua experiência"
-- "Marca alguém que..."
-- Caixinha de perguntas direcionadas
-
-TIMING E SWIPE:
-- Indica quando postar cada story
-- Como conectar um story ao próximo
-- Momento ideal para CTA
-- Como manter a audiência até o final
-
-CALL TO ACTIONS EFETIVOS:
-- Para comentários no feed
-- Para compartilhamento
-- Para salvamento
-- Para seguir o perfil
-- Para ativar notificações
-
-Formato: Apresente cada story numerado com texto, elementos interativos, timing sugerido e objetivo específico.`;
-
       const { data, error } = await supabase.functions.invoke('generate-ai-content', {
-        body: { prompt }
+        body: {
+          agentType: 'interacao',
+          formData,
+          userId: null
+        }
       });
 
       if (error) throw error;
-      setResult(data.generatedText);
+      setResult(data.content);
+
       toast({ title: "Stories criados!", description: "Sua sequência de stories foi gerada." });
     } catch (error) {
       console.error('Erro:', error);
@@ -112,13 +68,48 @@ Formato: Apresente cada story numerado com texto, elementos interativos, timing 
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card>
-              <CardHeader><CardTitle>Formulário</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Informações para Stories Interativos
+                </CardTitle>
+              </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="nicho">Nicho</Label>
-                    <Input id="nicho" value={formData.nicho} onChange={(e) => setFormData({...formData, nicho: e.target.value})} required />
+                    <Label htmlFor="publico_alvo">Público-Alvo</Label>
+                    <Input 
+                      id="publico_alvo" 
+                      value={formData.publico_alvo} 
+                      onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
+                      placeholder="Ex: Mulheres de 25-40 anos interessadas em beleza"
+                      required 
+                    />
                   </div>
+
+                  <div>
+                    <Label htmlFor="produto">Produto/Serviço</Label>
+                    <Input 
+                      id="produto" 
+                      value={formData.produto} 
+                      onChange={(e) => setFormData({...formData, produto: e.target.value})} 
+                      placeholder="Ex: Curso de maquiagem profissional"
+                      required 
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="acao_desejada">Ação Desejada</Label>
+                    <Textarea 
+                      id="acao_desejada" 
+                      value={formData.acao_desejada} 
+                      onChange={(e) => setFormData({...formData, acao_desejada: e.target.value})} 
+                      placeholder="Ex: Inscrever-se no curso, baixar e-book, seguir perfil, participar de live"
+                      rows={3}
+                      required 
+                    />
+                  </div>
+
                   <Button type="submit" className="w-full" disabled={loading} variant="gradient">
                     {loading ? "Criando..." : "Gerar Stories"}
                   </Button>
@@ -131,6 +122,9 @@ Formato: Apresente cada story numerado com texto, elementos interativos, timing 
                   <span>Stories de Interação</span>
                   {result && <Button variant="outline" size="sm" onClick={copyToClipboard}><Copy className="w-4 h-4 mr-2" />Copiar</Button>}
                 </CardTitle>
+                <CardDescription>
+                  Sequência provocativa para máximo engajamento
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {result ? (
@@ -140,7 +134,7 @@ Formato: Apresente cada story numerado com texto, elementos interativos, timing 
                 ) : (
                   <div className="text-center text-muted-foreground py-12">
                     <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Preencha o formulário</p>
+                    <p>Preencha o formulário para gerar sua sequência de stories interativos</p>
                   </div>
                 )}
               </CardContent>
