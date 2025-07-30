@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -98,127 +99,131 @@ export default function Prompts() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Carregando prompts...</h1>
+      <DashboardLayout>
+        <div className="p-8">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">Carregando prompts...</h1>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Biblioteca de Prompts</h1>
-          <p className="text-muted-foreground">
-            Explore nossa coleção de prompts otimizados para diferentes necessidades.
-          </p>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar prompts..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+    <DashboardLayout>
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-4">Biblioteca de Prompts</h1>
+            <p className="text-muted-foreground">
+              Explore nossa coleção de prompts otimizados para diferentes necessidades.
+            </p>
           </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as categorias</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
-        {filteredPrompts.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground mb-4">
-                {searchTerm || selectedCategory !== "all" 
-                  ? "Nenhum prompt encontrado com os filtros aplicados."
-                  : "Nenhum prompt disponível no momento."
-                }
-              </p>
-              {(searchTerm || selectedCategory !== "all") && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedCategory("all");
-                  }}
-                >
-                  Limpar filtros
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPrompts.map((prompt) => (
-              <Card key={prompt.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg">{prompt.title}</CardTitle>
-                    <Badge variant="secondary">{prompt.category}</Badge>
-                  </div>
-                  {prompt.description && (
-                    <CardDescription className="line-clamp-3">
-                      {prompt.description}
-                    </CardDescription>
-                  )}
-                </CardHeader>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar prompts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-                <CardContent>
-                  <div className="bg-muted/50 p-3 rounded-md mb-4">
-                    <p className="text-sm line-clamp-3 text-muted-foreground">
-                      {prompt.content}
-                    </p>
-                  </div>
-
-                  {prompt.tags && prompt.tags.length > 0 && (
-                    <div className="flex items-center gap-2 mb-4">
-                      <Tag className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex flex-wrap gap-1">
-                        {prompt.tags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {prompt.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{prompt.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={() => copyToClipboard(prompt.content)}
-                    className="w-full"
-                    variant="outline"
+          {filteredPrompts.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <p className="text-muted-foreground mb-4">
+                  {searchTerm || selectedCategory !== "all" 
+                    ? "Nenhum prompt encontrado com os filtros aplicados."
+                    : "Nenhum prompt disponível no momento."
+                  }
+                </p>
+                {(searchTerm || selectedCategory !== "all") && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setSearchTerm("");
+                      setSelectedCategory("all");
+                    }}
                   >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copiar Prompt
+                    Limpar filtros
                   </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPrompts.map((prompt) => (
+                <Card key={prompt.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-lg">{prompt.title}</CardTitle>
+                      <Badge variant="secondary">{prompt.category}</Badge>
+                    </div>
+                    {prompt.description && (
+                      <CardDescription className="line-clamp-3">
+                        {prompt.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="bg-muted/50 p-3 rounded-md mb-4">
+                      <p className="text-sm line-clamp-3 text-muted-foreground">
+                        {prompt.content}
+                      </p>
+                    </div>
+
+                    {prompt.tags && prompt.tags.length > 0 && (
+                      <div className="flex items-center gap-2 mb-4">
+                        <Tag className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex flex-wrap gap-1">
+                          {prompt.tags.slice(0, 3).map((tag, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {prompt.tags.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{prompt.tags.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={() => copyToClipboard(prompt.content)}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copiar Prompt
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -192,193 +193,197 @@ export default function Comunidade() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Carregando comunidade...</h1>
+      <DashboardLayout>
+        <div className="p-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">Carregando comunidade...</h1>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Comunidade</h1>
-          <p className="text-muted-foreground">
-            Conecte-se com outros usuários, compartilhe experiências e aprenda juntos.
-          </p>
-        </div>
-
-        {/* Create Post */}
-        {user && (
-          <Card className="mb-8">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarFallback>
-                    {getUserInitials(user.email || "")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{user.email}</p>
-                  <p className="text-sm text-muted-foreground">O que você está pensando?</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Compartilhe algo com a comunidade..."
-                value={newPostContent}
-                onChange={(e) => setNewPostContent(e.target.value)}
-                className="min-h-20 mb-4"
-              />
-              <div className="flex justify-between items-center">
-                <Button variant="outline" size="sm">
-                  <ImageIcon className="h-4 w-4 mr-2" />
-                  Adicionar imagem
-                </Button>
-                <Button 
-                  onClick={createPost}
-                  disabled={!newPostContent.trim()}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  Publicar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Posts */}
-        {posts.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground mb-4">Nenhum post na comunidade ainda.</p>
-              <p className="text-sm text-muted-foreground">Seja o primeiro a compartilhar algo!</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {posts.map((post) => (
-              <Card key={post.id}>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback>
-                        {getUserInitials(post.profiles?.display_name || "")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{post.profiles?.display_name || "Usuário"}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(post.created_at), { 
-                          addSuffix: true, 
-                          locale: ptBR 
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4">{post.content}</p>
-                  
-                  {post.image_url && (
-                    <div className="mb-4">
-                      <img 
-                        src={post.image_url} 
-                        alt="Post image"
-                        className="rounded-lg max-w-full h-auto"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-4 pt-4 border-t">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleLike(post.id, post.is_liked || false)}
-                      className={post.is_liked ? "text-red-500" : ""}
-                      disabled={!user}
-                    >
-                      <Heart className={`h-4 w-4 mr-1 ${post.is_liked ? "fill-current" : ""}`} />
-                      {post.likes_count}
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (selectedPost === post.id) {
-                          setSelectedPost(null);
-                        } else {
-                          setSelectedPost(post.id);
-                          fetchComments(post.id);
-                        }
-                      }}
-                    >
-                      <MessageCircle className="h-4 w-4 mr-1" />
-                      {post.comments_count}
-                    </Button>
-                  </div>
-
-                  {/* Comments Section */}
-                  {selectedPost === post.id && (
-                    <div className="mt-4 pt-4 border-t space-y-4">
-                      {comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-xs">
-                              {getUserInitials(comment.profiles?.display_name || "")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="bg-muted rounded-lg p-3">
-                              <p className="font-medium text-sm">{comment.profiles?.display_name || "Usuário"}</p>
-                              <p className="text-sm">{comment.content}</p>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {formatDistanceToNow(new Date(comment.created_at), { 
-                                addSuffix: true, 
-                                locale: ptBR 
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-
-                      {user && (
-                        <div className="flex gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-xs">
-                              {getUserInitials(user.email || "")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 flex gap-2">
-                            <Textarea
-                              placeholder="Escreva um comentário..."
-                              value={newComment}
-                              onChange={(e) => setNewComment(e.target.value)}
-                              className="flex-1 min-h-10"
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => addComment(post.id)}
-                              disabled={!newComment.trim()}
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+    <DashboardLayout>
+      <div className="p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-4">Comunidade</h1>
+            <p className="text-muted-foreground">
+              Conecte-se com outros usuários, compartilhe experiências e aprenda juntos.
+            </p>
           </div>
-        )}
+
+          {/* Create Post */}
+          {user && (
+            <Card className="mb-8">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarFallback>
+                      {getUserInitials(user.email || "")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{user.email}</p>
+                    <p className="text-sm text-muted-foreground">O que você está pensando?</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder="Compartilhe algo com a comunidade..."
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  className="min-h-20 mb-4"
+                />
+                <div className="flex justify-between items-center">
+                  <Button variant="outline" size="sm">
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Adicionar imagem
+                  </Button>
+                  <Button 
+                    onClick={createPost}
+                    disabled={!newPostContent.trim()}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Publicar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Posts */}
+          {posts.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <p className="text-muted-foreground mb-4">Nenhum post na comunidade ainda.</p>
+                <p className="text-sm text-muted-foreground">Seja o primeiro a compartilhar algo!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {posts.map((post) => (
+                <Card key={post.id}>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback>
+                          {getUserInitials(post.profiles?.display_name || "")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{post.profiles?.display_name || "Usuário"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(post.created_at), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4">{post.content}</p>
+                    
+                    {post.image_url && (
+                      <div className="mb-4">
+                        <img 
+                          src={post.image_url} 
+                          alt="Post image"
+                          className="rounded-lg max-w-full h-auto"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-4 pt-4 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleLike(post.id, post.is_liked || false)}
+                        className={post.is_liked ? "text-red-500" : ""}
+                        disabled={!user}
+                      >
+                        <Heart className={`h-4 w-4 mr-1 ${post.is_liked ? "fill-current" : ""}`} />
+                        {post.likes_count}
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (selectedPost === post.id) {
+                            setSelectedPost(null);
+                          } else {
+                            setSelectedPost(post.id);
+                            fetchComments(post.id);
+                          }
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        {post.comments_count}
+                      </Button>
+                    </div>
+
+                    {/* Comments Section */}
+                    {selectedPost === post.id && (
+                      <div className="mt-4 pt-4 border-t space-y-4">
+                        {comments.map((comment) => (
+                          <div key={comment.id} className="flex gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">
+                                {getUserInitials(comment.profiles?.display_name || "")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="bg-muted rounded-lg p-3">
+                                <p className="font-medium text-sm">{comment.profiles?.display_name || "Usuário"}</p>
+                                <p className="text-sm">{comment.content}</p>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {formatDistanceToNow(new Date(comment.created_at), { 
+                                  addSuffix: true, 
+                                  locale: ptBR 
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+
+                        {user && (
+                          <div className="flex gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">
+                                {getUserInitials(user.email || "")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 flex gap-2">
+                              <Textarea
+                                placeholder="Escreva um comentário..."
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                className="flex-1 min-h-10"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => addComment(post.id)}
+                                disabled={!newComment.trim()}
+                              >
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

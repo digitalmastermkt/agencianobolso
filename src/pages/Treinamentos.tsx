@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -119,85 +120,89 @@ export default function Treinamentos() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Carregando treinamentos...</h1>
+      <DashboardLayout>
+        <div className="p-8">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">Carregando treinamentos...</h1>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Treinamentos</h1>
-          <p className="text-muted-foreground">
-            Aprenda com nossos cursos especializados e melhore suas habilidades.
-          </p>
-        </div>
-
-        {trainings.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground mb-4">Nenhum treinamento disponível no momento.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trainings.map((training) => (
-              <Card key={training.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                {training.thumbnail_url && (
-                  <div className="aspect-video bg-muted">
-                    <img
-                      src={training.thumbnail_url}
-                      alt={training.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg">{training.title}</CardTitle>
-                    {training.is_enrolled && (
-                      <Badge variant="secondary">Inscrito</Badge>
-                    )}
-                  </div>
-                  {training.description && (
-                    <CardDescription className="line-clamp-2">
-                      {training.description}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-
-                <CardContent>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                    <div className="flex items-center gap-1">
-                      <Play className="h-4 w-4" />
-                      <span>{training.lessons_count} aulas</span>
-                    </div>
-                    {training.total_duration > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{Math.round(training.total_duration / 60)}h</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={() => handleEnroll(training.id)}
-                    disabled={training.is_enrolled}
-                    className="w-full"
-                  >
-                    {training.is_enrolled ? "Já inscrito" : "Inscrever-se"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+    <DashboardLayout>
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-4">Treinamentos</h1>
+            <p className="text-muted-foreground">
+              Aprenda com nossos cursos especializados e melhore suas habilidades.
+            </p>
           </div>
-        )}
+
+          {trainings.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <p className="text-muted-foreground mb-4">Nenhum treinamento disponível no momento.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {trainings.map((training) => (
+                <Card key={training.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  {training.thumbnail_url && (
+                    <div className="aspect-video bg-muted">
+                      <img
+                        src={training.thumbnail_url}
+                        alt={training.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-lg">{training.title}</CardTitle>
+                      {training.is_enrolled && (
+                        <Badge variant="secondary">Inscrito</Badge>
+                      )}
+                    </div>
+                    {training.description && (
+                      <CardDescription className="line-clamp-2">
+                        {training.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                      <div className="flex items-center gap-1">
+                        <Play className="h-4 w-4" />
+                        <span>{training.lessons_count} aulas</span>
+                      </div>
+                      {training.total_duration > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{Math.round(training.total_duration / 60)}h</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      onClick={() => handleEnroll(training.id)}
+                      disabled={training.is_enrolled}
+                      className="w-full"
+                    >
+                      {training.is_enrolled ? "Já inscrito" : "Inscrever-se"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
