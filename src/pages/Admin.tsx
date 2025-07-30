@@ -3,6 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, FileText, Users, BarChart3 } from "lucide-react";
+import { CreateTrainingForm } from "@/components/admin/CreateTrainingForm";
+import { CreatePromptForm } from "@/components/admin/CreatePromptForm";
 
 const AdminTrainings = () => {
   return (
@@ -52,6 +54,8 @@ const AdminTrainings = () => {
           </CardContent>
         </Card>
       </div>
+
+      <CreateTrainingForm />
 
       <Card>
         <CardHeader>
@@ -134,6 +138,8 @@ const AdminPrompts = () => {
           </CardContent>
         </Card>
       </div>
+
+      <CreatePromptForm />
 
       <Card>
         <CardHeader>
