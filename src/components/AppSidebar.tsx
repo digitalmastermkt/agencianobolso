@@ -30,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileDialog } from "./ProfileDialog";
 
@@ -110,6 +111,7 @@ export function AppSidebar() {
   const sidebar = useSidebar();
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin, role } = useUserRole();
   const { toast } = useToast();
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -218,27 +220,29 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Admin Navigation */}
-          <SidebarGroup>
-            <SidebarGroupLabel>Administração</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} className={getNavClass}>
-                        <item.icon className="mr-2 h-4 w-4" />
-                        <span>{item.title}</span>
-                        {isActive(item.url) && (
-                          <ChevronRight className="ml-auto h-4 w-4" />
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {/* Admin Navigation - Only for Admins */}
+          {isAdmin && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Administração</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {adminItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink to={item.url} className={getNavClass}>
+                          <item.icon className="mr-2 h-4 w-4" />
+                          <span>{item.title}</span>
+                          {isActive(item.url) && (
+                            <ChevronRight className="ml-auto h-4 w-4" />
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
         </SidebarContent>
 
         <SidebarFooter className="border-t">
@@ -252,7 +256,9 @@ export function AppSidebar() {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user?.email}</p>
-                <p className="text-xs text-muted-foreground">Usuário</p>
+                <p className="text-xs text-muted-foreground">
+                  {role === 'admin' ? 'Administrador' : 'Usuário'}
+                </p>
               </div>
             </div>
 
