@@ -25,7 +25,7 @@ const Index = () => {
             <div className="text-center">
               <div className="animate-float">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-                  SparkAgen AI
+                  Agência no Bolso AI
                   <span className="block text-2xl md:text-3xl lg:text-4xl font-normal mt-4 text-white/90">
                     Criatividade Inteligente para Negócios Locais
                   </span>
