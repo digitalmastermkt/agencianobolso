@@ -14,6 +14,10 @@ import AgenteConexao from "./pages/agents/AgenteConexao";
 import AgenteBanner from "./pages/agents/AgenteBanner";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Treinamentos from "./pages/Treinamentos";
+import Prompts from "./pages/Prompts";
+import Comunidade from "./pages/Comunidade";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +69,26 @@ const App = () => (
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/treinamentos" element={
+            <ProtectedRoute>
+              <Treinamentos />
+            </ProtectedRoute>
+          } />
+          <Route path="/prompts" element={
+            <ProtectedRoute>
+              <Prompts />
+            </ProtectedRoute>
+          } />
+          <Route path="/comunidade" element={
+            <ProtectedRoute>
+              <Comunidade />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Admin />
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

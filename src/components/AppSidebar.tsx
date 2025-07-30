@@ -80,6 +80,32 @@ const mainItems = [
   }
 ];
 
+const learningItems = [
+  {
+    title: "Treinamentos",
+    url: "/treinamentos",
+    icon: User
+  },
+  {
+    title: "Prompts",
+    url: "/prompts", 
+    icon: Sparkles
+  },
+  {
+    title: "Comunidade",
+    url: "/comunidade",
+    icon: MessageCircle
+  }
+];
+
+const adminItems = [
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: Settings
+  }
+];
+
 export function AppSidebar() {
   const sidebar = useSidebar();
   const location = useLocation();
@@ -148,6 +174,28 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
+          {/* Learning Navigation */}
+          <SidebarGroup>
+            <SidebarGroupLabel>Aprendizado</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {learningItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} className={getNavClass}>
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.title}</span>
+                        {isActive(item.url) && (
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
           {/* Agents Navigation */}
           <SidebarGroup>
             <SidebarGroupLabel>Agentes IA</SidebarGroupLabel>
@@ -158,6 +206,28 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavClass}>
                         <item.icon className={`mr-2 h-4 w-4 ${item.color}`} />
+                        <span>{item.title}</span>
+                        {isActive(item.url) && (
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Admin Navigation */}
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} className={getNavClass}>
+                        <item.icon className="mr-2 h-4 w-4" />
                         <span>{item.title}</span>
                         {isActive(item.url) && (
                           <ChevronRight className="ml-auto h-4 w-4" />
