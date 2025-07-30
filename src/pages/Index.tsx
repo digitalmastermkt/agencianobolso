@@ -256,7 +256,7 @@ const Index = () => {
               <Link to="/agentes">
                 <Button variant="creative" size="xl">
                   <Zap className="w-6 h-6 mr-3" />
-                  Começar Gratuitamente
+                  Começar Agora!
                 </Button>
               </Link>
               <Link to="/comunidade">
