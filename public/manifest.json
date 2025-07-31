@@ -1,7 +1,7 @@
 {
-  "name": "SparkAgen AI",
-  "short_name": "SparkAgen",
-  "description": "Plataforma de Agentes de IA para Marketing e Vendas",
+  "name": "Agência no Bolso",
+  "short_name": "Agência no Bolso",
+  "description": "Agência de IA para Marketing e Vendas no seu bolso",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0b",
