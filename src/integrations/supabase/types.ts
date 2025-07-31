@@ -256,6 +256,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           is_published: boolean | null
+          module_id: string | null
           order_index: number
           title: string
           training_id: string
@@ -269,6 +270,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_published?: boolean | null
+          module_id?: string | null
           order_index?: number
           title: string
           training_id: string
@@ -282,6 +284,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_published?: boolean | null
+          module_id?: string | null
           order_index?: number
           title?: string
           training_id?: string
@@ -290,6 +293,13 @@ export type Database = {
           video_url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lessons_training_id_fkey"
             columns: ["training_id"]
@@ -466,24 +476,34 @@ export type Database = {
       }
       user_enrollments: {
         Row: {
+          course_id: string | null
           enrolled_at: string
           id: string
           training_id: string
           user_id: string
         }
         Insert: {
+          course_id?: string | null
           enrolled_at?: string
           id?: string
           training_id: string
           user_id: string
         }
         Update: {
+          course_id?: string | null
           enrolled_at?: string
           id?: string
           training_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_enrollments_training_id_fkey"
             columns: ["training_id"]
