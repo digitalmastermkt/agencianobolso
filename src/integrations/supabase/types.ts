@@ -259,7 +259,7 @@ export type Database = {
           module_id: string | null
           order_index: number
           title: string
-          training_id: string
+          training_id: string | null
           updated_at: string
           video_platform: string | null
           video_url: string
@@ -273,7 +273,7 @@ export type Database = {
           module_id?: string | null
           order_index?: number
           title: string
-          training_id: string
+          training_id?: string | null
           updated_at?: string
           video_platform?: string | null
           video_url: string
@@ -287,7 +287,7 @@ export type Database = {
           module_id?: string | null
           order_index?: number
           title?: string
-          training_id?: string
+          training_id?: string | null
           updated_at?: string
           video_platform?: string | null
           video_url?: string

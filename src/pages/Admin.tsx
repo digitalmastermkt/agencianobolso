@@ -5,83 +5,186 @@ import { Badge } from "@/components/ui/badge";
 import { GraduationCap, FileText, Users, BarChart3 } from "lucide-react";
 import { CreateTrainingForm } from "@/components/admin/CreateTrainingForm";
 import { CreatePromptForm } from "@/components/admin/CreatePromptForm";
+import { CreateCourseForm } from "@/components/admin/CreateCourseForm";
+import { CreateModuleForm } from "@/components/admin/CreateModuleForm";
+import { CreateLessonForm } from "@/components/admin/CreateLessonForm";
 
 const AdminTrainings = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Gerenciar Treinamentos</h2>
-        <p className="text-muted-foreground">Crie e gerencie os treinamentos da plataforma.</p>
+        <h2 className="text-2xl font-bold mb-2">Gerenciar Conteúdo Educacional</h2>
+        <p className="text-muted-foreground">Crie e gerencie cursos, módulos e aulas da plataforma.</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5" />
-              Total de Treinamentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">12</div>
-            <p className="text-sm text-muted-foreground">8 publicados, 4 rascunhos</p>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="courses" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="courses">Cursos</TabsTrigger>
+          <TabsTrigger value="modules">Módulos</TabsTrigger>
+          <TabsTrigger value="lessons">Aulas</TabsTrigger>
+          <TabsTrigger value="legacy">Treinamentos Legacy</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Inscrições
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">234</div>
-            <p className="text-sm text-muted-foreground">Total de inscrições</p>
-          </CardContent>
-        </Card>
+        <TabsContent value="courses">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5" />
+                    Total de Cursos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">8</div>
+                  <p className="text-sm text-muted-foreground">5 publicados, 3 rascunhos</p>
+                </CardContent>
+              </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Taxa de Conclusão
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">78%</div>
-            <p className="text-sm text-muted-foreground">Média geral</p>
-          </CardContent>
-        </Card>
-      </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Inscrições
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">234</div>
+                  <p className="text-sm text-muted-foreground">Total de inscrições</p>
+                </CardContent>
+              </Card>
 
-      <CreateTrainingForm />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Treinamentos Recentes</CardTitle>
-          <CardDescription>Últimos treinamentos criados ou atualizados</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { title: "Fundamentos de IA", status: "Publicado", enrollments: 45 },
-              { title: "Prompt Engineering Avançado", status: "Rascunho", enrollments: 0 },
-              { title: "ChatGPT para Negócios", status: "Publicado", enrollments: 67 }
-            ].map((training, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">{training.title}</h4>
-                  <p className="text-sm text-muted-foreground">{training.enrollments} inscrições</p>
-                </div>
-                <Badge variant={training.status === "Publicado" ? "default" : "secondary"}>
-                  {training.status}
-                </Badge>
-              </div>
-            ))}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Taxa de Conclusão
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">78%</div>
+                  <p className="text-sm text-muted-foreground">Média geral</p>
+                </CardContent>
+              </Card>
+            </div>
+            <CreateCourseForm />
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="modules">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total de Módulos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">24</div>
+                  <p className="text-sm text-muted-foreground">Distribuídos em 8 cursos</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Módulos Publicados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">18</div>
+                  <p className="text-sm text-muted-foreground">6 em rascunho</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Média por Curso</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">3</div>
+                  <p className="text-sm text-muted-foreground">Módulos por curso</p>
+                </CardContent>
+              </Card>
+            </div>
+            <CreateModuleForm />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="lessons">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total de Aulas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">156</div>
+                  <p className="text-sm text-muted-foreground">Distribuídas em 24 módulos</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Duração Total</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">42h</div>
+                  <p className="text-sm text-muted-foreground">Conteúdo disponível</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Média por Módulo</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">6.5</div>
+                  <p className="text-sm text-muted-foreground">Aulas por módulo</p>
+                </CardContent>
+              </Card>
+            </div>
+            <CreateLessonForm />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="legacy">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5" />
+                    Treinamentos Legacy
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">12</div>
+                  <p className="text-sm text-muted-foreground">Sistema anterior</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Migração Pendente</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">4</div>
+                  <p className="text-sm text-muted-foreground">Para nova estrutura</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Já Migrados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">8</div>
+                  <p className="text-sm text-muted-foreground">Convertidos para cursos</p>
+                </CardContent>
+              </Card>
+            </div>
+            <CreateTrainingForm />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

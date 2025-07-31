@@ -99,6 +99,7 @@ export function CreateLessonForm({ onSuccess, preSelectedModuleId }: CreateLesso
         title: data.title,
         description: data.description,
         module_id: data.module_id,
+        training_id: null,
         video_url: data.video_url,
         duration_minutes: data.duration_minutes,
         order_index: data.order_index,
