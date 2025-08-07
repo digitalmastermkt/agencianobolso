@@ -60,11 +60,11 @@ export function SubscriptionPanel() {
                 Ativo • Plano {subscription_tier} {subscription_end ? `(até ${new Date(subscription_end).toLocaleDateString('pt-BR')})` : ""}
               </p>
             </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={refresh} disabled={loading}>
+            <div className="flex gap-3 flex-nowrap items-center">
+              <Button variant="outline" onClick={refresh} disabled={loading} className="whitespace-nowrap">
                 Atualizar Status
               </Button>
-              <Button variant="gradient" onClick={handleManage}>
+              <Button variant="gradient" onClick={handleManage} className="whitespace-nowrap">
                 Gerenciar Assinatura
               </Button>
             </div>
