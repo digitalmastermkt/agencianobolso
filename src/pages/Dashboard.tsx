@@ -21,6 +21,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { SubscriptionPanel } from "@/components/subscriptions/SubscriptionPanel";
 
 interface AgentStats {
   id: string;
@@ -184,6 +185,8 @@ export default function Dashboard() {
               Bem-vindo de volta, {user?.email}
             </p>
           </div>
+
+          <SubscriptionPanel />
 
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
