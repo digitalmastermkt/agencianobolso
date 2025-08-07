@@ -4,6 +4,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Crown, TrendingUp, Star } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const PRICE_IDS = {
   Essencial: "price_1RtCJlL0y5sMsrd4ZJHcvV3A",
@@ -13,8 +15,15 @@ const PRICE_IDS = {
 
 export function SubscriptionPanel() {
   const { subscribed, subscription_tier, subscription_end, loading, refresh } = useSubscription();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubscribe = async (priceId: string) => {
+    if (!user) {
+      toast({ title: "Faça login para assinar", description: "Entre na sua conta para continuar o checkout." });
+      navigate("/auth");
+      return;
+    }
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { price_id: priceId },
