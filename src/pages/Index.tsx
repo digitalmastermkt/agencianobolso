@@ -13,6 +13,7 @@ import {
   MessageCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SubscriptionPanel } from "@/components/subscriptions/SubscriptionPanel";
 
 const Index = () => {
   return (
@@ -193,6 +194,17 @@ const Index = () => {
                 </Button>
               </Link>
             </div>
+          </div>
+        </section>
+
+        {/* Planos */}
+        <section className="py-20 bg-gradient-subtle/50">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Planos</h2>
+              <p className="text-muted-foreground">Escolha o plano e conclua o checkout em poucos cliques.</p>
+            </div>
+            <SubscriptionPanel />
           </div>
         </section>
 
