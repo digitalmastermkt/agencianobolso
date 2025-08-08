@@ -92,12 +92,16 @@ const App = () => (
           } />
           <Route path="/prompts" element={
             <ProtectedRoute>
-              <Prompts />
+              <PlanGuard requiredPlan="Essencial">
+                <Prompts />
+              </PlanGuard>
             </ProtectedRoute>
           } />
           <Route path="/comunidade" element={
             <ProtectedRoute>
-              <Comunidade />
+              <PlanGuard requiredPlan="Essencial">
+                <Comunidade />
+              </PlanGuard>
             </ProtectedRoute>
           } />
           <Route path="/admin" element={
