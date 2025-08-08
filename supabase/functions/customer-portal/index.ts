@@ -36,13 +36,55 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User email not available");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (customers.data.length === 0) throw new Error("Stripe customer not found");
+
+    // Ensure the Stripe customer exists for this user
+    let customerId: string | null = null;
+    const existing = await stripe.customers.list({ email: user.email, limit: 1 });
+    if (existing.data.length > 0) {
+      customerId = existing.data[0].id;
+      log("Found Stripe customer", { customerId });
+    } else {
+      const created = await stripe.customers.create({
+        email: user.email,
+        metadata: { supabase_user_id: user.id },
+      });
+      customerId = created.id;
+      log("Created Stripe customer", { customerId });
+    }
 
     const origin = req.headers.get("origin") || "http://localhost:5173";
+
+    // Ensure a Billing Portal configuration exists (Stripe requires a default or explicit configuration)
+    let configurationId: string | undefined = undefined;
+    try {
+      const configs = await stripe.billingPortal.configurations.list({ limit: 1 });
+      if (configs.data.length > 0) {
+        configurationId = configs.data[0].id;
+        log("Using existing portal configuration", { configurationId });
+      } else {
+        const conf = await stripe.billingPortal.configurations.create({
+          business_profile: {
+            privacy_policy_url: `${origin}/privacy`,
+            terms_of_service_url: `${origin}/terms`,
+          },
+          features: {
+            customer_update: { allowed_updates: ["address", "email", "phone"], enabled: true },
+            payment_method_update: { enabled: true },
+            subscription_cancel: { enabled: true, mode: "at_period_end" },
+            subscription_update: { enabled: true, default_allowed_updates: ["price"], proration_behavior: "create_prorations" },
+          },
+        });
+        configurationId = conf.id;
+        log("Created portal configuration", { configurationId });
+      }
+    } catch (e) {
+      log("Portal configuration check/create failed; proceeding without explicit configuration", e);
+    }
+
     const portal = await stripe.billingPortal.sessions.create({
-      customer: customers.data[0].id,
+      customer: customerId,
       return_url: `${origin}/dashboard`,
+      ...(configurationId ? { configuration: configurationId } : {}),
     });
 
     return new Response(
