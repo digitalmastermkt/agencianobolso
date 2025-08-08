@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,9 @@ import { CreateCourseForm } from "@/components/admin/CreateCourseForm";
 import { CreateModuleForm } from "@/components/admin/CreateModuleForm";
 import { CreateLessonForm } from "@/components/admin/CreateLessonForm";
 import { PlansAdmin } from "@/components/admin/PlansAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const AdminTrainings = () => {
   return (
@@ -273,6 +276,58 @@ const AdminPrompts = () => {
 };
 
 const AdminUsers = () => {
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
+  const [newToday, setNewToday] = useState<number>(0);
+  const [recentUsers, setRecentUsers] = useState<
+    Array<{ id: string; display_name: string | null; role: string | null; created_at: string }>
+  >([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const fetchData = async () => {
+      try {
+        const nowISO = new Date().toISOString();
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const startOfTodayISO = startOfToday.toISOString();
+
+        const [totalRes, newTodayRes, activeRes, recentRes] = await Promise.all([
+          supabase.from("profiles").select("*", { head: true, count: "exact" }),
+          supabase.from("profiles").select("*", { head: true, count: "exact" }).gte("created_at", startOfTodayISO),
+          supabase
+            .from("subscribers")
+            .select("*", { head: true, count: "exact" })
+            .eq("subscribed", true)
+            .or(`subscription_end.is.null,subscription_end.gt.${nowISO}`),
+          supabase
+            .from("profiles")
+            .select("id, display_name, role, created_at")
+            .order("created_at", { ascending: false })
+            .limit(10),
+        ]);
+
+        if (isCancelled) return;
+
+        setTotalUsers(totalRes.count ?? 0);
+        setNewToday(newTodayRes.count ?? 0);
+        setActiveSubscribers(activeRes.count ?? 0);
+        setRecentUsers(recentRes.data ?? []);
+      } catch (e) {
+        console.error("Erro ao carregar dados de usuários:", e);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const engagement = totalUsers > 0 ? Math.round((activeSubscribers / totalUsers) * 100) : 0;
+
   return (
     <div className="space-y-6">
       <div>
@@ -289,8 +344,8 @@ const AdminUsers = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">1,247</div>
-            <p className="text-sm text-muted-foreground">+12% este mês</p>
+            <div className="text-3xl font-bold">{totalUsers}</div>
+            <p className="text-sm text-muted-foreground">Contas registradas</p>
           </CardContent>
         </Card>
 
@@ -299,8 +354,8 @@ const AdminUsers = () => {
             <CardTitle>Usuários Ativos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">892</div>
-            <p className="text-sm text-muted-foreground">Últimos 30 dias</p>
+            <div className="text-3xl font-bold">{activeSubscribers}</div>
+            <p className="text-sm text-muted-foreground">Assinantes com plano ativo</p>
           </CardContent>
         </Card>
 
@@ -309,18 +364,18 @@ const AdminUsers = () => {
             <CardTitle>Novos Hoje</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">23</div>
+            <div className="text-3xl font-bold">{newToday}</div>
             <p className="text-sm text-muted-foreground">Novos registros</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Taxa de Engajamento</CardTitle>
+            <CardTitle>Taxa de Assinantes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">67%</div>
-            <p className="text-sm text-muted-foreground">Usuários ativos</p>
+            <div className="text-3xl font-bold">{engagement}%</div>
+            <p className="text-sm text-muted-foreground">Assinantes / total</p>
           </CardContent>
         </Card>
       </div>
@@ -332,21 +387,22 @@ const AdminUsers = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[
-              { email: "joao@email.com", date: "Hoje", status: "Ativo" },
-              { email: "maria@email.com", date: "Ontem", status: "Ativo" },
-              { email: "pedro@email.com", date: "2 dias", status: "Inativo" }
-            ].map((user, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+            {recentUsers.map((u) => (
+              <div key={u.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <h4 className="font-medium">{user.email}</h4>
-                  <p className="text-sm text-muted-foreground">Registrado há {user.date}</p>
+                  <h4 className="font-medium">{u.display_name ?? "Usuário"}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Registrado há {formatDistanceToNow(new Date(u.created_at), { locale: ptBR, addSuffix: false })}
+                  </p>
                 </div>
-                <Badge variant={user.status === "Ativo" ? "default" : "secondary"}>
-                  {user.status}
+                <Badge variant={u.role === "admin" ? "default" : "secondary"}>
+                  {u.role ?? "user"}
                 </Badge>
               </div>
             ))}
+            {recentUsers.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhum usuário encontrado.</p>
+            )}
           </div>
         </CardContent>
       </Card>
