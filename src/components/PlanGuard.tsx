@@ -6,6 +6,7 @@ import { Shield, Sparkles } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface PlanGuardProps {
   requiredPlan?: "Essencial" | "Premium" | "Elite";
@@ -18,8 +19,10 @@ export function PlanGuard({ requiredPlan, agentKey, courseId, children }: PlanGu
   const navigate = useNavigate();
   const { loading: subLoading, subscribed, hasAccess, refresh: refreshSub } = useSubscription();
   const { loading: rulesLoading, canAccessAgent, canAccessCourse, refresh: refreshRules } = usePlanAccess();
+  const { isAdmin } = useUserRole();
 
   const blocked = (() => {
+    if (isAdmin) return false;
     if (subLoading || rulesLoading) return false; // avoid flicker
     if (!subscribed) return true;
     if (requiredPlan && !hasAccess(requiredPlan)) return true;
@@ -43,6 +46,10 @@ export function PlanGuard({ requiredPlan, agentKey, courseId, children }: PlanGu
     refreshSub();
     refreshRules();
   }, [refreshSub, refreshRules]);
+
+  if (isAdmin) {
+    return <>{children}</>;
+  }
 
   if (subLoading || rulesLoading) {
     return (

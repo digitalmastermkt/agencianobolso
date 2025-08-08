@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "./useSubscription";
+import { useUserRole } from "./useUserRole";
+
 
 export type PlanTier = "Essencial" | "Premium" | "Elite";
 
@@ -9,6 +11,7 @@ type CourseAccess = { plan: string; course_id: string };
 
 export function usePlanAccess() {
   const { subscription_tier, subscribed } = useSubscription();
+  const { isAdmin } = useUserRole();
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<AgentAccess[]>([]);
   const [courses, setCourses] = useState<CourseAccess[]>([]);
@@ -44,18 +47,20 @@ export function usePlanAccess() {
 
   const canAccessAgent = useCallback(
     (agentKey: string) => {
+      if (isAdmin) return true;
       if (!subscribed || !tier) return false;
       return agents.some((r) => r.plan === tier && r.agent_key === agentKey);
     },
-    [agents, subscribed, tier]
+    [agents, subscribed, tier, isAdmin]
   );
 
   const canAccessCourse = useCallback(
     (courseId: string) => {
+      if (isAdmin) return true;
       if (!subscribed || !tier) return false;
       return courses.some((r) => r.plan === tier && r.course_id === courseId);
     },
-    [courses, subscribed, tier]
+    [courses, subscribed, tier, isAdmin]
   );
 
   const summary = useMemo(() => ({ agentsCount: agents.length, coursesCount: courses.length }), [agents.length, courses.length]);
