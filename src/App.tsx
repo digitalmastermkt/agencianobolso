@@ -21,6 +21,8 @@ import Comunidade from "./pages/Comunidade";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { PlanGuard } from "@/components/PlanGuard";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCanceled from "./pages/PaymentCanceled";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +111,16 @@ const App = () => (
               <AdminRoute>
                 <Admin />
               </AdminRoute>
+            </ProtectedRoute>
+          } />
+          <Route path="/success" element={
+            <ProtectedRoute>
+              <PaymentSuccess />
+            </ProtectedRoute>
+          } />
+          <Route path="/cancel" element={
+            <ProtectedRoute>
+              <PaymentCanceled />
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
