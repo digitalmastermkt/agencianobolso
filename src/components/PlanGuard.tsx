@@ -24,7 +24,8 @@ export function PlanGuard({ requiredPlan, agentKey, courseId, children }: PlanGu
   const blocked = (() => {
     if (isAdmin) return false;
     if (subLoading || rulesLoading) return false; // avoid flicker
-    if (!subscribed) return true;
+    // Free users: allow only the "vendas" agent
+    if (!subscribed) return !(agentKey === "vendas");
     if (requiredPlan && !hasAccess(requiredPlan)) return true;
     if (agentKey && !canAccessAgent(agentKey)) return true;
     if (courseId && !canAccessCourse(courseId)) return true;

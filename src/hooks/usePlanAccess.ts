@@ -48,7 +48,8 @@ export function usePlanAccess() {
   const canAccessAgent = useCallback(
     (agentKey: string) => {
       if (isAdmin) return true;
-      if (!subscribed || !tier) return false;
+      // Free users: allow only the "vendas" agent
+      if (!subscribed || !tier) return agentKey === "vendas";
       return agents.some((r) => r.plan === tier && r.agent_key === agentKey);
     },
     [agents, subscribed, tier, isAdmin]
