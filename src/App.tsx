@@ -20,6 +20,7 @@ import Prompts from "./pages/Prompts";
 import Comunidade from "./pages/Comunidade";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import { PlanGuard } from "@/components/PlanGuard";
 
 const queryClient = new QueryClient();
 
@@ -39,32 +40,44 @@ const App = () => (
           } />
           <Route path="/agentes/vendas" element={
             <ProtectedRoute>
-              <AgenteVendas />
+              <PlanGuard agentKey="vendas">
+                <AgenteVendas />
+              </PlanGuard>
             </ProtectedRoute>
           } />
           <Route path="/agentes/storytelling" element={
             <ProtectedRoute>
-              <AgenteStorytelling />
+              <PlanGuard agentKey="storytelling">
+                <AgenteStorytelling />
+              </PlanGuard>
             </ProtectedRoute>
           } />
           <Route path="/agentes/viral" element={
             <ProtectedRoute>
-              <AgenteViral />
+              <PlanGuard agentKey="viral">
+                <AgenteViral />
+              </PlanGuard>
             </ProtectedRoute>
           } />
           <Route path="/agentes/interacao" element={
             <ProtectedRoute>
-              <AgenteInteracao />
+              <PlanGuard agentKey="interacao">
+                <AgenteInteracao />
+              </PlanGuard>
             </ProtectedRoute>
           } />
           <Route path="/agentes/conexao" element={
             <ProtectedRoute>
-              <AgenteConexao />
+              <PlanGuard agentKey="conexao">
+                <AgenteConexao />
+              </PlanGuard>
             </ProtectedRoute>
           } />
           <Route path="/agentes/banner" element={
             <ProtectedRoute>
-              <AgenteBanner />
+              <PlanGuard agentKey="banner">
+                <AgenteBanner />
+              </PlanGuard>
             </ProtectedRoute>
           } />
           <Route path="/dashboard" element={

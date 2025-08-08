@@ -8,6 +8,7 @@ import { CreatePromptForm } from "@/components/admin/CreatePromptForm";
 import { CreateCourseForm } from "@/components/admin/CreateCourseForm";
 import { CreateModuleForm } from "@/components/admin/CreateModuleForm";
 import { CreateLessonForm } from "@/components/admin/CreateLessonForm";
+import { PlansAdmin } from "@/components/admin/PlansAdmin";
 
 const AdminTrainings = () => {
   return (
@@ -365,10 +366,11 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="trainings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="trainings">Treinamentos</TabsTrigger>
             <TabsTrigger value="prompts">Prompts</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="plans">Planos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="trainings">
@@ -381,6 +383,10 @@ export default function Admin() {
 
           <TabsContent value="users">
             <AdminUsers />
+          </TabsContent>
+
+          <TabsContent value="plans">
+            <PlansAdmin />
           </TabsContent>
         </Tabs>
       </div>
