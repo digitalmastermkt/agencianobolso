@@ -3,20 +3,62 @@ import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Crown, TrendingUp, Star } from "lucide-react";
+import { Crown, TrendingUp, Star, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-const PRICE_IDS = {
-  Essencial: "price_1RtCJlL0y5sMsrd4ZJHcvV3A",
-  Premium: "price_1RtCTGL0y5sMsrd4yRno549V",
-  Elite: "price_1RtCyUL0y5sMsrd4j7Bgl4xT",
-} as const;
+type PlanTierLocal = "Essencial" | "Premium" | "Elite";
+const PRICE_IDS: Record<"monthly" | "annual", Record<PlanTierLocal, string>> = {
+  monthly: {
+    Essencial: "price_1RtCJlL0y5sMsrd4ZJHcvV3A",
+    Premium: "price_1RtCTGL0y5sMsrd4yRno549V",
+    Elite: "price_1RtCyUL0y5sMsrd4j7Bgl4xT",
+  },
+  annual: {
+    Essencial: "price_1RtwbYL0y5sMsrd4mqnLAsRK",
+    Premium: "price_1RtwejL0y5sMsrd40q0fAqKO",
+    Elite: "price_1RtwaZL0y5sMsrd4b3TDm2hA",
+  },
+};
 
 export function SubscriptionPanel() {
   const { subscribed, subscription_tier, subscription_end, loading, refresh } = useSubscription();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("billingCycle");
+    if (saved === "annual" || saved === "monthly") setBillingCycle(saved);
+  }, []);
+
+  const setCycle = (cycle: "monthly" | "annual") => {
+    setBillingCycle(cycle);
+    localStorage.setItem("billingCycle", cycle);
+  };
+
+  const monthlyDisplay = {
+    Essencial: "R$ 29/mês",
+    Premium: "R$ 59/mês",
+    Elite: "R$ 97/mês",
+  } as const;
+
+  const annualTotals = {
+    Essencial: 290,
+    Premium: 590,
+    Elite: 970,
+  } as const;
+
+  const formatBRL = (val: number, minFrac = 2) =>
+    val.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: minFrac });
+
+  const annualDisplay = {
+    Essencial: `${formatBRL(annualTotals.Essencial / 12)}/mês (${formatBRL(annualTotals.Essencial, 0)} cobrados anualmente)`,
+    Premium: `${formatBRL(annualTotals.Premium / 12)}/mês (${formatBRL(annualTotals.Premium, 0)} cobrados anualmente)`,
+    Elite: `${formatBRL(annualTotals.Elite / 12)}/mês (${formatBRL(annualTotals.Elite, 0)} cobrados anualmente)`,
+  } as const;
 
   const handleSubscribe = async (priceId: string) => {
     if (!user) {
@@ -52,6 +94,11 @@ export function SubscriptionPanel() {
     }
   };
 
+  const handleStartFree = () => {
+    if (!user) navigate("/auth");
+    else navigate("/dashboard");
+  };
+
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -79,27 +126,35 @@ export function SubscriptionPanel() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <PlanCard
+              icon={<Sparkles className="w-5 h-5" />}
+              title="Gratuito"
+              price="R$ 0/mês"
+              features={["1 agente liberado: Vendas"]}
+              onSelect={handleStartFree}
+              ctaLabel="Começar grátis"
+            />
             <PlanCard
               icon={<TrendingUp className="w-5 h-5" />}
               title="Essencial"
-              price="R$ 29,90/mês"
-              features={["Acesso básico aos agentes"]}
-              onSelect={() => handleSubscribe(PRICE_IDS.Essencial)}
+              price={billingCycle === "monthly" ? monthlyDisplay.Essencial : annualDisplay.Essencial}
+              features={["Agentes: Conexão, Interação, Banner"]}
+              onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Essencial)}
             />
             <PlanCard
               icon={<Star className="w-5 h-5" />}
               title="Premium"
-              price="R$ 59,90/mês"
-              features={["Tudo do Essencial", "Recursos avançados"]}
-              onSelect={() => handleSubscribe(PRICE_IDS.Premium)}
+              price={billingCycle === "monthly" ? monthlyDisplay.Premium : annualDisplay.Premium}
+              features={["Tudo do Essencial + Vendas, Storytelling"]}
+              onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Premium)}
             />
             <PlanCard
               icon={<Crown className="w-5 h-5" />}
               title="Elite"
-              price="R$ 99,90/mês"
-              features={["Tudo do Premium", "Recursos completos"]}
-              onSelect={() => handleSubscribe(PRICE_IDS.Elite)}
+              price={billingCycle === "monthly" ? monthlyDisplay.Elite : annualDisplay.Elite}
+              features={["Tudo do Premium + Viral", "Acesso a agentes futuros"]}
+              onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Elite)}
             />
           </div>
         )}
