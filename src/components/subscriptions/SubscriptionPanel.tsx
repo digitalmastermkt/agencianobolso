@@ -163,7 +163,7 @@ export function SubscriptionPanel() {
   );
 }
 
-function PlanCard({ icon, title, price, features, onSelect }: { icon: React.ReactNode; title: string; price: string; features: string[]; onSelect: () => void; }) {
+function PlanCard({ icon, title, price, features, onSelect, ctaLabel }: { icon: React.ReactNode; title: string; price: string; features: string[]; onSelect: () => void; ctaLabel?: string; }) {
   return (
     <div className="border rounded-lg p-5">
       <div className="flex items-center gap-2 mb-2">
@@ -177,7 +177,7 @@ function PlanCard({ icon, title, price, features, onSelect }: { icon: React.Reac
         ))}
       </ul>
       <Button variant="gradient" className="w-full" onClick={onSelect}>
-        Assinar {title}
+        {ctaLabel ?? `Assinar ${title}`}
       </Button>
     </div>
   );
