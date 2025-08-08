@@ -350,6 +350,86 @@ export type Database = {
           },
         ]
       }
+      plan_agents_access: {
+        Row: {
+          agent_key: string
+          created_at: string
+          id: string
+          label: string | null
+          plan: string
+        }
+        Insert: {
+          agent_key: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          plan: string
+        }
+        Update: {
+          agent_key?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          plan?: string
+        }
+        Relationships: []
+      }
+      plan_courses_access: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          plan: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          plan: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          plan?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_courses_access_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          monthly_credits: number
+          plan: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          monthly_credits?: number
+          plan: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          monthly_credits?: number
+          plan?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
