@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, BookOpen, Users, FileText, Menu, X, LogIn, User } from "lucide-react";
+import { Sparkles, BookOpen, Users, FileText, Menu, X, LogIn, User, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 const navigation = [{
   name: "Agentes",
   href: "/agentes",
   icon: Sparkles
+}, {
+  name: "Planos",
+  href: "/vendas",
+  icon: Crown
 }, {
   name: "Treinamentos",
   href: "/treinamentos",

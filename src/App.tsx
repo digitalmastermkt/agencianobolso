@@ -19,6 +19,7 @@ import Treinamentos from "./pages/Treinamentos";
 import Prompts from "./pages/Prompts";
 import Comunidade from "./pages/Comunidade";
 import Admin from "./pages/Admin";
+import Vendas from "./pages/Vendas";
 import NotFound from "./pages/NotFound";
 import { PlanGuard } from "@/components/PlanGuard";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -34,6 +35,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/vendas" element={<Vendas />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/agentes" element={
             <ProtectedRoute>
