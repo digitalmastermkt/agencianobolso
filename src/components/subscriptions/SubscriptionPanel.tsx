@@ -126,36 +126,58 @@ export function SubscriptionPanel() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <PlanCard
-              icon={<Sparkles className="w-5 h-5" />}
-              title="Gratuito"
-              price="R$ 0/mês"
-              features={["1 agente liberado: Vendas"]}
-              onSelect={handleStartFree}
-              ctaLabel="Começar grátis"
-            />
-            <PlanCard
-              icon={<TrendingUp className="w-5 h-5" />}
-              title="Essencial"
-              price={billingCycle === "monthly" ? monthlyDisplay.Essencial : annualDisplay.Essencial}
-              features={["Agentes: Conexão, Interação, Banner"]}
-              onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Essencial)}
-            />
-            <PlanCard
-              icon={<Star className="w-5 h-5" />}
-              title="Premium"
-              price={billingCycle === "monthly" ? monthlyDisplay.Premium : annualDisplay.Premium}
-              features={["Tudo do Essencial + Vendas, Storytelling"]}
-              onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Premium)}
-            />
-            <PlanCard
-              icon={<Crown className="w-5 h-5" />}
-              title="Elite"
-              price={billingCycle === "monthly" ? monthlyDisplay.Elite : annualDisplay.Elite}
-              features={["Tudo do Premium + Viral", "Acesso a agentes futuros"]}
-              onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Elite)}
-            />
+          <div>
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <p className="text-sm text-muted-foreground">Escolha o ciclo de cobrança</p>
+              <div className="flex gap-2">
+                <Button
+                  variant={billingCycle === "monthly" ? "gradient" : "outline"}
+                  onClick={() => setCycle("monthly")}
+                  className="whitespace-nowrap"
+                >
+                  Mensal
+                </Button>
+                <Button
+                  variant={billingCycle === "annual" ? "gradient" : "outline"}
+                  onClick={() => setCycle("annual")}
+                  className="whitespace-nowrap"
+                >
+                  Anual <span className="ml-2 text-xs text-muted-foreground">(2 meses grátis)</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <PlanCard
+                icon={<Sparkles className="w-5 h-5" />}
+                title="Gratuito"
+                price="R$ 0/mês"
+                features={["1 agente liberado: Vendas"]}
+                onSelect={handleStartFree}
+                ctaLabel="Começar grátis"
+              />
+              <PlanCard
+                icon={<TrendingUp className="w-5 h-5" />}
+                title="Essencial"
+                price={billingCycle === "monthly" ? monthlyDisplay.Essencial : annualDisplay.Essencial}
+                features={["Agentes: Conexão, Interação, Banner"]}
+                onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Essencial)}
+              />
+              <PlanCard
+                icon={<Star className="w-5 h-5" />}
+                title="Premium"
+                price={billingCycle === "monthly" ? monthlyDisplay.Premium : annualDisplay.Premium}
+                features={["Tudo do Essencial + Vendas, Storytelling"]}
+                onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Premium)}
+              />
+              <PlanCard
+                icon={<Crown className="w-5 h-5" />}
+                title="Elite"
+                price={billingCycle === "monthly" ? monthlyDisplay.Elite : annualDisplay.Elite}
+                features={["Tudo do Premium + Viral", "Acesso a agentes futuros"]}
+                onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Elite)}
+              />
+            </div>
           </div>
         )}
       </CardContent>
