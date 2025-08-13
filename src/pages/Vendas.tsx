@@ -60,7 +60,7 @@ const Vendas = () => {
           "@type": "Product",
           name: "Plano Essencial",
           description:
-            "Agentes Conexão, Interação e Banner + acesso à plataforma e recursos fundamentais.",
+            "Agente Vendas + acesso à plataforma e recursos fundamentais de IA.",
           offers: {
             "@type": "Offer",
             priceCurrency: "BRL",
@@ -72,7 +72,7 @@ const Vendas = () => {
           "@type": "Product",
           name: "Plano Premium",
           description:
-            "Tudo do Essencial + agentes Vendas e Storytelling, mais recursos para crescimento.",
+            "Tudo do Essencial + agentes adicionais e recursos premium de IA para crescimento.",
           offers: {
             "@type": "Offer",
             priceCurrency: "BRL",
@@ -84,7 +84,7 @@ const Vendas = () => {
           "@type": "Product",
           name: "Plano Elite",
           description:
-            "Tudo do Premium + agente Viral e acesso antecipado a novos agentes.",
+            "Tudo do Premium + todos os agentes premium e acesso prioritário a novos recursos.",
           offers: {
             "@type": "Offer",
             priceCurrency: "BRL",
@@ -159,9 +159,9 @@ const Vendas = () => {
                     <Sparkles className="w-5 h-5 text-primary" /> Agentes que entendem seu nicho
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  Conte com 6 especialistas IA: Vendas, Storytelling, Viral, Interação, Conexão e Banner.
-                </CardContent>
+                 <CardContent>
+                   Agente Vendas já ativo na plataforma, com mais agentes sendo desenvolvidos para cada necessidade.
+                 </CardContent>
               </Card>
               <Card className="border-0 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
@@ -206,12 +206,12 @@ const Vendas = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
-                    {[
-                      "Agentes: Conexão, Interação e Banner",
-                      "Promptoteca básica",
-                      "Treinamentos introdutórios",
-                      "Comunidade (leitura)",
-                    ].map((f, i) => (
+                     {[
+                       "Agente Vendas (disponível)",
+                       "Acesso à plataforma",
+                       "Geração de conteúdo com IA",
+                       "Comunidade (visualização)",
+                     ].map((f, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" /> {f}
                       </li>
@@ -233,13 +233,13 @@ const Vendas = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
-                    {[
-                      "Tudo do Essencial",
-                      "Agentes: Vendas e Storytelling",
-                      "Promptoteca completa",
-                      "Treinamentos intermediários",
-                      "Comunidade (postar e interagir)",
-                    ].map((f, i) => (
+                     {[
+                       "Tudo do Essencial",
+                       "Agentes adicionais expandidos",
+                       "Recursos premium de IA",
+                       "Funcionalidades avançadas",
+                       "Comunidade (participação completa)",
+                     ].map((f, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" /> {f}
                       </li>
@@ -258,13 +258,13 @@ const Vendas = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
-                    {[
-                      "Tudo do Premium",
-                      "Agente Viral",
-                      "Acesso antecipado a novos agentes",
-                      "Treinamentos avançados",
-                      "Suporte prioritário",
-                    ].map((f, i) => (
+                     {[
+                       "Tudo do Premium",
+                       "Todos os agentes premium",
+                       "Acesso prioritário a novos recursos",
+                       "Recursos exclusivos de IA",
+                       "Suporte dedicado",
+                     ].map((f, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" /> {f}
                       </li>
