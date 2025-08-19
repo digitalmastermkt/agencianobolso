@@ -403,8 +403,14 @@ const AdminUsers = () => {
         supabase
           .from("profiles")
           .select(`
-            id, display_name, role, created_at, user_id, avatar_url,
-            subscribers!left(subscribed, subscription_tier, subscription_end, email)
+            *,
+            subscribers!subscribers_user_id_fkey (
+              subscribed, 
+              subscription_tier, 
+              subscription_end, 
+              email,
+              stripe_customer_id
+            )
           `)
           .order("created_at", { ascending: false })
       ]);
