@@ -10,10 +10,13 @@ export function useUserRole() {
   useEffect(() => {
     async function fetchUserRole() {
       if (!user) {
+        console.log("🔒 useUserRole: Nenhum usuário logado");
         setRole(null);
         setLoading(false);
         return;
       }
+
+      console.log("🔒 useUserRole: Buscando role para usuário", user.id, user.email);
 
       try {
         const { data, error } = await supabase
@@ -22,14 +25,18 @@ export function useUserRole() {
           .eq('user_id', user.id)
           .single();
 
+        console.log("🔒 useUserRole: Resultado da query", { data, error });
+
         if (error) {
-          console.error('Error fetching user role:', error);
+          console.error('❌ Erro ao buscar role do usuário:', error);
           setRole('user'); // Default to user role
         } else {
-          setRole(data?.role || 'user');
+          const userRole = data?.role || 'user';
+          console.log("✅ Role encontrado:", userRole);
+          setRole(userRole);
         }
       } catch (error) {
-        console.error('Error fetching user role:', error);
+        console.error('❌ Erro inesperado ao buscar role:', error);
         setRole('user');
       } finally {
         setLoading(false);

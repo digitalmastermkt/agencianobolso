@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { BookOpen, GraduationCap, Users, FileText, Plus, BarChart3, TrendingUp, ArrowLeft } from "lucide-react";
+import { BookOpen, GraduationCap, Users, FileText, Plus, BarChart3, TrendingUp, ArrowLeft, AlertCircle, Sparkles } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -380,22 +380,36 @@ const AdminPrompts = () => {
 import { useUserRole } from "@/hooks/useUserRole";
 
 const AdminUsers = () => {
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { isAdmin, loading: roleLoading, role } = useUserRole();
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
   const [newToday, setNewToday] = useState<number>(0);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    console.log("🔍 AdminUsers fetchData - Estado atual:", { 
+      isAdmin, 
+      role, 
+      roleLoading 
+    });
+
+    if (roleLoading) {
+      console.log("⏳ Aguardando verificação de role...");
+      return;
+    }
+
     if (!isAdmin) {
-      console.log("❌ Usuário não é admin, não pode acessar dados");
+      console.log("❌ Usuário não é admin, definindo erro");
+      setError("Usuário não tem permissões de administrador");
       setLoading(false);
       return;
     }
     
     try {
       setLoading(true);
+      setError(null);
       console.log("🔍 Iniciando fetchData como admin...");
       
       const nowISO = new Date().toISOString();
@@ -454,17 +468,17 @@ const AdminUsers = () => {
       console.log("✅ Usuários processados:", processedUsers);
       setAllUsers(processedUsers);
     } catch (e) {
-      console.error("Erro ao carregar dados de usuários:", e);
+      console.error("❌ Erro ao carregar dados de usuários:", e);
+      setError(`Erro ao carregar dados: ${e}`);
     } finally {
       setLoading(false);
     }
-  }, [isAdmin]);
+  }, [isAdmin, roleLoading]);
 
   useEffect(() => {
-    if (!roleLoading) {
-      fetchData();
-    }
-  }, [fetchData, roleLoading]);
+    console.log("🔄 AdminUsers useEffect - Estado:", { roleLoading, isAdmin, role });
+    fetchData();
+  }, [fetchData]);
 
   const usersByPlan = useMemo(() => {
     return allUsers.reduce((acc, user) => {
@@ -560,11 +574,32 @@ const AdminUsers = () => {
           <CardDescription>Gerenciar todos os usuários da plataforma</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {error && (
+            <div className="text-center py-8">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
+              <div className="text-destructive font-medium mb-2">Erro ao Carregar Dados</div>
+              <div className="text-sm text-muted-foreground mb-4">{error}</div>
+              <Button onClick={fetchData} size="sm">
+                Tentar Novamente
+              </Button>
+            </div>
+          )}
+          
+          {!error && loading && (
             <div className="flex items-center justify-center py-8">
+              <Sparkles className="w-8 h-8 animate-spin text-primary mr-3" />
               <div className="text-muted-foreground">Carregando usuários...</div>
             </div>
-          ) : (
+          )}
+          
+          {!error && !loading && allUsers.length === 0 && (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+              <div className="text-muted-foreground">Nenhum usuário encontrado</div>
+            </div>
+          )}
+          
+          {!error && !loading && allUsers.length > 0 && (
             <Table>
               <TableHeader>
                 <TableRow>
