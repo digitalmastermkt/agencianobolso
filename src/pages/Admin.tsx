@@ -377,7 +377,10 @@ const AdminPrompts = () => {
   );
 };
 
+import { useUserRole } from "@/hooks/useUserRole";
+
 const AdminUsers = () => {
+  const { isAdmin, loading: roleLoading } = useUserRole();
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
   const [newToday, setNewToday] = useState<number>(0);
@@ -385,8 +388,16 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    if (!isAdmin) {
+      console.log("❌ Usuário não é admin, não pode acessar dados");
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
+      console.log("🔍 Iniciando fetchData como admin...");
+      
       const nowISO = new Date().toISOString();
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
@@ -415,12 +426,18 @@ const AdminUsers = () => {
           .order("created_at", { ascending: false })
       ]);
 
+      console.log("📊 Resultado das queries:");
+      console.log("Total users count:", totalRes.count);
+      console.log("Users data:", usersRes.data);
+      console.log("Users error:", usersRes.error);
+
       setTotalUsers(totalRes.count ?? 0);
       setNewToday(newTodayRes.count ?? 0);
       setActiveSubscribers(activeRes.count ?? 0);
 
       // Processar dados dos usuários
       const processedUsers = (usersRes.data || []).map((user: any) => {
+        console.log("🔄 Processando usuário:", user);
         const subscription = user.subscribers?.[0];
         return {
           ...user,
@@ -434,17 +451,20 @@ const AdminUsers = () => {
         };
       });
 
+      console.log("✅ Usuários processados:", processedUsers);
       setAllUsers(processedUsers);
     } catch (e) {
       console.error("Erro ao carregar dados de usuários:", e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!roleLoading) {
+      fetchData();
+    }
+  }, [fetchData, roleLoading]);
 
   const usersByPlan = useMemo(() => {
     return allUsers.reduce((acc, user) => {
