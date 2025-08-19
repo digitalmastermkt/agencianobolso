@@ -142,39 +142,117 @@ export function PlansAdmin() {
         <TabsContent value="agents">
           <Card>
             <CardHeader>
-              <CardTitle>Vincular agentes por plano</CardTitle>
-              <CardDescription>Use uma chave simples para cada agente. Ex.: vendas, storytelling, viral.</CardDescription>
+              <CardTitle>Vincular Agentes IA aos Planos</CardTitle>
+              <CardDescription>Defina quais agentes IA cada plano pode acessar.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label>Plano</Label>
-                  <Input list="plans" value={newAgent.plan} onChange={(e) => setNewAgent((s) => ({ ...s, plan: e.currentTarget.value }))} />
-                  <datalist id="plans">
-                    {knownPlans.map((p) => (
-                      <option key={p} value={p} />
+            <CardContent className="space-y-6">
+              {/* Agentes Disponíveis */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card className="p-4">
+                  <h4 className="font-semibold text-primary">Agentes Disponíveis:</h4>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <div>• <strong>vendas</strong> - Agente de Vendas</div>
+                    <div>• <strong>storytelling</strong> - Agente de Storytelling</div>
+                    <div>• <strong>viral</strong> - Agente Viral</div>
+                    <div>• <strong>interacao</strong> - Agente de Interação</div>
+                    <div>• <strong>conexao</strong> - Agente de Conexão</div>
+                    <div>• <strong>banner</strong> - Agente de Banner</div>
+                  </div>
+                </Card>
+                
+                <Card className="p-4">
+                  <h4 className="font-semibold text-primary">Planos Disponíveis:</h4>
+                  <div className="mt-2 space-y-1 text-sm">
+                    {knownPlans.map((plan) => (
+                      <div key={plan}>• <strong>{plan}</strong></div>
                     ))}
-                  </datalist>
-                </div>
-                <div>
-                  <Label>Agent key</Label>
-                  <Input placeholder="ex.: vendas" value={newAgent.agent_key} onChange={(e) => setNewAgent((s) => ({ ...s, agent_key: e.currentTarget.value }))} />
-                </div>
-                <div className="flex items-end">
-                  <Button onClick={addAgent}>Adicionar</Button>
-                </div>
+                  </div>
+                </Card>
+
+                <Card className="p-4">
+                  <h4 className="font-semibold text-primary">Regra Atual:</h4>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    Usuários gratuitos: apenas "vendas"<br/>
+                    Planos pagos: conforme configurado abaixo
+                  </div>
+                </Card>
               </div>
 
-              <div className="space-y-2">
-                {agentRows.map((row) => (
-                  <div key={row.id} className="flex items-center justify-between p-3 border rounded-md">
-                    <div>
-                      <div className="font-medium">{row.agent_key}</div>
-                      <div className="text-sm text-muted-foreground">Plano: {row.plan}</div>
-                    </div>
-                    <Button variant="destructive" onClick={() => removeAgent(row.id)}>Remover</Button>
+              {/* Formulário de Adição */}
+              <Card className="p-4 bg-muted/50">
+                <h4 className="font-semibold mb-3">Vincular Novo Agente</h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div>
+                    <Label>Plano</Label>
+                    <select 
+                      className="w-full p-2 border rounded-md"
+                      value={newAgent.plan} 
+                      onChange={(e) => setNewAgent((s) => ({ ...s, plan: e.target.value }))}
+                    >
+                      {knownPlans.map((plan) => (
+                        <option key={plan} value={plan}>{plan}</option>
+                      ))}
+                    </select>
                   </div>
-                ))}
+                  <div>
+                    <Label>Agente</Label>
+                    <select 
+                      className="w-full p-2 border rounded-md"
+                      value={newAgent.agent_key} 
+                      onChange={(e) => setNewAgent((s) => ({ ...s, agent_key: e.target.value }))}
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="vendas">Vendas</option>
+                      <option value="storytelling">Storytelling</option>
+                      <option value="viral">Viral</option>
+                      <option value="interacao">Interação</option>
+                      <option value="conexao">Conexão</option>
+                      <option value="banner">Banner</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label>Descrição (opcional)</Label>
+                    <Input 
+                      placeholder="ex.: Agente de vendas"
+                      value={newAgent.label || ''} 
+                      onChange={(e) => setNewAgent((s) => ({ ...s, label: e.target.value }))} 
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={addAgent} disabled={!newAgent.agent_key}>
+                      Vincular
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Lista de Vínculos Atuais */}
+              <div>
+                <h4 className="font-semibold mb-3">Vínculos Configurados</h4>
+                {agentRows.length === 0 && (
+                  <Card className="p-4 text-center text-muted-foreground">
+                    Nenhum agente vinculado ainda. Configure os agentes para cada plano acima.
+                  </Card>
+                )}
+                <div className="space-y-2">
+                  {agentRows.map((row) => (
+                    <Card key={row.id} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-lg">
+                            {row.agent_key} → {row.plan}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {row.label || `Agente ${row.agent_key} disponível no plano ${row.plan}`}
+                          </div>
+                        </div>
+                        <Button variant="destructive" size="sm" onClick={() => removeAgent(row.id)}>
+                          Remover
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
