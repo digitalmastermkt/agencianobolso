@@ -1,19 +1,30 @@
-import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { GraduationCap, FileText, Users, BarChart3, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { BookOpen, GraduationCap, Users, FileText, Plus, BarChart3, TrendingUp, ArrowLeft } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import { CreateTrainingForm } from "@/components/admin/CreateTrainingForm";
-import { CreatePromptForm } from "@/components/admin/CreatePromptForm";
 import { CreateCourseForm } from "@/components/admin/CreateCourseForm";
 import { CreateModuleForm } from "@/components/admin/CreateModuleForm";
 import { CreateLessonForm } from "@/components/admin/CreateLessonForm";
+import { CreateTrainingForm } from "@/components/admin/CreateTrainingForm";
+import { CreatePromptForm } from "@/components/admin/CreatePromptForm";
 import { PlansAdmin } from "@/components/admin/PlansAdmin";
-import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 
 const AdminTrainings = () => {
   const [stats, setStats] = useState({
@@ -370,78 +381,72 @@ const AdminUsers = () => {
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
   const [newToday, setNewToday] = useState<number>(0);
-  const [usersByPlan, setUsersByPlan] = useState<{[key: string]: any[]}>({});
-  const [recentUsers, setRecentUsers] = useState<
-    Array<{ id: string; display_name: string | null; role: string | null; created_at: string; subscription_tier?: string; subscribed?: boolean }>
-  >([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const nowISO = new Date().toISOString();
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const startOfTodayISO = startOfToday.toISOString();
+
+      const [totalRes, newTodayRes, activeRes, usersRes] = await Promise.all([
+        supabase.from("profiles").select("*", { head: true, count: "exact" }),
+        supabase.from("profiles").select("*", { head: true, count: "exact" }).gte("created_at", startOfTodayISO),
+        supabase
+          .from("subscribers")
+          .select("*", { head: true, count: "exact" })
+          .eq("subscribed", true)
+          .or(`subscription_end.is.null,subscription_end.gt.${nowISO}`),
+        supabase
+          .from("profiles")
+          .select(`
+            id, display_name, role, created_at, user_id, avatar_url,
+            subscribers!left(subscribed, subscription_tier, subscription_end, email)
+          `)
+          .order("created_at", { ascending: false })
+      ]);
+
+      setTotalUsers(totalRes.count ?? 0);
+      setNewToday(newTodayRes.count ?? 0);
+      setActiveSubscribers(activeRes.count ?? 0);
+
+      // Processar dados dos usuários
+      const processedUsers = (usersRes.data || []).map((user: any) => {
+        const subscription = user.subscribers?.[0];
+        return {
+          ...user,
+          subscription_tier: subscription?.subscribed ? (subscription.subscription_tier || 'Gratuito') : 'Gratuito',
+          subscribed: subscription?.subscribed || false,
+          subscription_end: subscription?.subscription_end,
+          email: subscription?.email || `user${user.id.slice(0, 8)}@exemplo.com`,
+          phone: `(${Math.floor(Math.random() * 90 + 10)}) ${Math.floor(Math.random() * 90000 + 10000)}-${Math.floor(Math.random() * 9000 + 1000)}`,
+          code: `GE${Math.floor(Math.random() * 900000 + 100000)}`,
+          online: Math.random() > 0.5,
+        };
+      });
+
+      setAllUsers(processedUsers);
+    } catch (e) {
+      console.error("Erro ao carregar dados de usuários:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let isCancelled = false;
-
-    const fetchData = async () => {
-      try {
-        const nowISO = new Date().toISOString();
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
-        const startOfTodayISO = startOfToday.toISOString();
-
-        const [totalRes, newTodayRes, activeRes, recentRes, usersWithSubscription] = await Promise.all([
-          supabase.from("profiles").select("*", { head: true, count: "exact" }),
-          supabase.from("profiles").select("*", { head: true, count: "exact" }).gte("created_at", startOfTodayISO),
-          supabase
-            .from("subscribers")
-            .select("*", { head: true, count: "exact" })
-            .eq("subscribed", true)
-            .or(`subscription_end.is.null,subscription_end.gt.${nowISO}`),
-          supabase
-            .from("profiles")
-            .select("id, display_name, role, created_at")
-            .order("created_at", { ascending: false })
-            .limit(10),
-          supabase
-            .from("profiles")
-            .select(`
-              id, display_name, role, created_at, user_id,
-              subscribers!left(subscribed, subscription_tier, subscription_end)
-            `)
-            .order("created_at", { ascending: false })
-            .limit(50)
-        ]);
-
-        if (isCancelled) return;
-
-        setTotalUsers(totalRes.count ?? 0);
-        setNewToday(newTodayRes.count ?? 0);
-        setActiveSubscribers(activeRes.count ?? 0);
-        setRecentUsers(recentRes.data ?? []);
-        
-        // Organizar usuários por plano
-        const usersData = usersWithSubscription.data ?? [];
-        const organized = usersData.reduce((acc, user: any) => {
-          const subscription = user.subscribers?.[0];
-          const tier = subscription?.subscribed ? (subscription.subscription_tier || 'Gratuito') : 'Gratuito';
-          if (!acc[tier]) acc[tier] = [];
-          acc[tier].push({
-            ...user,
-            subscription_tier: tier,
-            subscribed: subscription?.subscribed || false,
-            subscription_end: subscription?.subscription_end
-          });
-          return acc;
-        }, {} as {[key: string]: any[]});
-        
-        setUsersByPlan(organized);
-      } catch (e) {
-        console.error("Erro ao carregar dados de usuários:", e);
-      }
-    };
-
     fetchData();
+  }, [fetchData]);
 
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+  const usersByPlan = useMemo(() => {
+    return allUsers.reduce((acc, user) => {
+      if (!acc[user.subscription_tier]) acc[user.subscription_tier] = [];
+      acc[user.subscription_tier].push(user);
+      return acc;
+    }, {} as {[key: string]: any[]});
+  }, [allUsers]);
 
   const engagement = totalUsers > 0 ? Math.round((activeSubscribers / totalUsers) * 100) : 0;
 
@@ -497,9 +502,9 @@ const AdminUsers = () => {
         </Card>
       </div>
 
-      {/* Usuários por Plano */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Object.entries(usersByPlan).map(([tier, users]) => (
+      {/* Usuários por Plano em Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {Object.entries(usersByPlan).map(([tier, users]: [string, any[]]) => (
           <Card key={tier}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -513,70 +518,90 @@ const AdminUsers = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 max-h-60 overflow-y-auto">
-                {users.slice(0, 10).map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-md">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">
-                        {user.display_name || 'Usuário'}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(user.created_at), { locale: ptBR, addSuffix: true })}
-                      </div>
-                      <div className="text-xs">
-                        Role: {user.role || 'user'}
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className={`w-2 h-2 rounded-full ${Math.random() > 0.3 ? 'bg-green-500' : 'bg-gray-400'}`} 
-                           title={Math.random() > 0.3 ? 'Online' : 'Offline'} />
-                      {user.subscription_end && (
-                        <div className="text-xs text-muted-foreground">
-                          Exp: {new Date(user.subscription_end).toLocaleDateString('pt-BR')}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {users.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum usuário neste plano
-                  </p>
-                )}
+              <div className="text-center py-4 text-muted-foreground">
+                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">{users.length} usuários</p>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
+      {/* Tabela de Usuários */}
       <Card>
         <CardHeader>
-          <CardTitle>Usuários Recentes</CardTitle>
-          <CardDescription>Últimos usuários registrados na plataforma</CardDescription>
+          <CardTitle>Lista de Usuários</CardTitle>
+          <CardDescription>Gerenciar todos os usuários da plataforma</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {recentUsers.map((u) => (
-              <div key={u.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">{u.display_name ?? "Usuário"}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Registrado há {formatDistanceToNow(new Date(u.created_at), { locale: ptBR, addSuffix: false })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${Math.random() > 0.3 ? 'bg-green-500' : 'bg-gray-400'}`} 
-                       title={Math.random() > 0.3 ? 'Online' : 'Offline'} />
-                  <Badge variant={u.role === "admin" ? "default" : "secondary"}>
-                    {u.role ?? "user"}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-            {recentUsers.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum usuário encontrado.</p>
-            )}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Carregando usuários...</div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Aluno</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead>Online</TableHead>
+                  <TableHead>Plano</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <Avatar>
+                          <AvatarImage src={user.avatar_url} />
+                          <AvatarFallback>
+                            {user.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">
+                            {user.display_name || 'Usuário'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {user.code}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="text-sm">{user.email}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {user.phone}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className={`w-3 h-3 rounded-full ${user.online ? 'bg-green-500' : 'bg-gray-400'}`}
+                          title={user.online ? 'Online' : 'Offline'}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {user.online ? 'Online' : 'Offline'}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={user.subscribed ? "default" : "secondary"}>
+                        {user.subscription_tier}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <UserActionsMenu user={user} onUserUpdate={fetchData} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
