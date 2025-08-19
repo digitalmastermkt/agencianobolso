@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, Send, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,12 +44,32 @@ export default function Comunidade() {
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+    loadUserProfile();
+  }, [user]);
+
+  const loadUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data) {
+        setUserProfile(data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar perfil:', error);
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -220,12 +240,16 @@ export default function Comunidade() {
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarFallback>
-                      {getUserInitials(user.email || "")}
-                    </AvatarFallback>
+                    {userProfile?.avatar_url ? (
+                      <AvatarImage src={userProfile.avatar_url} alt="Avatar" />
+                    ) : (
+                      <AvatarFallback>
+                        {getUserInitials(userProfile?.display_name || user.email || "")}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <div>
-                    <p className="font-medium">{user.email}</p>
+                    <p className="font-medium">{userProfile?.display_name || user.email}</p>
                     <p className="text-sm text-muted-foreground">O que você está pensando?</p>
                   </div>
                 </div>
@@ -269,9 +293,13 @@ export default function Comunidade() {
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        <AvatarFallback>
-                          {getUserInitials(post.profiles?.display_name || "")}
-                        </AvatarFallback>
+                        {post.profiles?.avatar_url ? (
+                          <AvatarImage src={post.profiles.avatar_url} alt="Avatar" />
+                        ) : (
+                          <AvatarFallback>
+                            {getUserInitials(post.profiles?.display_name || "")}
+                          </AvatarFallback>
+                        )}
                       </Avatar>
                       <div>
                         <p className="font-medium">{post.profiles?.display_name || "Usuário"}</p>
@@ -332,9 +360,13 @@ export default function Comunidade() {
                         {comments.map((comment) => (
                           <div key={comment.id} className="flex gap-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs">
-                                {getUserInitials(comment.profiles?.display_name || "")}
-                              </AvatarFallback>
+                              {comment.profiles?.avatar_url ? (
+                                <AvatarImage src={comment.profiles.avatar_url} alt="Avatar" />
+                              ) : (
+                                <AvatarFallback className="text-xs">
+                                  {getUserInitials(comment.profiles?.display_name || "")}
+                                </AvatarFallback>
+                              )}
                             </Avatar>
                             <div className="flex-1">
                               <div className="bg-muted rounded-lg p-3">
@@ -354,9 +386,13 @@ export default function Comunidade() {
                         {user && (
                           <div className="flex gap-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs">
-                                {getUserInitials(user.email || "")}
-                              </AvatarFallback>
+                              {userProfile?.avatar_url ? (
+                                <AvatarImage src={userProfile.avatar_url} alt="Avatar" />
+                              ) : (
+                                <AvatarFallback className="text-xs">
+                                  {getUserInitials(userProfile?.display_name || user.email || "")}
+                                </AvatarFallback>
+                              )}
                             </Avatar>
                             <div className="flex-1 flex gap-2">
                               <Textarea

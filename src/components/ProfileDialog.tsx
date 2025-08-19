@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,12 +20,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, User } from "lucide-react";
+import { Eye, EyeOff, User, Camera, Upload } from "lucide-react";
 
 const profileSchema = z.object({
   display_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
@@ -53,7 +53,9 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -93,6 +95,92 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     }
   };
 
+  const uploadAvatar = async (file: File) => {
+    if (!user) return null;
+    
+    setUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar.${fileExt}`;
+      
+      // Delete existing avatar first
+      await supabase.storage.from('avatars').remove([fileName]);
+      
+      // Upload new avatar
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (error) throw error;
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      throw error;
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Arquivo inválido",
+        description: "Por favor, selecione uma imagem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "A imagem deve ter no máximo 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const avatarUrl = await uploadAvatar(file);
+      if (avatarUrl && user) {
+        // Update profile with new avatar URL
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            user_id: user.id,
+            avatar_url: avatarUrl,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Avatar atualizado",
+          description: "Sua foto foi atualizada com sucesso.",
+        });
+
+        loadProfile();
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar avatar",
+        description: "Não foi possível salvar a imagem.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const onProfileSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!user) return;
 
@@ -105,6 +193,8 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
           display_name: values.display_name,
           bio: values.bio,
           updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;
@@ -114,7 +204,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
         description: "Suas informações foram salvas com sucesso.",
       });
 
-      loadProfile();
+      await loadProfile();
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       toast({
@@ -166,9 +256,11 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   };
 
   // Load profile when dialog opens
-  if (open && user && !profile) {
-    loadProfile();
-  }
+  useEffect(() => {
+    if (open && user) {
+      loadProfile();
+    }
+  }, [open, user]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -181,11 +273,38 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
         </DialogHeader>
 
         <div className="flex items-center gap-4 mb-6">
-          <Avatar className="w-16 h-16">
-            <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-              {user?.email ? getUserInitials(user.email) : "U"}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative group">
+            <Avatar className="w-16 h-16">
+              {profile?.avatar_url ? (
+                <AvatarImage src={profile.avatar_url} alt="Avatar" />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                  {user?.email ? getUserInitials(user.email) : "U"}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="absolute -bottom-2 -right-2 rounded-full p-2 h-8 w-8"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingAvatar}
+            >
+              {uploadingAvatar ? (
+                <Upload className="h-3 w-3 animate-spin" />
+              ) : (
+                <Camera className="h-3 w-3" />
+              )}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
           <div>
             <h3 className="font-semibold">{profile?.display_name || "Usuário"}</h3>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
