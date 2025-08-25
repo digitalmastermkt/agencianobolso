@@ -207,7 +207,7 @@ export default function CapturaEvento() {
                 <div className="space-y-2">
                   <Input
                     type="tel"
-                    placeholder="📱 Seu WhatsApp (com DDD)"
+                    placeholder="📱 Seu WhatsApp (xx)xxxxxxxxx"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
                     className="w-full h-12 text-lg border-2 border-primary/20 focus:border-primary"
