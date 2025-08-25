@@ -17,7 +17,7 @@ import {
   Target,
   Sparkles
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const agents = [
     {
@@ -171,6 +172,7 @@ export default function Dashboard() {
   }
 
   const mostUsedAgent = getMostUsedAgent();
+  const highlightSubscription = searchParams.get('tab') === 'subscription';
 
   return (
     <DashboardLayout>
@@ -186,7 +188,9 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <SubscriptionPanel />
+          <div className={highlightSubscription ? "ring-2 ring-primary rounded-lg p-1 mb-4" : ""}>
+            <SubscriptionPanel />
+          </div>
 
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

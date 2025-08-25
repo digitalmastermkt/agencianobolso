@@ -71,7 +71,7 @@ export function PlanGuard({ requiredPlan, agentKey, courseId, children }: PlanGu
               Este conteúdo está disponível apenas para o seu plano atual. Atualize ou gerencie sua assinatura.
             </p>
             <div className="flex gap-2 justify-center">
-              <Button variant="secondary" onClick={() => navigate("/dashboard")}>Ver planos</Button>
+              <Button variant="secondary" onClick={() => navigate("/dashboard?tab=subscription")}>Ver planos</Button>
               <Button variant="ghost" onClick={handleRefresh}>Recarregar créditos</Button>
             </div>
           </CardContent>
