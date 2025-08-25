@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Crown, TrendingUp, Star, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 type PlanTierLocal = "Essencial" | "Premium" | "Elite";
@@ -26,6 +26,7 @@ export function SubscriptionPanel() {
   const { subscribed, subscription_tier, subscription_end, loading, refresh } = useSubscription();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
 
@@ -94,6 +95,9 @@ export function SubscriptionPanel() {
     }
   };
 
+  // Always show plans if the tab parameter is 'subscription'
+  const showPlans = !subscribed || searchParams.get('tab') === 'subscription';
+
   const handleStartFree = () => {
     if (!user) navigate("/auth");
     else navigate("/dashboard");
@@ -108,8 +112,8 @@ export function SubscriptionPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {subscribed ? (
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {subscribed && !showPlans && (
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
               <p className="text-sm text-muted-foreground">Status da assinatura</p>
               <p className="text-foreground font-medium">
@@ -121,11 +125,13 @@ export function SubscriptionPanel() {
                 {loading ? "Atualizando..." : "Atualizar Status"}
               </Button>
               <Button variant="gradient" onClick={handleManage} className="whitespace-nowrap">
-                Gerenciar Assinatura
+                Créditos e Assinatura
               </Button>
             </div>
           </div>
-        ) : (
+        )}
+        
+        {showPlans && (
           <div>
             <div className="flex items-center justify-between gap-4 mb-4">
               <p className="text-sm text-muted-foreground">Escolha o ciclo de cobrança</p>
