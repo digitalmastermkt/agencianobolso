@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Users, Calendar, MapPin, Video, Shield, Sparkles, ArrowRight, Phone, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CapturaEvento() {
   const [nome, setNome] = useState("");
@@ -13,6 +14,25 @@ export default function CapturaEvento() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const validateBrazilianPhone = (phone: string) => {
+    // Remove all non-numeric characters
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Check if it has 10 or 11 digits (with area code)
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+      return false;
+    }
+    
+    // Check if it starts with a valid area code (11-99)
+    const areaCode = cleanPhone.substring(0, 2);
+    const areaCodeNum = parseInt(areaCode);
+    if (areaCodeNum < 11 || areaCodeNum > 99) {
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,16 +46,70 @@ export default function CapturaEvento() {
       return;
     }
 
+    if (!validateBrazilianPhone(whatsapp)) {
+      toast({
+        title: "WhatsApp inválido",
+        description: "Por favor, insira um número de WhatsApp válido com DDD brasileiro (ex: 11999999999).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simular envio do formulário
-    setTimeout(() => {
+    try {
+      // Save to Supabase
+      const { data, error } = await supabase
+        .from('event_registrations')
+        .insert([
+          {
+            nome,
+            email,
+            whatsapp: whatsapp.replace(/\D/g, ''), // Store only numbers
+          }
+        ])
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      // Send to webhook
+      try {
+        await fetch('https://n8n-n8n.3e5171.easypanel.host/webhook-test/agencia-no-bolso', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nome,
+            email,
+            whatsapp: whatsapp.replace(/\D/g, ''),
+            timestamp: new Date().toISOString(),
+            source: 'evento-empresario-4-0'
+          }),
+        });
+      } catch (webhookError) {
+        console.error('Error sending to webhook:', webhookError);
+        // Don't fail the registration if webhook fails
+      }
+
       toast({
         title: "Inscrição confirmada!",
         description: "Redirecionando para próximos passos...",
       });
+      
       navigate("/obrigado");
-    }, 1500);
+    } catch (error) {
+      console.error('Error saving registration:', error);
+      toast({
+        title: "Erro ao se inscrever",
+        description: "Ocorreu um erro ao processar sua inscrição. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const beneficios = [
