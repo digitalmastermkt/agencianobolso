@@ -127,10 +127,26 @@ export function PlansAdmin() {
                     <Label>Descrição</Label>
                     <Input
                       defaultValue={ps.description ?? ""}
+                      onChange={(e) => {
+                        const updatedSettings = planSettings.map(setting => 
+                          setting.id === ps.id 
+                            ? { ...setting, description: e.target.value }
+                            : setting
+                        );
+                        setPlanSettings(updatedSettings);
+                      }}
                       onBlur={(e) => savePlan(ps.id, { description: e.currentTarget.value })}
                     />
                   </div>
-                  <Button onClick={() => savePlan(ps.id, { monthly_credits: ps.monthly_credits, description: ps.description ?? "" })}>
+                  <Button onClick={() => {
+                    const currentPlan = planSettings.find(p => p.id === ps.id);
+                    if (currentPlan) {
+                      savePlan(ps.id, { 
+                        monthly_credits: currentPlan.monthly_credits, 
+                        description: currentPlan.description ?? "" 
+                      });
+                    }
+                  }}>
                     Salvar
                   </Button>
                 </CardContent>

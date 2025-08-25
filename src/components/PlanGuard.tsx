@@ -72,8 +72,7 @@ export function PlanGuard({ requiredPlan, agentKey, courseId, children }: PlanGu
             </p>
             <div className="flex gap-2 justify-center">
               <Button variant="secondary" onClick={() => navigate("/dashboard")}>Ver planos</Button>
-              <Button onClick={handlePortal}>Gerenciar assinatura</Button>
-              <Button variant="ghost" onClick={handleRefresh}>Recarregar</Button>
+              <Button variant="ghost" onClick={handleRefresh}>Recarregar créditos</Button>
             </div>
           </CardContent>
         </Card>

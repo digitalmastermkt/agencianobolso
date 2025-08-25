@@ -118,7 +118,7 @@ export function SubscriptionPanel() {
             </div>
             <div className="flex gap-3 flex-nowrap items-center">
               <Button variant="outline" onClick={refresh} disabled={loading} className="whitespace-nowrap">
-                Atualizar Status
+                {loading ? "Atualizando..." : "Atualizar Status"}
               </Button>
               <Button variant="gradient" onClick={handleManage} className="whitespace-nowrap">
                 Gerenciar Assinatura
