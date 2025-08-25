@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EditCourseForm } from "./EditCourseForm";
+import { CoursePreviewDialog } from "./CoursePreviewDialog";
 
 interface Course {
   id: string;
@@ -24,6 +25,8 @@ export function CoursesManager() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [previewCourse, setPreviewCourse] = useState<Course | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchCourses = async () => {
@@ -79,8 +82,8 @@ export function CoursesManager() {
   };
 
   const handlePreview = (course: Course) => {
-    // Navegar para página de preview do curso
-    window.open(`/treinamentos?preview=${course.id}`, "_blank");
+    setPreviewCourse(course);
+    setPreviewOpen(true);
   };
 
   if (loading) {
@@ -196,6 +199,12 @@ export function CoursesManager() {
             </TableBody>
           </Table>
         )}
+
+        <CoursePreviewDialog
+          course={previewCourse}
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+        />
       </CardContent>
     </Card>
   );
