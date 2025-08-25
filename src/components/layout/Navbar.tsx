@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, BookOpen, Users, FileText, Menu, X, LogIn, User, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 const navigation = [{
   name: "Agentes",
   href: "/agentes",
@@ -57,6 +58,7 @@ export function Navbar() {
 
           {/* Auth Section */}
           <div className="hidden md:flex items-center space-x-4">
+            <ThemeToggle />
             {user ? <div className="flex items-center space-x-3">
                 <Button variant="ghost" size="sm">
                   <User className="w-4 h-4 mr-2" />
@@ -74,7 +76,8 @@ export function Navbar() {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center space-x-2">
+            <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
