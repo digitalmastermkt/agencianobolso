@@ -21,6 +21,7 @@ import Comunidade from "./pages/Comunidade";
 import Admin from "./pages/Admin";
 import Vendas from "./pages/Vendas";
 import CapturaEvento from "./pages/CapturaEvento";
+import Obrigado from "./pages/Obrigado";
 import NotFound from "./pages/NotFound";
 import { PlanGuard } from "@/components/PlanGuard";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/evento" element={<CapturaEvento />} />
+          <Route path="/obrigado" element={<Obrigado />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/agentes" element={
             <ProtectedRoute>
