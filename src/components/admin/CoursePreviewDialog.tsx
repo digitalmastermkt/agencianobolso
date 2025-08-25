@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronRight, Play, Clock, BookOpen, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerDialog } from "./VideoPlayerDialog";
+import { CourseViewerDialog } from "./CourseViewerDialog";
 
 interface Lesson {
   id: string;
@@ -17,6 +18,7 @@ interface Lesson {
   duration_minutes: number;
   order_index: number;
   is_published: boolean;
+  module_id: string;
 }
 
 interface Module {
@@ -48,6 +50,7 @@ export function CoursePreviewDialog({ course, open, onOpenChange }: CoursePrevie
   const [loading, setLoading] = useState(false);
   const [openModules, setOpenModules] = useState<Set<string>>(new Set());
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
+  const [courseViewerOpen, setCourseViewerOpen] = useState(false);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
 
   useEffect(() => {
@@ -72,7 +75,8 @@ export function CoursePreviewDialog({ course, open, onOpenChange }: CoursePrevie
             video_url,
             duration_minutes,
             order_index,
-            is_published
+            is_published,
+            module_id
           )
         `)
         .eq("course_id", course.id)
@@ -156,6 +160,18 @@ export function CoursePreviewDialog({ course, open, onOpenChange }: CoursePrevie
                 </Badge>
               </div>
               <p className="text-muted-foreground mb-4">{course.description}</p>
+              
+              {/* Action Button */}
+              <div className="mb-4">
+                <Button
+                  onClick={() => setCourseViewerOpen(true)}
+                  disabled={getTotalLessons() === 0}
+                  className="flex items-center gap-2"
+                >
+                  <Play className="h-4 w-4" />
+                  Assistir Curso
+                </Button>
+              </div>
               
               {/* Stats do Curso */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -305,6 +321,20 @@ export function CoursePreviewDialog({ course, open, onOpenChange }: CoursePrevie
             description={currentLesson.description}
             isPublished={currentLesson.is_published}
             duration={currentLesson.duration_minutes}
+          />
+        )}
+
+        {/* Course Viewer Dialog (Netflix-style) */}
+        {modules.length > 0 && (
+          <CourseViewerDialog
+            open={courseViewerOpen}
+            onOpenChange={setCourseViewerOpen}
+            course={{
+              id: course.id,
+              title: course.title,
+              description: course.description || "",
+              modules: modules
+            }}
           />
         )}
       </DialogContent>
