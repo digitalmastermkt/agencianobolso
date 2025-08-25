@@ -20,13 +20,19 @@ export function useSubscription() {
   const refresh = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("check-subscription");
-    if (error) {
-      console.error("Erro ao verificar assinatura:", error);
-    } else if (data) {
-      setInfo(data as SubscriptionInfo);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) {
+        console.error("Erro ao verificar assinatura:", error);
+        throw error;
+      } else if (data) {
+        setInfo(data as SubscriptionInfo);
+      }
+    } catch (error) {
+      console.error("Erro na função refresh:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [user]);
 
   useEffect(() => {

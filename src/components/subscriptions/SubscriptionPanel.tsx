@@ -85,13 +85,21 @@ export function SubscriptionPanel() {
   const handleManage = async () => {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
-      if (error) throw error;
+      if (error) {
+        console.error("Erro customer-portal:", error);
+        throw error;
+      }
       if (data?.url) {
         window.open(data.url as string, "_blank");
+        toast({ title: "Portal aberto", description: "Gerencie seus créditos e assinatura na nova aba." });
       }
     } catch (e: any) {
-      console.error(e);
-      toast({ title: "Erro ao abrir portal", description: e?.message || "Tente novamente." });
+      console.error("Erro completo:", e);
+      toast({ 
+        title: "Erro ao abrir portal", 
+        description: e?.message || "Tente novamente mais tarde.",
+        variant: "destructive"
+      });
     }
   };
 
