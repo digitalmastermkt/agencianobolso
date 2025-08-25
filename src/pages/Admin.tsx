@@ -15,6 +15,9 @@ import { CreateLessonForm } from "@/components/admin/CreateLessonForm";
 import { CreateTrainingForm } from "@/components/admin/CreateTrainingForm";
 import { CreatePromptForm } from "@/components/admin/CreatePromptForm";
 import { PlansAdmin } from "@/components/admin/PlansAdmin";
+import { CoursesManager } from "@/components/admin/CoursesManager";
+import { ModulesManager } from "@/components/admin/ModulesManager";
+import { LessonsManager } from "@/components/admin/LessonsManager";
 import {
   Table,
   TableBody,
@@ -144,6 +147,7 @@ const AdminTrainings = () => {
               </Card>
             </div>
             <CreateCourseForm />
+            <CoursesManager />
           </div>
         </TabsContent>
 
@@ -181,6 +185,7 @@ const AdminTrainings = () => {
               </Card>
             </div>
             <CreateModuleForm />
+            <ModulesManager />
           </div>
         </TabsContent>
 
@@ -218,6 +223,7 @@ const AdminTrainings = () => {
               </Card>
             </div>
             <CreateLessonForm />
+            <LessonsManager />
           </div>
         </TabsContent>
 
