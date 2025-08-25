@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EditLessonForm } from "./EditLessonForm";
+import { VideoPlayerDialog } from "./VideoPlayerDialog";
 
 interface Lesson {
   id: string;
@@ -27,6 +28,8 @@ export function LessonsManager() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const { toast } = useToast();
 
   const fetchLessons = async () => {
@@ -89,9 +92,8 @@ export function LessonsManager() {
   };
 
   const handleWatchVideo = (lesson: Lesson) => {
-    if (lesson.video_url) {
-      window.open(lesson.video_url, "_blank");
-    }
+    setCurrentLesson(lesson);
+    setVideoPlayerOpen(true);
   };
 
   if (loading) {
@@ -227,6 +229,19 @@ export function LessonsManager() {
               ))}
             </TableBody>
           </Table>
+        )}
+
+        {/* Video Player Dialog */}
+        {currentLesson && (
+          <VideoPlayerDialog
+            open={videoPlayerOpen}
+            onOpenChange={setVideoPlayerOpen}
+            videoUrl={currentLesson.video_url}
+            title={currentLesson.title}
+            description={currentLesson.description}
+            isPublished={currentLesson.is_published}
+            duration={currentLesson.duration_minutes}
+          />
         )}
       </CardContent>
     </Card>

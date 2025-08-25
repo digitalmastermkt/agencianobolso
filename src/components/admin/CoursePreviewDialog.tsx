@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight, Play, Clock, BookOpen, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VideoPlayerDialog } from "./VideoPlayerDialog";
 
 interface Lesson {
   id: string;
@@ -46,6 +47,8 @@ export function CoursePreviewDialog({ course, open, onOpenChange }: CoursePrevie
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(false);
   const [openModules, setOpenModules] = useState<Set<string>>(new Set());
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
 
   useEffect(() => {
     if (course && open) {
@@ -98,6 +101,11 @@ export function CoursePreviewDialog({ course, open, onOpenChange }: CoursePrevie
       newOpenModules.add(moduleId);
     }
     setOpenModules(newOpenModules);
+  };
+
+  const handlePlayVideo = (lesson: Lesson) => {
+    setCurrentLesson(lesson);
+    setVideoPlayerOpen(true);
   };
 
   const getTotalDuration = () => {
@@ -266,7 +274,7 @@ export function CoursePreviewDialog({ course, open, onOpenChange }: CoursePrevie
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => window.open(lesson.video_url, "_blank")}
+                                        onClick={() => handlePlayVideo(lesson)}
                                         className="h-6 px-2"
                                       >
                                         <Play className="h-3 w-3" />
@@ -286,6 +294,19 @@ export function CoursePreviewDialog({ course, open, onOpenChange }: CoursePrevie
             )}
           </div>
         </div>
+
+        {/* Video Player Dialog */}
+        {currentLesson && (
+          <VideoPlayerDialog
+            open={videoPlayerOpen}
+            onOpenChange={setVideoPlayerOpen}
+            videoUrl={currentLesson.video_url}
+            title={currentLesson.title}
+            description={currentLesson.description}
+            isPublished={currentLesson.is_published}
+            duration={currentLesson.duration_minutes}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
