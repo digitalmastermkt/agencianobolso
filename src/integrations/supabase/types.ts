@@ -201,6 +201,39 @@ export type Database = {
         }
         Relationships: []
       }
+      data_access_audit: {
+        Row: {
+          accessed_at: string
+          action: string
+          id: string
+          ip_address: unknown | null
+          record_id: string
+          table_name: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          action: string
+          id?: string
+          ip_address?: unknown | null
+          record_id: string
+          table_name: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          action?: string
+          id?: string
+          ip_address?: unknown | null
+          record_id?: string
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       event_registrations: {
         Row: {
           created_at: string
@@ -665,12 +698,61 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      event_registrations_secure: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string | null
+          nome: string | null
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: never
+          id?: string | null
+          nome?: never
+          updated_at?: string | null
+          whatsapp?: never
+        }
+        Update: {
+          created_at?: string | null
+          email?: never
+          id?: string | null
+          nome?: never
+          updated_at?: string | null
+          whatsapp?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      decrypt_pii: {
+        Args: { encrypted_data: string }
+        Returns: string
+      }
+      encrypt_pii: {
+        Args: { data: string }
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_event_registration_details: {
+        Args: { registration_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          updated_at: string
+          whatsapp: string
+        }[]
+      }
+      log_data_access: {
+        Args: { p_action: string; p_record_id: string; p_table_name: string }
+        Returns: undefined
       }
     }
     Enums: {
