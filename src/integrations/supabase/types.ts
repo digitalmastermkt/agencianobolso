@@ -698,33 +698,7 @@ export type Database = {
       }
     }
     Views: {
-      event_registrations_secure: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          id: string | null
-          nome: string | null
-          updated_at: string | null
-          whatsapp: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: never
-          id?: string | null
-          nome?: never
-          updated_at?: string | null
-          whatsapp?: never
-        }
-        Update: {
-          created_at?: string | null
-          email?: never
-          id?: string | null
-          nome?: never
-          updated_at?: string | null
-          whatsapp?: never
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       decrypt_pii: {
@@ -741,6 +715,17 @@ export type Database = {
       }
       get_event_registration_details: {
         Args: { registration_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          updated_at: string
+          whatsapp: string
+        }[]
+      }
+      get_event_registrations_masked: {
+        Args: Record<PropertyKey, never>
         Returns: {
           created_at: string
           email: string
