@@ -22,7 +22,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const { sanitizeInput, logSecurityEvent, validateInputSafety } = useFormSecurity({
+  const { sanitizeInput, logSecurityEvent, validateInputSafety, logAuthAttempt, checkAuthSecurity } = useFormSecurity({
     formName: 'authentication',
     validateInputSafety: true
   });
@@ -77,6 +77,10 @@ export default function Auth() {
       });
       return;
     }
+
+    // Check auth security (rate limiting and suspicious activity)
+    const authSecurityPassed = await checkAuthSecurity(sanitizedEmail);
+    if (!authSecurityPassed) return;
     
     setLoading(true);
 
@@ -86,8 +90,14 @@ export default function Auth() {
         password: sanitizedPassword
       });
 
-      if (error) throw error;
+      if (error) {
+        // Log failed login attempt
+        await logAuthAttempt(sanitizedEmail, false, error.message);
+        throw error;
+      }
 
+      // Log successful login attempt
+      await logAuthAttempt(sanitizedEmail, true);
       await logSecurityEvent('login_success', {
         email: sanitizedEmail
       });
@@ -153,6 +163,10 @@ export default function Auth() {
       return;
     }
 
+    // Check auth security (rate limiting and suspicious activity)
+    const authSecurityPassed = await checkAuthSecurity(sanitizedEmail);
+    if (!authSecurityPassed) return;
+
     setLoading(true);
 
     try {
@@ -164,8 +178,14 @@ export default function Auth() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Log failed signup attempt
+        await logAuthAttempt(sanitizedEmail, false, error.message);
+        throw error;
+      }
 
+      // Log successful signup attempt
+      await logAuthAttempt(sanitizedEmail, true);
       await logSecurityEvent('signup_success', {
         email: sanitizedEmail
       });

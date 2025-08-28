@@ -123,6 +123,85 @@ export function useFormSecurity(options: FormSecurityOptions) {
     return true;
   }, [checkHoneypot, validateFormData, checkRateLimit]);
 
+  // Enhanced authentication logging
+  const logAuthAttempt = useCallback(async (
+    email: string,
+    success: boolean,
+    failureReason?: string
+  ) => {
+    try {
+      // Get IP address (simplified - in production this would come from server)
+      const ipAddress = '127.0.0.1';
+      const userAgent = navigator.userAgent;
+      
+      await supabase.rpc('log_auth_attempt', {
+        p_ip_address: ipAddress,
+        p_user_agent: userAgent,
+        p_email: email,
+        p_success: success,
+        p_failure_reason: failureReason
+      });
+    } catch (error) {
+      console.error('Failed to log auth attempt:', error);
+    }
+  }, []);
+
+  // Check for suspicious activity and rate limits
+  const checkAuthSecurity = useCallback(async (email?: string): Promise<boolean> => {
+    try {
+      // Get IP address (simplified - in production this would come from server)
+      const ipAddress = '127.0.0.1';
+      
+      // Check rate limiting
+      const { data: rateLimitOk, error: rateLimitError } = await supabase.rpc('check_auth_rate_limit', {
+        p_ip_address: ipAddress,
+        p_email: email
+      });
+      
+      if (rateLimitError) {
+        console.error('Rate limit check failed:', rateLimitError);
+        return true; // Allow if check fails
+      }
+      
+      if (!rateLimitOk) {
+        toast({
+          title: "Muitas tentativas",
+          description: "Muitas tentativas de login. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      // Check for suspicious patterns
+      const { data: suspiciousActivity, error: suspiciousError } = await supabase.rpc('detect_suspicious_auth_activity', {
+        p_ip_address: ipAddress
+      });
+      
+      if (suspiciousError) {
+        console.error('Suspicious activity check failed:', suspiciousError);
+      }
+      
+      if (suspiciousActivity) {
+        // Log security event for suspicious activity
+        await supabase.rpc('log_auth_event', {
+          event_type: 'suspicious_activity_detected',
+          details: JSON.stringify({ ip_address: ipAddress, email })
+        });
+        
+        toast({
+          title: "Atividade suspeita detectada",
+          description: "Detectamos atividade suspeita. Sua conta pode estar sendo protegida.",
+          variant: "destructive",
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Auth security check error:', error);
+      return true; // Allow if check fails
+    }
+  }, [toast]);
+
   // Log security event
   const logSecurityEvent = useCallback(async (eventType: string, details?: any) => {
     try {
@@ -140,6 +219,8 @@ export function useFormSecurity(options: FormSecurityOptions) {
     sanitizeInput,
     validateInputSafety,
     logSecurityEvent,
+    logAuthAttempt,
+    checkAuthSecurity,
     isChecking,
     honeypotValue,
     setHoneypotValue,

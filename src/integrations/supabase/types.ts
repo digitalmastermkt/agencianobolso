@@ -49,6 +49,36 @@ export type Database = {
           },
         ]
       }
+      auth_attempts: {
+        Row: {
+          created_at: string
+          email: string | null
+          failure_reason: string | null
+          id: string
+          ip_address: unknown
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          failure_reason?: string | null
+          id?: string
+          ip_address: unknown
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          failure_reason?: string | null
+          id?: string
+          ip_address?: unknown
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       community_comments: {
         Row: {
           content: string
@@ -797,6 +827,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_auth_rate_limit: {
+        Args: {
+          p_email?: string
+          p_ip_address: unknown
+          p_max_per_hour?: number
+          p_max_per_minute?: number
+        }
+        Returns: boolean
+      }
       check_event_registration_rate_limit: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -808,6 +847,14 @@ export type Database = {
       decrypt_pii: {
         Args: { encrypted_data: string }
         Returns: string
+      }
+      detect_suspicious_auth_activity: {
+        Args: {
+          p_ip_address: unknown
+          p_max_failures?: number
+          p_time_window_minutes?: number
+        }
+        Returns: boolean
       }
       encrypt_pii: {
         Args: { data: string }
@@ -838,6 +885,26 @@ export type Database = {
           updated_at: string
           whatsapp: string
         }[]
+      }
+      get_security_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          failed_attempts: number
+          successful_attempts: number
+          suspicious_ips: number
+          total_auth_attempts: number
+          unique_ips: number
+        }[]
+      }
+      log_auth_attempt: {
+        Args: {
+          p_email?: string
+          p_failure_reason?: string
+          p_ip_address: unknown
+          p_success?: boolean
+          p_user_agent?: string
+        }
+        Returns: undefined
       }
       log_auth_event: {
         Args: { details?: Json; event_type: string }
