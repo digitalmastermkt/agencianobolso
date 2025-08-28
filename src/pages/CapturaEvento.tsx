@@ -6,6 +6,7 @@ import { CheckCircle, Users, Calendar, MapPin, Video, Shield, Sparkles, ArrowRig
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useFormSecurity } from "@/hooks/useFormSecurity";
 
 export default function CapturaEvento() {
   const [nome, setNome] = useState("");
@@ -14,6 +15,19 @@ export default function CapturaEvento() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  const { 
+    performSecurityChecks, 
+    sanitizeInput, 
+    logSecurityEvent,
+    honeypotValue, 
+    setHoneypotValue 
+  } = useFormSecurity({
+    formName: 'event_registration',
+    maxSubmissionsPerHour: 3,
+    enableHoneypot: true,
+    validateInputSafety: true
+  });
 
   const validateBrazilianPhone = (phone: string) => {
     // Remove all non-numeric characters
@@ -37,7 +51,12 @@ export default function CapturaEvento() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!nome || !email || !whatsapp) {
+    // Sanitize inputs
+    const sanitizedNome = sanitizeInput(nome);
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedWhatsapp = sanitizeInput(whatsapp);
+    
+    if (!sanitizedNome || !sanitizedEmail || !sanitizedWhatsapp) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos para se inscrever.",
@@ -46,7 +65,7 @@ export default function CapturaEvento() {
       return;
     }
 
-    if (!validateBrazilianPhone(whatsapp)) {
+    if (!validateBrazilianPhone(sanitizedWhatsapp)) {
       toast({
         title: "WhatsApp inválido",
         description: "Por favor, insira um número de WhatsApp válido com DDD brasileiro (ex: 11999999999).",
@@ -55,17 +74,44 @@ export default function CapturaEvento() {
       return;
     }
 
+    // Enhanced email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(sanitizedEmail)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, insira um endereço de email válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
+    // Perform security checks
+    const securityCheckPassed = await performSecurityChecks({
+      nome: sanitizedNome,
+      email: sanitizedEmail,
+      whatsapp: sanitizedWhatsapp
+    });
+
+    if (!securityCheckPassed) {
+      setIsSubmitting(false);
+      await logSecurityEvent('form_security_violation', {
+        form: 'event_registration',
+        reason: 'security_check_failed'
+      });
+      return;
+    }
+    
     try {
-      // Save to Supabase
+      // Save to Supabase with sanitized data
       const { data, error } = await supabase
         .from('event_registrations')
         .insert([
           {
-            nome,
-            email,
-            whatsapp: whatsapp.replace(/\D/g, ''), // Store only numbers
+            nome: sanitizedNome,
+            email: sanitizedEmail,
+            whatsapp: sanitizedWhatsapp.replace(/\D/g, ''), // Store only numbers
           }
         ])
         .select();
@@ -82,9 +128,9 @@ export default function CapturaEvento() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            nome,
-            email,
-            whatsapp: whatsapp.replace(/\D/g, ''),
+            nome: sanitizedNome,
+            email: sanitizedEmail,
+            whatsapp: sanitizedWhatsapp.replace(/\D/g, ''),
             timestamp: new Date().toISOString(),
             source: 'evento-empresario-4-0'
           }),
@@ -99,9 +145,21 @@ export default function CapturaEvento() {
         description: "Redirecionando para próximos passos...",
       });
       
+      // Log successful registration
+      await logSecurityEvent('event_registration_success', {
+        form: 'event_registration'
+      });
+      
       navigate("/obrigado");
     } catch (error) {
       console.error('Error saving registration:', error);
+      
+      // Log registration failure
+      await logSecurityEvent('event_registration_failure', {
+        form: 'event_registration',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
       toast({
         title: "Erro ao se inscrever",
         description: "Ocorreu um erro ao processar sua inscrição. Tente novamente.",
@@ -193,6 +251,8 @@ export default function CapturaEvento() {
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     className="w-full h-12 text-lg border-2 border-primary/20 focus:border-primary"
+                    maxLength={100}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -202,6 +262,8 @@ export default function CapturaEvento() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full h-12 text-lg border-2 border-primary/20 focus:border-primary"
+                    maxLength={255}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -211,6 +273,19 @@ export default function CapturaEvento() {
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
                     className="w-full h-12 text-lg border-2 border-primary/20 focus:border-primary"
+                    maxLength={15}
+                    required
+                  />
+                </div>
+                {/* Honeypot field - hidden from users */}
+                <div style={{ display: 'none' }}>
+                  <Input
+                    type="text"
+                    value={honeypotValue}
+                    onChange={(e) => setHoneypotValue(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
                   />
                 </div>
                 <Button 

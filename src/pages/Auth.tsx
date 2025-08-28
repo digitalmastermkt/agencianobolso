@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useFormSecurity } from "@/hooks/useFormSecurity";
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,11 @@ export default function Auth() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  const { sanitizeInput, logSecurityEvent, validateInputSafety } = useFormSecurity({
+    formName: 'authentication',
+    validateInputSafety: true
+  });
 
   // Pega a rota de onde o usuário veio (se foi redirecionado)
   const from = location.state?.from || "/dashboard";
@@ -55,15 +61,36 @@ export default function Auth() {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Sanitize and validate inputs
+    const sanitizedEmail = sanitizeInput(loginData.email);
+    const sanitizedPassword = loginData.password; // Don't sanitize password too much
+    
+    if (!validateInputSafety(sanitizedEmail)) {
+      toast({
+        title: "Entrada inválida",
+        description: "Email contém caracteres não permitidos.",
+        variant: "destructive"
+      });
+      await logSecurityEvent('login_attempt_invalid_input', {
+        email: sanitizedEmail
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: loginData.email,
-        password: loginData.password
+        email: sanitizedEmail,
+        password: sanitizedPassword
       });
 
       if (error) throw error;
+
+      await logSecurityEvent('login_success', {
+        email: sanitizedEmail
+      });
 
       toast({
         title: "Login realizado!",
@@ -72,6 +99,12 @@ export default function Auth() {
       navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Erro no login:', error);
+      
+      await logSecurityEvent('login_failure', {
+        email: sanitizedEmail,
+        error: error.message
+      });
+      
       toast({
         title: "Erro no login",
         description: error.message || "Email ou senha incorretos",
@@ -85,10 +118,36 @@ export default function Auth() {
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (signupData.password !== signupData.confirmPassword) {
+    // Sanitize and validate inputs
+    const sanitizedEmail = sanitizeInput(signupData.email);
+    const sanitizedPassword = signupData.password; // Don't sanitize password too much
+    
+    if (!validateInputSafety(sanitizedEmail)) {
+      toast({
+        title: "Entrada inválida",
+        description: "Email contém caracteres não permitidos.",
+        variant: "destructive"
+      });
+      await logSecurityEvent('signup_attempt_invalid_input', {
+        email: sanitizedEmail
+      });
+      return;
+    }
+    
+    if (sanitizedPassword !== signupData.confirmPassword) {
       toast({
         title: "Erro no cadastro",
         description: "As senhas não coincidem",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Enhanced password validation
+    if (sanitizedPassword.length < 8) {
+      toast({
+        title: "Senha muito fraca",
+        description: "A senha deve ter pelo menos 8 caracteres.",
         variant: "destructive"
       });
       return;
@@ -98,8 +157,8 @@ export default function Auth() {
 
     try {
       const { error } = await supabase.auth.signUp({
-        email: signupData.email,
-        password: signupData.password,
+        email: sanitizedEmail,
+        password: sanitizedPassword,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`
         }
@@ -107,12 +166,22 @@ export default function Auth() {
 
       if (error) throw error;
 
+      await logSecurityEvent('signup_success', {
+        email: sanitizedEmail
+      });
+
       toast({
         title: "Cadastro realizado!",
         description: "Verifique seu email para confirmar a conta."
       });
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
+      
+      await logSecurityEvent('signup_failure', {
+        email: sanitizedEmail,
+        error: error.message
+      });
+      
       toast({
         title: "Erro no cadastro",
         description: error.message || "Erro ao criar conta",

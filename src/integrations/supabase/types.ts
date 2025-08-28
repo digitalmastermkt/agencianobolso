@@ -288,6 +288,36 @@ export type Database = {
         }
         Relationships: []
       }
+      form_submission_rate_limit: {
+        Row: {
+          created_at: string | null
+          form_type: string
+          id: string
+          ip_address: unknown
+          last_submission: string | null
+          submission_count: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          form_type: string
+          id?: string
+          ip_address: unknown
+          last_submission?: string | null
+          submission_count?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          form_type?: string
+          id?: string
+          ip_address?: unknown
+          last_submission?: string | null
+          submission_count?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       lesson_progress: {
         Row: {
           completed: boolean | null
@@ -771,6 +801,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      check_form_rate_limit: {
+        Args: { form_name: string; max_per_hour?: number }
+        Returns: boolean
+      }
       decrypt_pii: {
         Args: { encrypted_data: string }
         Returns: string
@@ -804,6 +838,10 @@ export type Database = {
           updated_at: string
           whatsapp: string
         }[]
+      }
+      log_auth_event: {
+        Args: { details?: Json; event_type: string }
+        Returns: undefined
       }
       log_data_access: {
         Args: { p_action: string; p_record_id: string; p_table_name: string }
