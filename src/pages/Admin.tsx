@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
+import { EventRegistrationsManager } from "@/components/admin/EventRegistrationsManager";
 
 const AdminTrainings = () => {
   const [stats, setStats] = useState({
@@ -700,11 +701,12 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="trainings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="trainings">Treinamentos</TabsTrigger>
             <TabsTrigger value="prompts">Prompts</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="plans">Planos</TabsTrigger>
+            <TabsTrigger value="events">Eventos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="trainings">
@@ -721,6 +723,10 @@ export default function Admin() {
 
           <TabsContent value="plans">
             <PlansAdmin />
+          </TabsContent>
+
+          <TabsContent value="events">
+            <EventRegistrationsManager />
           </TabsContent>
         </Tabs>
       </div>

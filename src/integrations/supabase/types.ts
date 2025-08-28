@@ -864,6 +864,28 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_decrypted_event_registration: {
+        Args: { registration_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          updated_at: string
+          whatsapp: string
+        }[]
+      }
+      get_decrypted_event_registrations: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          updated_at: string
+          whatsapp: string
+        }[]
+      }
       get_event_registration_details: {
         Args: { registration_id: string }
         Returns: {
