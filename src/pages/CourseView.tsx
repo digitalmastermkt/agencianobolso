@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { CourseViewerDialog } from "@/components/admin/CourseViewerDialog";
 
 interface Course {
   id: string;
@@ -28,6 +29,8 @@ interface Course {
       video_url: string;
       duration_minutes: number;
       order_index: number;
+      is_published: boolean;
+      module_id: string;
     }>;
   }>;
 }
@@ -36,6 +39,8 @@ export default function CourseView() {
   const { courseId } = useParams<{ courseId: string }>();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedLessonId, setSelectedLessonId] = useState<string | undefined>();
   const { user } = useAuth();
   const { toast } = useToast();
   const { canAccessCourse } = usePlanAccess();
@@ -82,7 +87,9 @@ export default function CourseView() {
             description,
             video_url,
             duration_minutes,
-            order_index
+            order_index,
+            is_published,
+            module_id
           )
         `)
         .eq('course_id', courseId)
@@ -153,6 +160,13 @@ export default function CourseView() {
   const totalDuration = course.modules.reduce((acc, module) => 
     acc + module.lessons.reduce((lessonAcc, lesson) => lessonAcc + (lesson.duration_minutes || 0), 0), 0
   );
+
+  const handleLessonClick = (lessonId: string) => {
+    if (hasAccess) {
+      setSelectedLessonId(lessonId);
+      setViewerOpen(true);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -261,6 +275,7 @@ export default function CourseView() {
                             className={`flex items-center justify-between p-3 rounded-lg border ${
                               hasAccess ? 'hover:bg-muted/50 cursor-pointer' : 'opacity-60'
                             }`}
+                            onClick={() => handleLessonClick(lesson.id)}
                           >
                             <div className="flex items-center gap-3">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -299,6 +314,16 @@ export default function CourseView() {
           </div>
         </div>
       </div>
+
+      {/* Course Viewer Dialog */}
+      {course && (
+        <CourseViewerDialog
+          open={viewerOpen}
+          onOpenChange={setViewerOpen}
+          course={course}
+          initialLessonId={selectedLessonId}
+        />
+      )}
     </DashboardLayout>
   );
 }
