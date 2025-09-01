@@ -276,10 +276,60 @@ serve(async (req) => {
     const data = await response.json();
     const generatedContent = data.choices[0].message.content;
 
-    // Save to database if userId is provided
+    // Save to database and track credits if userId is provided
     if (userId) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       
+      // Get user's subscription and current credits usage
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      
+      const [userProfile, creditsUsage, planSettings] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select(`
+            *,
+            subscribers!subscribers_user_id_fkey (
+              subscription_tier,
+              subscribed
+            )
+          `)
+          .eq('user_id', userId)
+          .maybeSingle(),
+        supabase
+          .from('user_credits_usage')
+          .select('credits_used')
+          .eq('user_id', userId)
+          .eq('month_year', currentMonth),
+        supabase
+          .from('plan_settings')
+          .select('plan, monthly_credits')
+      ]);
+
+      if (userProfile.error || !userProfile.data) {
+        throw new Error('User not found');
+      }
+
+      const subscription = userProfile.data.subscribers?.[0];
+      const userPlan = subscription?.subscribed ? (subscription.subscription_tier || 'Gratuito') : 'Gratuito';
+      
+      // Get plan limits
+      const planConfig = planSettings.data?.find(p => p.plan === userPlan);
+      const monthlyLimit = planConfig?.monthly_credits || 0;
+      
+      // Calculate current usage
+      const currentUsage = (creditsUsage.data || []).reduce((total, usage) => total + usage.credits_used, 0);
+      
+      // Free users get special treatment for 'vendas' agent
+      if (!subscription?.subscribed && agentType !== 'vendas') {
+        throw new Error('Este agente requer um plano pago. Usuários gratuitos podem usar apenas o agente de vendas.');
+      }
+      
+      // Check credit limits for paid users
+      if (subscription?.subscribed && currentUsage >= monthlyLimit) {
+        throw new Error(`Limite de créditos mensais excedido. Seu plano ${userPlan} permite ${monthlyLimit} créditos por mês.`);
+      }
+      
+      // Record the AI generation
       await supabase
         .from('ai_generations')
         .insert({
@@ -288,6 +338,18 @@ serve(async (req) => {
           input_data: formData,
           generated_content: generatedContent
         });
+      
+      // Record credit usage (only for paid users or free users using vendas)
+      if (subscription?.subscribed || agentType === 'vendas') {
+        await supabase
+          .from('user_credits_usage')
+          .insert({
+            user_id: userId,
+            agent_type: agentType,
+            credits_used: 1,
+            month_year: currentMonth
+          });
+      }
     }
 
     return new Response(

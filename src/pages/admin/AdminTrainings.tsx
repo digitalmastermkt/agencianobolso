@@ -213,40 +213,64 @@ export default function AdminTrainings() {
 
           <TabsContent value="legacy">
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <GraduationCap className="h-5 w-5" />
-                      Treinamentos Legacy
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{stats.totalTrainings}</div>
-                    <p className="text-sm text-muted-foreground">Sistema anterior</p>
-                  </CardContent>
-                </Card>
+              <Card className="border-orange-200 bg-orange-50">
+                <CardHeader>
+                  <CardTitle className="text-orange-800">⚠️ Treinamentos Legacy</CardTitle>
+                  <CardDescription className="text-orange-700">
+                    <strong>Recomendação:</strong> Use esta seção apenas para criar conteúdo do plano gratuito. 
+                    Para conteúdo premium, utilize a nova estrutura de Cursos → Módulos → Aulas.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <GraduationCap className="h-5 w-5" />
+                            Treinamentos Legacy
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">{stats.totalTrainings}</div>
+                          <p className="text-sm text-muted-foreground">Sistema anterior</p>
+                        </CardContent>
+                      </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Migração Pendente</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{stats.totalTrainings - stats.publishedTrainings}</div>
-                    <p className="text-sm text-muted-foreground">Para nova estrutura</p>
-                  </CardContent>
-                </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Para Migração</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">{stats.totalTrainings - stats.publishedTrainings}</div>
+                          <p className="text-sm text-muted-foreground">Migrar para cursos</p>
+                        </CardContent>
+                      </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Já Migrados</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{stats.publishedTrainings}</div>
-                    <p className="text-sm text-muted-foreground">Convertidos para cursos</p>
-                  </CardContent>
-                </Card>
-              </div>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Já Migrados</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">{stats.publishedTrainings}</div>
+                          <p className="text-sm text-muted-foreground">Convertidos para cursos</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                      <h4 className="font-semibold text-blue-800 mb-2">Plano de Migração</h4>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        <li>• Mantenha os treinamentos legacy apenas para conteúdo gratuito</li>
+                        <li>• Migre conteúdo premium para a estrutura Cursos → Módulos → Aulas</li>
+                        <li>• Use o sistema de planos para controlar acesso ao conteúdo</li>
+                        <li>• Considere remover esta seção após a migração completa</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
               <CreateTrainingForm />
             </div>
           </TabsContent>

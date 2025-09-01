@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, AlertCircle, Sparkles } from "lucide-react";
+import { Users, AlertCircle, Sparkles, MessageSquare, Edit, UserCheck, UserX, TrendingUp } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { SendNotificationDialog } from "@/components/admin/SendNotificationDialog";
+import { EditUserStatusDialog } from "@/components/admin/EditUserStatusDialog";
 import {
   Table,
   TableBody,
@@ -25,6 +27,8 @@ export default function AdminUsers() {
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notificationDialog, setNotificationDialog] = useState<{ open: boolean; user: any }>({ open: false, user: null });
+  const [editDialog, setEditDialog] = useState<{ open: boolean; user: any }>({ open: false, user: null });
 
   const fetchData = useCallback(async () => {
     console.log("🔍 AdminUsers fetchData - Estado atual:", { 
@@ -87,6 +91,21 @@ export default function AdminUsers() {
       setNewToday(newTodayRes.count ?? 0);
       setActiveSubscribers(activeRes.count ?? 0);
 
+      // Buscar créditos consumidos para cada usuário
+      const userIds = (usersRes.data || []).map((user: any) => user.user_id);
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      
+      const { data: creditsData } = await supabase
+        .from("user_credits_usage")
+        .select("user_id, credits_used")
+        .in("user_id", userIds)
+        .eq("month_year", currentMonth);
+
+      const creditsByUser = (creditsData || []).reduce((acc, credit) => {
+        acc[credit.user_id] = (acc[credit.user_id] || 0) + credit.credits_used;
+        return acc;
+      }, {} as Record<string, number>);
+
       const processedUsers = (usersRes.data || []).map((user: any) => {
         console.log("🔄 Processando usuário:", user);
         const subscription = user.subscribers?.[0];
@@ -96,8 +115,10 @@ export default function AdminUsers() {
           subscribed: subscription?.subscribed || false,
           subscription_end: subscription?.subscription_end,
           email: subscription?.email || `user${user.id.slice(0, 8)}@exemplo.com`,
-          phone: `(${Math.floor(Math.random() * 90 + 10)}) ${Math.floor(Math.random() * 90000 + 10000)}-${Math.floor(Math.random() * 9000 + 1000)}`,
+          whatsapp: user.whatsapp || `(${Math.floor(Math.random() * 90 + 10)}) ${Math.floor(Math.random() * 90000 + 10000)}-${Math.floor(Math.random() * 9000 + 1000)}`,
           code: `GE${Math.floor(Math.random() * 900000 + 100000)}`,
+          status: user.status || 'ativo',
+          credits_used: creditsByUser[user.user_id] || 0,
           online: Math.random() > 0.5,
         };
       });
@@ -241,10 +262,11 @@ export default function AdminUsers() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Aluno</TableHead>
+                    <TableHead>Usuário</TableHead>
                     <TableHead>Contato</TableHead>
-                    <TableHead>Online</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Plano</TableHead>
+                    <TableHead>Créditos Usados</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -273,18 +295,21 @@ export default function AdminUsers() {
                         <div>
                           <div className="text-sm">{user.email}</div>
                           <div className="text-sm text-muted-foreground">
-                            {user.phone}
+                            {user.whatsapp || 'Não informado'}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <div 
-                            className={`w-3 h-3 rounded-full ${user.online ? 'bg-green-500' : 'bg-gray-400'}`}
-                            title={user.online ? 'Online' : 'Offline'}
-                          />
-                          <span className="text-sm text-muted-foreground">
-                            {user.online ? 'Online' : 'Offline'}
+                          {user.status === 'ativo' ? (
+                            <UserCheck className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <UserX className="h-4 w-4 text-red-500" />
+                          )}
+                          <span className={`text-sm font-medium ${
+                            user.status === 'ativo' ? 'text-green-700' : 'text-red-700'
+                          }`}>
+                            {user.status === 'ativo' ? 'Ativo' : 'Inativo'}
                           </span>
                         </div>
                       </TableCell>
@@ -294,7 +319,32 @@ export default function AdminUsers() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <UserActionsMenu user={user} onUserUpdate={fetchData} />
+                        <div className="flex items-center gap-1">
+                          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{user.credits_used}</span>
+                          <span className="text-xs text-muted-foreground">este mês</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setNotificationDialog({ open: true, user })}
+                            title="Enviar notificação"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditDialog({ open: true, user })}
+                            title="Editar usuário"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <UserActionsMenu user={user} onUserUpdate={fetchData} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -303,6 +353,24 @@ export default function AdminUsers() {
             )}
           </CardContent>
         </Card>
+
+        {/* Dialogs */}
+        {notificationDialog.user && (
+          <SendNotificationDialog
+            open={notificationDialog.open}
+            onOpenChange={(open) => setNotificationDialog({ open, user: open ? notificationDialog.user : null })}
+            user={notificationDialog.user}
+          />
+        )}
+
+        {editDialog.user && (
+          <EditUserStatusDialog
+            open={editDialog.open}
+            onOpenChange={(open) => setEditDialog({ open, user: open ? editDialog.user : null })}
+            user={editDialog.user}
+            onUserUpdate={fetchData}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
