@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EditModuleForm } from "./EditModuleForm";
+import { ModulePreviewDialog } from "./ModulePreviewDialog";
 
 interface Module {
   id: string;
@@ -26,6 +27,8 @@ export function ModulesManager() {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [previewModule, setPreviewModule] = useState<Module | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchModules = async () => {
@@ -82,7 +85,8 @@ export function ModulesManager() {
   };
 
   const handlePreview = (module: Module) => {
-    window.open(`/treinamentos?preview_module=${module.id}`, "_blank");
+    setPreviewModule(module);
+    setPreviewOpen(true);
   };
 
   if (loading) {
@@ -202,6 +206,12 @@ export function ModulesManager() {
             </TableBody>
           </Table>
         )}
+
+        <ModulePreviewDialog
+          module={previewModule}
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+        />
       </CardContent>
     </Card>
   );
