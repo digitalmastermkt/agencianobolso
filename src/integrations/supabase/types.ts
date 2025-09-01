@@ -585,8 +585,10 @@ export type Database = {
           display_name: string | null
           id: string
           role: string | null
+          status: string | null
           updated_at: string
           user_id: string
+          whatsapp: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -595,8 +597,10 @@ export type Database = {
           display_name?: string | null
           id?: string
           role?: string | null
+          status?: string | null
           updated_at?: string
           user_id: string
+          whatsapp?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -605,8 +609,10 @@ export type Database = {
           display_name?: string | null
           id?: string
           role?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -803,6 +809,36 @@ export type Database = {
           },
         ]
       }
+      user_credits_usage: {
+        Row: {
+          agent_type: string
+          created_at: string
+          credits_used: number
+          id: string
+          month_year: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type: string
+          created_at?: string
+          credits_used?: number
+          id?: string
+          month_year: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string
+          credits_used?: number
+          id?: string
+          month_year?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_enrollments: {
         Row: {
           course_id: string | null
@@ -848,6 +884,42 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read_at: string | null
+          sent_by: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read_at?: string | null
+          sent_by?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          sent_by?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -944,6 +1016,10 @@ export type Database = {
           total_auth_attempts: number
           unique_ips: number
         }[]
+      }
+      get_user_monthly_credits_usage: {
+        Args: { p_month_year?: string; p_user_id: string }
+        Returns: number
       }
       log_auth_attempt: {
         Args: {
