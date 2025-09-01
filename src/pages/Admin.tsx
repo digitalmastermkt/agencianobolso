@@ -702,13 +702,13 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="trainings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="trainings">Treinamentos</TabsTrigger>
-            <TabsTrigger value="prompts">Prompts</TabsTrigger>
-            <TabsTrigger value="users">Usuários</TabsTrigger>
-            <TabsTrigger value="plans">Planos</TabsTrigger>
-            <TabsTrigger value="events">Eventos</TabsTrigger>
-            <TabsTrigger value="stripe">Stripe</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 gap-1">
+            <TabsTrigger value="trainings" className="text-xs lg:text-sm">Treinamentos</TabsTrigger>
+            <TabsTrigger value="prompts" className="text-xs lg:text-sm">Prompts</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs lg:text-sm">Usuários</TabsTrigger>
+            <TabsTrigger value="plans" className="text-xs lg:text-sm">Planos</TabsTrigger>
+            <TabsTrigger value="events" className="text-xs lg:text-sm">Eventos</TabsTrigger>
+            <TabsTrigger value="stripe" className="text-xs lg:text-sm bg-orange-100 text-orange-700 font-medium border border-orange-200">Stripe</TabsTrigger>
           </TabsList>
 
           <TabsContent value="trainings">
