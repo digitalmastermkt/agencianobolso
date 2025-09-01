@@ -61,7 +61,7 @@ export function VideoPlayerDialog({
         className={`${
           isFullscreen 
             ? "max-w-full max-h-full w-screen h-screen p-0 m-0" 
-            : "max-w-4xl max-h-[90vh]"
+            : "max-w-3xl w-[90vw] max-h-[85vh] p-4"
         } transition-all duration-300`}
       >
         {!isFullscreen && (
