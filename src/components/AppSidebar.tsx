@@ -12,7 +12,12 @@ import {
   Settings,
   LogOut,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  GraduationCap,
+  FileText,
+  Users,
+  CreditCard,
+  Calendar
 } from "lucide-react";
 import {
   Sidebar,
@@ -101,9 +106,40 @@ const learningItems = [
 
 const adminItems = [
   {
-    title: "Admin",
-    url: "/admin",
-    icon: Settings
+    title: "Treinamentos",
+    url: "/admin/trainings",
+    icon: GraduationCap,
+    color: "text-blue-600"
+  },
+  {
+    title: "Prompts",
+    url: "/admin/prompts",
+    icon: FileText,
+    color: "text-green-600"
+  },
+  {
+    title: "Usuários",
+    url: "/admin/users",
+    icon: Users,
+    color: "text-purple-600"
+  },
+  {
+    title: "Planos",
+    url: "/admin/plans",
+    icon: CreditCard,
+    color: "text-indigo-600"
+  },
+  {
+    title: "Eventos",
+    url: "/admin/events",
+    icon: Calendar,
+    color: "text-cyan-600"
+  },
+  {
+    title: "Stripe",
+    url: "/admin/stripe",
+    icon: Settings,
+    color: "text-orange-600"
   }
 ];
 
@@ -230,9 +266,9 @@ export function AppSidebar() {
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink to={item.url} className={getNavClass}>
-                          <item.icon className="mr-2 h-4 w-4" />
+                          <item.icon className={`mr-2 h-4 w-4 ${item.color}`} />
                           <span>{item.title}</span>
-                          {isActive(item.url) && (
+                          {currentPath.startsWith(item.url) && (
                             <ChevronRight className="ml-auto h-4 w-4" />
                           )}
                         </NavLink>

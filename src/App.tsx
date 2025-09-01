@@ -19,6 +19,12 @@ import Treinamentos from "./pages/Treinamentos";
 import Prompts from "./pages/Prompts";
 import Comunidade from "./pages/Comunidade";
 import Admin from "./pages/Admin";
+import AdminTrainings from "./pages/admin/AdminTrainings";
+import AdminPrompts from "./pages/admin/AdminPrompts";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPlans from "./pages/admin/AdminPlans";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminStripe from "./pages/admin/AdminStripe";
 import Vendas from "./pages/Vendas";
 import CapturaEvento from "./pages/CapturaEvento";
 import Obrigado from "./pages/Obrigado";
@@ -26,6 +32,7 @@ import NotFound from "./pages/NotFound";
 import { PlanGuard } from "@/components/PlanGuard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCanceled from "./pages/PaymentCanceled";
+import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -112,10 +119,46 @@ const App = () => (
               </PlanGuard>
             </ProtectedRoute>
           } />
-          <Route path="/admin" element={
+          <Route path="/admin" element={<Navigate to="/admin/trainings" replace />} />
+          <Route path="/admin/trainings" element={
             <ProtectedRoute>
               <AdminRoute>
-                <Admin />
+                <AdminTrainings />
+              </AdminRoute>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/prompts" element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminPrompts />
+              </AdminRoute>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminUsers />
+              </AdminRoute>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/plans" element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminPlans />
+              </AdminRoute>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/events" element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminEvents />
+              </AdminRoute>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/stripe" element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminStripe />
               </AdminRoute>
             </ProtectedRoute>
           } />
