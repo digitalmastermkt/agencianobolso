@@ -1,42 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Copy, Check } from 'lucide-react';
-
-interface PriceIds {
-  monthly: {
-    essencial: string;
-    premium: string;
-    elite: string;
-  };
-  annual: {
-    essencial: string;
-    premium: string;
-    elite: string;
-  };
-}
+import { Copy, Check, Save, RefreshCw } from 'lucide-react';
+import { useStripePriceConfig, PriceIds } from '@/hooks/useStripePriceConfig';
 
 export function StripePriceUpdater() {
-  const [priceIds, setPriceIds] = useState<PriceIds>({
-    monthly: {
-      essencial: '',
-      premium: '',
-      elite: ''
-    },
-    annual: {
-      essencial: '',
-      premium: '',
-      elite: ''
-    }
+  const { 
+    priceIds: configPriceIds, 
+    loading, 
+    saving, 
+    savePriceConfig, 
+    refreshConfig 
+  } = useStripePriceConfig();
+  
+  const [localPriceIds, setLocalPriceIds] = useState<PriceIds>({
+    monthly: { Essencial: '', Premium: '', Elite: '' },
+    annual: { Essencial: '', Premium: '', Elite: '' }
   });
-
+  
   const [copied, setCopied] = useState<string | null>(null);
 
+  // Sync with loaded config
+  useEffect(() => {
+    if (!loading) {
+      setLocalPriceIds(configPriceIds);
+    }
+  }, [configPriceIds, loading]);
+
   const handleInputChange = (type: 'monthly' | 'annual', plan: string, value: string) => {
-    setPriceIds(prev => ({
+    setLocalPriceIds(prev => ({
       ...prev,
       [type]: {
         ...prev[type],
@@ -45,39 +40,34 @@ export function StripePriceUpdater() {
     }));
   };
 
+  const handleSave = async () => {
+    await savePriceConfig(localPriceIds);
+  };
+
   const generateUpdateCode = () => {
-    const allFilled = Object.values(priceIds.monthly).every(id => id) && 
-                      Object.values(priceIds.annual).every(id => id);
+    const allFilled = Object.values(localPriceIds.monthly).every(id => id) && 
+                      Object.values(localPriceIds.annual).every(id => id);
     
     if (!allFilled) return 'Preencha todos os Price IDs primeiro.';
 
-    return `// SubscriptionPanel.tsx - Objeto PRICE_IDS atualizado
-const PRICE_IDS: Record<"monthly" | "annual", Record<PlanTierLocal, string>> = {
-  monthly: {
-    Essencial: "${priceIds.monthly.essencial}",
-    Premium: "${priceIds.monthly.premium}",
-    Elite: "${priceIds.monthly.elite}",
-  },
-  annual: {
-    Essencial: "${priceIds.annual.essencial}",
-    Premium: "${priceIds.annual.premium}",
-    Elite: "${priceIds.annual.elite}",
-  },
-};
-
-// create-checkout/index.ts - Objeto PRICE_MAP atualizado
+    return `// create-checkout/index.ts - Objeto PRICE_MAP atualizado
 const PRICE_MAP: Record<string, string> = {
-  "${priceIds.monthly.essencial}": "Essencial",
-  "${priceIds.monthly.premium}": "Premium", 
-  "${priceIds.monthly.elite}": "Elite",
+  "${localPriceIds.monthly.Essencial}": "Essencial",
+  "${localPriceIds.monthly.Premium}": "Premium", 
+  "${localPriceIds.monthly.Elite}": "Elite",
 };
 
 // check-subscription/index.ts - Objeto PRICE_TO_TIER atualizado
 const PRICE_TO_TIER: Record<string, string> = {
-  "${priceIds.monthly.essencial}": "Essencial",
-  "${priceIds.monthly.premium}": "Premium",
-  "${priceIds.monthly.elite}": "Elite",
+  "${localPriceIds.monthly.Essencial}": "Essencial",
+  "${localPriceIds.monthly.Premium}": "Premium",
+  "${localPriceIds.monthly.Elite}": "Elite",
 };`;
+  };
+
+  const isFormValid = () => {
+    return Object.values(localPriceIds.monthly).every(id => id.trim()) && 
+           Object.values(localPriceIds.annual).every(id => id.trim());
   };
 
   const copyToClipboard = (text: string) => {
@@ -86,13 +76,39 @@ const PRICE_TO_TIER: Record<string, string> = {
     setTimeout(() => setCopied(null), 2000);
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center">
+              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+              <span>Carregando configurações...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Atualizador de Price IDs do Stripe</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            Configuração de Price IDs do Stripe
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshConfig}
+              disabled={loading}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Atualizar
+            </Button>
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Insira os Price IDs de produção do Stripe Dashboard
+            Configure os Price IDs do Stripe Dashboard. As alterações são salvas automaticamente no sistema.
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -105,8 +121,8 @@ const PRICE_TO_TIER: Record<string, string> = {
                 <Input
                   id="monthly-essencial"
                   placeholder="price_..."
-                  value={priceIds.monthly.essencial}
-                  onChange={(e) => handleInputChange('monthly', 'essencial', e.target.value)}
+                  value={localPriceIds.monthly.Essencial}
+                  onChange={(e) => handleInputChange('monthly', 'Essencial', e.target.value)}
                 />
               </div>
               <div>
@@ -114,8 +130,8 @@ const PRICE_TO_TIER: Record<string, string> = {
                 <Input
                   id="monthly-premium"
                   placeholder="price_..."
-                  value={priceIds.monthly.premium}
-                  onChange={(e) => handleInputChange('monthly', 'premium', e.target.value)}
+                  value={localPriceIds.monthly.Premium}
+                  onChange={(e) => handleInputChange('monthly', 'Premium', e.target.value)}
                 />
               </div>
               <div>
@@ -123,8 +139,8 @@ const PRICE_TO_TIER: Record<string, string> = {
                 <Input
                   id="monthly-elite"
                   placeholder="price_..."
-                  value={priceIds.monthly.elite}
-                  onChange={(e) => handleInputChange('monthly', 'elite', e.target.value)}
+                  value={localPriceIds.monthly.Elite}
+                  onChange={(e) => handleInputChange('monthly', 'Elite', e.target.value)}
                 />
               </div>
             </div>
@@ -141,8 +157,8 @@ const PRICE_TO_TIER: Record<string, string> = {
                 <Input
                   id="annual-essencial"
                   placeholder="price_..."
-                  value={priceIds.annual.essencial}
-                  onChange={(e) => handleInputChange('annual', 'essencial', e.target.value)}
+                  value={localPriceIds.annual.Essencial}
+                  onChange={(e) => handleInputChange('annual', 'Essencial', e.target.value)}
                 />
               </div>
               <div>
@@ -150,8 +166,8 @@ const PRICE_TO_TIER: Record<string, string> = {
                 <Input
                   id="annual-premium"
                   placeholder="price_..."
-                  value={priceIds.annual.premium}
-                  onChange={(e) => handleInputChange('annual', 'premium', e.target.value)}
+                  value={localPriceIds.annual.Premium}
+                  onChange={(e) => handleInputChange('annual', 'Premium', e.target.value)}
                 />
               </div>
               <div>
@@ -159,31 +175,52 @@ const PRICE_TO_TIER: Record<string, string> = {
                 <Input
                   id="annual-elite"
                   placeholder="price_..."
-                  value={priceIds.annual.elite}
-                  onChange={(e) => handleInputChange('annual', 'elite', e.target.value)}
+                  value={localPriceIds.annual.Elite}
+                  onChange={(e) => handleInputChange('annual', 'Elite', e.target.value)}
                 />
               </div>
             </div>
           </div>
+          <div className="pt-4 border-t">
+            <Button 
+              onClick={handleSave}
+              disabled={!isFormValid() || saving}
+              className="w-full"
+            >
+              {saving ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Configurações
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Código Gerado */}
+      {/* Código Gerado para Edge Functions */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            Código para Atualização
+            Código para Edge Functions (Opcional)
             <Button
               size="sm"
               variant="outline"
               onClick={() => copyToClipboard(generateUpdateCode())}
-              disabled={!Object.values(priceIds.monthly).every(id => id) || 
-                       !Object.values(priceIds.annual).every(id => id)}
+              disabled={!isFormValid()}
             >
               {copied === generateUpdateCode() ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied === generateUpdateCode() ? 'Copiado!' : 'Copiar'}
             </Button>
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Caso precise atualizar manualmente as edge functions, use este código:
+          </p>
         </CardHeader>
         <CardContent>
           <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap">

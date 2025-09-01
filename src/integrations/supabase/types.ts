@@ -696,6 +696,33 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_price_config: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          id: string
+          plan_tier: string
+          price_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle: string
+          created_at?: string
+          id?: string
+          plan_tier: string
+          price_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          id?: string
+          plan_tier?: string
+          price_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string

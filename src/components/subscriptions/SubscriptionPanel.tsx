@@ -7,24 +7,14 @@ import { Crown, TrendingUp, Star, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useStripePriceConfig } from "@/hooks/useStripePriceConfig";
 
 type PlanTierLocal = "Essencial" | "Premium" | "Elite";
-const PRICE_IDS: Record<"monthly" | "annual", Record<PlanTierLocal, string>> = {
-  monthly: {
-    Essencial: "price_1RtCJlL0y5sMsrd4ZJHcvV3A",
-    Premium: "price_1RtCTGL0y5sMsrd4yRno549V",
-    Elite: "price_1RtCyUL0y5sMsrd4j7Bgl4xT",
-  },
-  annual: {
-    Essencial: "price_1RtwbYL0y5sMsrd4mqnLAsRK",
-    Premium: "price_1RtwejL0y5sMsrd40q0fAqKO",
-    Elite: "price_1RtwaZL0y5sMsrd4b3TDm2hA",
-  },
-};
 
 export function SubscriptionPanel() {
   const { subscribed, subscription_tier, subscription_end, loading, refresh } = useSubscription();
   const { user } = useAuth();
+  const { priceIds: configPriceIds, loading: configLoading } = useStripePriceConfig();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -67,6 +57,16 @@ export function SubscriptionPanel() {
       navigate("/auth");
       return;
     }
+
+    if (!priceId) {
+      toast({ 
+        title: "Erro de configuração", 
+        description: "Price ID não configurado. Entre em contato com o suporte.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { price_id: priceId },
@@ -110,6 +110,18 @@ export function SubscriptionPanel() {
     if (!user) navigate("/auth");
     else navigate("/dashboard");
   };
+
+  if (loading || configLoading) {
+    return (
+      <Card className="mb-8">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <span>Carregando...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="mb-8">
@@ -175,21 +187,21 @@ export function SubscriptionPanel() {
                 title="Essencial"
                 price={billingCycle === "monthly" ? monthlyDisplay.Essencial : annualDisplay.Essencial}
                 features={["Agentes: Conexão, Interação, Banner"]}
-                onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Essencial)}
+                onSelect={() => handleSubscribe(configPriceIds[billingCycle]["Essencial"])}
               />
               <PlanCard
                 icon={<Star className="w-5 h-5" />}
                 title="Premium"
                 price={billingCycle === "monthly" ? monthlyDisplay.Premium : annualDisplay.Premium}
                 features={["Tudo do Essencial + Vendas, Storytelling"]}
-                onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Premium)}
+                onSelect={() => handleSubscribe(configPriceIds[billingCycle]["Premium"])}
               />
               <PlanCard
                 icon={<Crown className="w-5 h-5" />}
                 title="Elite"
                 price={billingCycle === "monthly" ? monthlyDisplay.Elite : annualDisplay.Elite}
                 features={["Tudo do Premium + Viral", "Acesso a agentes futuros"]}
-                onSelect={() => handleSubscribe(PRICE_IDS[billingCycle].Elite)}
+                onSelect={() => handleSubscribe(configPriceIds[billingCycle]["Elite"])}
               />
             </div>
           </div>
