@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,21 +22,27 @@ export function PlansAdmin() {
   // plan_courses_access
   const [courseRows, setCourseRows] = useState<Array<{ id: string; plan: string; course_id: string }>>([]);
   const [newCourse, setNewCourse] = useState<{ plan: string; course_id: string }>({ plan: "Essencial", course_id: "" });
+  
+  // Available courses for dropdown
+  const [availableCourses, setAvailableCourses] = useState<Array<{ id: string; title: string }>>([]);
 
   const loadAll = async () => {
     try {
       setLoadingSettings(true);
-      const [ps, agents, courses] = await Promise.all([
+      const [ps, agents, courses, availableCoursesData] = await Promise.all([
         supabase.from("plan_settings").select("id, plan, monthly_credits, description").order("plan", { ascending: true }),
         supabase.from("plan_agents_access").select("id, plan, agent_key, label").order("plan"),
         supabase.from("plan_courses_access").select("id, plan, course_id").order("plan"),
+        supabase.from("courses").select("id, title").eq("is_published", true).order("title"),
       ]);
       if (ps.error) throw ps.error;
       if (agents.error) throw agents.error;
       if (courses.error) throw courses.error;
+      if (availableCoursesData.error) throw availableCoursesData.error;
       setPlanSettings(ps.data || []);
       setAgentRows(agents.data || []);
       setCourseRows(courses.data || []);
+      setAvailableCourses(availableCoursesData.data || []);
     } catch (e: any) {
       console.error(e);
       toast({ title: "Erro ao carregar", description: e.message, variant: "destructive" });
@@ -284,32 +291,48 @@ export function PlansAdmin() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <Label>Plano</Label>
-                  <Input list="plans2" value={newCourse.plan} onChange={(e) => setNewCourse((s) => ({ ...s, plan: e.currentTarget.value }))} />
-                  <datalist id="plans2">
-                    {knownPlans.map((p) => (
-                      <option key={p} value={p} />
-                    ))}
-                  </datalist>
+                  <Select value={newCourse.plan} onValueChange={(value) => setNewCourse((s) => ({ ...s, plan: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {knownPlans.map((plan) => (
+                        <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <Label>Course ID</Label>
-                  <Input placeholder="uuid do curso" value={newCourse.course_id} onChange={(e) => setNewCourse((s) => ({ ...s, course_id: e.currentTarget.value }))} />
+                  <Label>Curso</Label>
+                  <Select value={newCourse.course_id} onValueChange={(value) => setNewCourse((s) => ({ ...s, course_id: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o curso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCourses.map((course) => (
+                        <SelectItem key={course.id} value={course.id}>{course.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex items-end">
-                  <Button onClick={addCourse}>Adicionar</Button>
+                  <Button onClick={addCourse} disabled={!newCourse.course_id}>Adicionar</Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                {courseRows.map((row) => (
-                  <div key={row.id} className="flex items-center justify-between p-3 border rounded-md">
-                    <div>
-                      <div className="font-medium">{row.course_id}</div>
-                      <div className="text-sm text-muted-foreground">Plano: {row.plan}</div>
+                {courseRows.map((row) => {
+                  const courseName = availableCourses.find(c => c.id === row.course_id)?.title || row.course_id;
+                  return (
+                    <div key={row.id} className="flex items-center justify-between p-3 border rounded-md">
+                      <div>
+                        <div className="font-medium">{courseName}</div>
+                        <div className="text-sm text-muted-foreground">Plano: {row.plan}</div>
+                      </div>
+                      <Button variant="destructive" onClick={() => removeCourse(row.id)}>Remover</Button>
                     </div>
-                    <Button variant="destructive" onClick={() => removeCourse(row.id)}>Remover</Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

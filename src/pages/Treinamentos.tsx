@@ -3,10 +3,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Clock, Users } from "lucide-react";
+import { Play, Clock, Users, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { Link } from "react-router-dom";
 
 interface Course {
   id: string;
@@ -14,7 +16,6 @@ interface Course {
   description: string;
   thumbnail_url: string;
   created_at: string;
-  is_enrolled?: boolean;
   modules_count?: number;
   lessons_count?: number;
   total_duration?: number;
@@ -25,6 +26,7 @@ export default function Treinamentos() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { canAccessCourse } = usePlanAccess();
 
   useEffect(() => {
     fetchCourses();
@@ -41,17 +43,10 @@ export default function Treinamentos() {
 
       if (error) throw error;
 
-      // Check enrollment status for each course
-      if (user && coursesData) {
-        const coursesWithEnrollment = await Promise.all(
+      // Get course details with modules and lessons count
+      if (coursesData) {
+        const coursesWithDetails = await Promise.all(
           coursesData.map(async (course) => {
-            const { data: enrollment } = await supabase
-              .from('user_enrollments')
-              .select('id')
-              .eq('user_id', user.id)
-              .eq('course_id', course.id)
-              .maybeSingle();
-
             // Get modules count
             const { data: modules } = await supabase
               .from('modules')
@@ -68,16 +63,15 @@ export default function Treinamentos() {
 
             return {
               ...course,
-              is_enrolled: !!enrollment,
               modules_count: modules?.length || 0,
               lessons_count: lessons?.length || 0,
               total_duration: lessons?.reduce((acc, lesson) => acc + (lesson.duration_minutes || 0), 0) || 0
             };
           })
         );
-        setCourses(coursesWithEnrollment);
+        setCourses(coursesWithDetails);
       } else {
-        setCourses(coursesData || []);
+        setCourses([]);
       }
     } catch (error) {
       console.error('Erro ao carregar cursos:', error);
@@ -91,42 +85,6 @@ export default function Treinamentos() {
     }
   };
 
-  const handleEnroll = async (courseId: string) => {
-    if (!user) {
-      toast({
-        title: "Login necessário",
-        description: "Faça login para se inscrever no curso.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('user_enrollments')
-        .insert({
-          user_id: user.id,
-          course_id: courseId,
-          training_id: null
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso!",
-        description: "Você foi inscrito no curso."
-      });
-
-      fetchCourses();
-    } catch (error) {
-      console.error('Erro ao se inscrever:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao se inscrever no curso.",
-        variant: "destructive"
-      });
-    }
-  };
 
   if (loading) {
     return (
@@ -174,8 +132,13 @@ export default function Treinamentos() {
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-lg">{course.title}</CardTitle>
-                      {course.is_enrolled && (
-                        <Badge variant="secondary">Inscrito</Badge>
+                      {canAccessCourse(course.id) ? (
+                        <Badge variant="secondary">Liberado</Badge>
+                      ) : (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Lock className="h-3 w-3" />
+                          Bloqueado
+                        </Badge>
                       )}
                     </div>
                     {course.description && (
@@ -203,13 +166,18 @@ export default function Treinamentos() {
                       )}
                     </div>
 
-                    <Button
-                      onClick={() => handleEnroll(course.id)}
-                      disabled={course.is_enrolled}
-                      className="w-full"
-                    >
-                      {course.is_enrolled ? "Já inscrito" : "Inscrever-se"}
-                    </Button>
+                    {canAccessCourse(course.id) ? (
+                      <Button asChild className="w-full">
+                        <Link to="/treinamentos">
+                          Acessar Curso
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button disabled className="w-full flex items-center gap-2">
+                        <Lock className="h-4 w-4" />
+                        Plano necessário
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
