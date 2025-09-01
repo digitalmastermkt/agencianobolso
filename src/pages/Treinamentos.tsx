@@ -168,7 +168,7 @@ export default function Treinamentos() {
 
                     {canAccessCourse(course.id) ? (
                       <Button asChild className="w-full">
-                        <Link to="/treinamentos">
+                        <Link to={`/curso/${course.id}`}>
                           Acessar Curso
                         </Link>
                       </Button>

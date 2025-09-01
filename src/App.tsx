@@ -16,6 +16,7 @@ import AgenteBanner from "./pages/agents/AgenteBanner";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Treinamentos from "./pages/Treinamentos";
+import CourseView from "./pages/CourseView";
 import Prompts from "./pages/Prompts";
 import Comunidade from "./pages/Comunidade";
 import Admin from "./pages/Admin";
@@ -103,6 +104,11 @@ const App = () => (
           <Route path="/treinamentos" element={
             <ProtectedRoute>
               <Treinamentos />
+            </ProtectedRoute>
+          } />
+          <Route path="/curso/:courseId" element={
+            <ProtectedRoute>
+              <CourseView />
             </ProtectedRoute>
           } />
           <Route path="/prompts" element={
