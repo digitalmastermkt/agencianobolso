@@ -160,13 +160,13 @@ export function CourseViewerDialog({
     const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
     const youtubeMatch = url.match(youtubeRegex);
     if (youtubeMatch) {
-      return `https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1&rel=0&modestbranding=1`;
+      return `https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=0&rel=0&modestbranding=1&enablejsapi=1`;
     }
 
     const vimeoRegex = /(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/)(\d+)/;
     const vimeoMatch = url.match(vimeoRegex);
     if (vimeoMatch) {
-      return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=0`;
     }
 
     return url;
@@ -243,6 +243,7 @@ export function CourseViewerDialog({
 
               {/* Video iframe */}
               <iframe
+                key={currentLesson.id}
                 src={getEmbedUrl(currentLesson.video_url)}
                 className="w-full h-full"
                 frameBorder="0"
@@ -273,7 +274,17 @@ export function CourseViewerDialog({
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Button
+                    variant="outline"
+                    onClick={goToPreviousLesson}
+                    disabled={allLessons.findIndex(l => l.id === currentLesson.id) === 0}
+                    className="flex items-center gap-2"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Aula Anterior
+                  </Button>
+                  
                   <Button
                     variant="default"
                     onClick={() => markLessonCompleted(currentLesson.id)}
@@ -337,10 +348,16 @@ export function CourseViewerDialog({
                           return (
                             <Card 
                               key={lesson.id} 
-                              className={`cursor-pointer transition-colors ${
-                                isCurrent ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/50"
+                              className={`cursor-pointer transition-all duration-200 ${
+                                isCurrent ? "ring-2 ring-primary bg-primary/5 shadow-md" : "hover:bg-muted/50 hover:shadow-sm"
                               }`}
-                              onClick={() => setCurrentLesson(lesson)}
+                              onClick={() => {
+                                setCurrentLesson(lesson);
+                                toast({
+                                  title: "Aula selecionada",
+                                  description: `Carregando: ${lesson.title}`
+                                });
+                              }}
                             >
                               <CardContent className="p-3">
                                 <div className="flex items-start gap-3">
