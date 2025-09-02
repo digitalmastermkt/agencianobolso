@@ -107,7 +107,7 @@ export function CourseViewerDialog({
     }
   };
 
-  const markLessonCompleted = async (lessonId: string) => {
+  const markLessonCompleted = async (lessonId: string, goToNext: boolean = false) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
@@ -124,10 +124,29 @@ export function CourseViewerDialog({
       if (error) throw error;
 
       setLessonProgress(prev => ({ ...prev, [lessonId]: true }));
-      toast({
-        title: "Aula concluída!",
-        description: "Seu progresso foi salvo."
-      });
+      
+      if (goToNext) {
+        const currentIndex = allLessons.findIndex(l => l.id === lessonId);
+        if (currentIndex < allLessons.length - 1) {
+          setTimeout(() => {
+            setCurrentLesson(allLessons[currentIndex + 1]);
+            toast({
+              title: "Aula concluída!",
+              description: `Avançando para: ${allLessons[currentIndex + 1].title}`
+            });
+          }, 500);
+        } else {
+          toast({
+            title: "Parabéns! Curso concluído!",
+            description: "Você concluiu todas as aulas deste curso."
+          });
+        }
+      } else {
+        toast({
+          title: "Aula concluída!",
+          description: "Seu progresso foi salvo."
+        });
+      }
     } catch (error) {
       console.error("Error marking lesson as completed:", error);
       toast({
@@ -243,7 +262,7 @@ export function CourseViewerDialog({
 
               {/* Video iframe */}
               <iframe
-                key={currentLesson.id}
+                key={`lesson-${currentLesson.id}-${Date.now()}`}
                 src={getEmbedUrl(currentLesson.video_url)}
                 className="w-full h-full"
                 frameBorder="0"
@@ -298,6 +317,19 @@ export function CourseViewerDialog({
                     )}
                     {lessonProgress[currentLesson.id] ? "Aula Concluída" : "Marcar como Concluída"}
                   </Button>
+
+                  {!lessonProgress[currentLesson.id] && (
+                    <Button
+                      variant="default"
+                      onClick={() => markLessonCompleted(currentLesson.id, true)}
+                      disabled={lessonProgress[currentLesson.id]}
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                    >
+                      <Check className="h-4 w-4" />
+                      <ChevronRight className="h-4 w-4" />
+                      Concluir e Avançar
+                    </Button>
+                  )}
                   
                   <Button
                     variant="outline"
