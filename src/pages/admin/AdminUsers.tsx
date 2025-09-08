@@ -69,23 +69,21 @@ export default function AdminUsers() {
           .or(`subscription_end.is.null,subscription_end.gt.${nowISO}`),
         supabase
           .from("profiles")
-          .select(`
-            *,
-            subscribers!subscribers_user_id_fkey (
-              subscribed, 
-              subscription_tier, 
-              subscription_end, 
-              email,
-              stripe_customer_id
-            )
-          `)
+          .select("*")
           .order("created_at", { ascending: false })
       ]);
+
+      // Buscar dados de subscription separadamente
+      const { data: subscribersData, error: subscribersError } = await supabase
+        .from("subscribers")
+        .select("user_id, subscribed, subscription_tier, subscription_end, email, stripe_customer_id");
 
       console.log("📊 Resultado das queries:");
       console.log("Total users count:", totalRes.count);
       console.log("Users data:", usersRes.data);
       console.log("Users error:", usersRes.error);
+      console.log("Subscribers data:", subscribersData);
+      console.log("Subscribers error:", subscribersError);
 
       setTotalUsers(totalRes.count ?? 0);
       setNewToday(newTodayRes.count ?? 0);
@@ -106,15 +104,21 @@ export default function AdminUsers() {
         return acc;
       }, {} as Record<string, number>);
 
+      // Criar mapa de subscriptions por user_id
+      const subscriptionsByUser = (subscribersData || []).reduce((acc, sub) => {
+        acc[sub.user_id] = sub;
+        return acc;
+      }, {} as Record<string, any>);
+
       const processedUsers = (usersRes.data || []).map((user: any) => {
         console.log("🔄 Processando usuário:", user);
-        const subscription = user.subscribers?.[0];
+        const subscription = subscriptionsByUser[user.user_id];
         return {
           ...user,
           subscription_tier: subscription?.subscribed ? (subscription.subscription_tier || 'Gratuito') : 'Gratuito',
           subscribed: subscription?.subscribed || false,
           subscription_end: subscription?.subscription_end,
-          email: subscription?.email || `user${user.id.slice(0, 8)}@exemplo.com`,
+          email: subscription?.email || user.display_name || `user${user.id.slice(0, 8)}@exemplo.com`,
           whatsapp: user.whatsapp || `(${Math.floor(Math.random() * 90 + 10)}) ${Math.floor(Math.random() * 90000 + 10000)}-${Math.floor(Math.random() * 9000 + 1000)}`,
           code: `GE${Math.floor(Math.random() * 900000 + 100000)}`,
           status: user.status || 'ativo',
