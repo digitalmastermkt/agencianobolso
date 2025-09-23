@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionPanel } from "@/components/subscriptions/SubscriptionPanel";
+import { TrialStatusCard } from "@/components/TrialStatusCard";
 
 interface AgentStats {
   id: string;
@@ -190,6 +191,11 @@ export default function Dashboard() {
 
           <div className={highlightSubscription ? "ring-2 ring-primary rounded-lg p-1 mb-4" : ""}>
             <SubscriptionPanel />
+          </div>
+
+          {/* Trial Status */}
+          <div className="mb-6">
+            <TrialStatusCard />
           </div>
 
           {/* Agents Grid with Stats */}

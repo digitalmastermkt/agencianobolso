@@ -278,59 +278,98 @@ serve(async (req) => {
 
     // Save to database and track credits if userId is provided
     if (userId) {
+      console.log(`🔍 Verificando créditos para usuário: ${userId}`);
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       
-      // Get user's subscription and current credits usage
-      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      // Buscar informações do usuário incluindo dados do trial
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('display_name, trial_start_date, trial_end_date, daily_credits_limit, is_trial_active')
+        .eq('user_id', userId)
+        .single();
       
-      const [userProfile, creditsUsage, planSettings] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select(`
-            *,
-            subscribers!subscribers_user_id_fkey (
-              subscription_tier,
-              subscribed
-            )
-          `)
-          .eq('user_id', userId)
-          .maybeSingle(),
-        supabase
-          .from('user_credits_usage')
-          .select('credits_used')
-          .eq('user_id', userId)
-          .eq('month_year', currentMonth),
-        supabase
-          .from('plan_settings')
-          .select('plan, monthly_credits')
-      ]);
-
-      if (userProfile.error || !userProfile.data) {
-        throw new Error('User not found');
+      if (profileError) {
+        console.error('❌ Erro ao buscar perfil:', profileError);
+        throw new Error('Erro ao verificar dados do usuário');
       }
 
-      const subscription = userProfile.data.subscribers?.[0];
-      const userPlan = subscription?.subscribed ? (subscription.subscription_tier || 'Gratuito') : 'Gratuito';
-      
-      // Get plan limits
-      const planConfig = planSettings.data?.find(p => p.plan === userPlan);
-      const monthlyLimit = planConfig?.monthly_credits || 0;
-      
-      // Calculate current usage
-      const currentUsage = (creditsUsage.data || []).reduce((total, usage) => total + usage.credits_used, 0);
-      
-      // Free users get special treatment for 'vendas' agent
-      if (!subscription?.subscribed && agentType !== 'vendas') {
-        throw new Error('Este agente requer um plano pago. Usuários gratuitos podem usar apenas o agente de vendas.');
+      // Verificar se está em trial ativo
+      const isTrialActive = profile?.is_trial_active && 
+        profile?.trial_end_date && 
+        new Date(profile.trial_end_date) > new Date();
+
+      console.log('🎯 Status do trial:', { 
+        isTrialActive, 
+        trialEnd: profile?.trial_end_date,
+        dailyLimit: profile?.daily_credits_limit 
+      });
+
+      if (isTrialActive) {
+        // Verificar limite diário de créditos para usuários em trial
+        const { data: dailyUsage, error: dailyUsageError } = await supabase
+          .rpc('get_user_daily_credits_usage', { p_user_id: userId });
+
+        if (dailyUsageError) {
+          console.error('❌ Erro ao buscar uso diário:', dailyUsageError);
+          throw new Error('Erro ao verificar uso diário de créditos');
+        }
+
+        const dailyLimit = profile?.daily_credits_limit || 10;
+        const dailyUsed = dailyUsage || 0;
+
+        console.log(`📊 Trial - Créditos diários: ${dailyUsed}/${dailyLimit}`);
+
+        if (dailyUsed >= dailyLimit) {
+          console.log('🚫 Limite diário de créditos excedido no trial');
+          throw new Error(`Limite diário de créditos excedido (${dailyUsed}/${dailyLimit}). Volte amanhã ou faça upgrade para acesso ilimitado.`);
+        }
+      } else {
+        // Verificar status da assinatura para usuários fora do trial
+        const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('check-subscription');
+        
+        if (subscriptionError) {
+          console.error('❌ Erro ao verificar assinatura:', subscriptionError);
+          throw new Error('Erro ao verificar assinatura');
+        }
+
+        console.log('📊 Status da assinatura:', subscriptionData);
+
+        // Verificar acesso ao agente para usuários não-trial
+        if (!subscriptionData.subscribed && agentType !== 'vendas') {
+          throw new Error('Este agente requer um plano pago. Usuários gratuitos podem usar apenas o agente de vendas.');
+        }
+
+        // Obter configurações do plano e uso mensal de créditos
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        
+        const [planSettingsRes, monthlyUsageRes] = await Promise.all([
+          supabase
+            .from('plan_settings')
+            .select('monthly_credits')
+            .eq('plan', subscriptionData.subscription_tier || 'Gratuito')
+            .single(),
+          supabase.rpc('get_user_monthly_credits_usage', { 
+            p_user_id: userId, 
+            p_month_year: currentMonth 
+          })
+        ]);
+
+        const planSettings = planSettingsRes.data;
+        const monthlyUsage = monthlyUsageRes.data || 0;
+        
+        console.log(`📈 Plano: ${subscriptionData.subscription_tier}`);
+        console.log(`💳 Créditos mensais permitidos: ${planSettings?.monthly_credits || 0}`);
+        console.log(`🔥 Créditos usados este mês: ${monthlyUsage}`);
+
+        // Verificar se excedeu o limite mensal
+        if (planSettings && monthlyUsage >= planSettings.monthly_credits) {
+          console.log('🚫 Limite mensal de créditos excedido');
+          throw new Error(`Limite mensal de créditos excedido (${monthlyUsage}/${planSettings.monthly_credits}). Seu plano ${subscriptionData.subscription_tier} permite ${planSettings.monthly_credits} créditos por mês.`);
+        }
       }
-      
-      // Check credit limits for paid users
-      if (subscription?.subscribed && currentUsage >= monthlyLimit) {
-        throw new Error(`Limite de créditos mensais excedido. Seu plano ${userPlan} permite ${monthlyLimit} créditos por mês.`);
-      }
-      
-      // Record the AI generation
-      await supabase
+
+      // Salvar geração no banco
+      const { error: insertError } = await supabase
         .from('ai_generations')
         .insert({
           user_id: userId,
@@ -338,18 +377,32 @@ serve(async (req) => {
           input_data: formData,
           generated_content: generatedContent
         });
-      
-      // Record credit usage (only for paid users or free users using vendas)
-      if (subscription?.subscribed || agentType === 'vendas') {
-        await supabase
-          .from('user_credits_usage')
-          .insert({
-            user_id: userId,
-            agent_type: agentType,
-            credits_used: 1,
-            month_year: currentMonth
-          });
+
+      if (insertError) {
+        console.error('❌ Erro ao salvar geração:', insertError);
+        // Não bloquear a resposta por erro de salvamento
       }
+
+      // Registrar uso de créditos
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      const { error: creditsError } = await supabase
+        .from('user_credits_usage')
+        .insert({
+          user_id: userId,
+          agent_type: agentType,
+          credits_used: 1,
+          month_year: currentMonth,
+          date_used: currentDate
+        });
+
+      if (creditsError) {
+        console.error('❌ Erro ao registrar créditos:', creditsError);
+        // Não bloquear a resposta por erro de registro
+      }
+
+      console.log('✅ Geração salva e créditos registrados com sucesso');
     }
 
     return new Response(

@@ -582,10 +582,14 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          daily_credits_limit: number | null
           display_name: string | null
           id: string
+          is_trial_active: boolean | null
           role: string | null
           status: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
           updated_at: string
           user_id: string
           whatsapp: string | null
@@ -594,10 +598,14 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          daily_credits_limit?: number | null
           display_name?: string | null
           id?: string
+          is_trial_active?: boolean | null
           role?: string | null
           status?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id: string
           whatsapp?: string | null
@@ -606,10 +614,14 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          daily_credits_limit?: number | null
           display_name?: string | null
           id?: string
+          is_trial_active?: boolean | null
           role?: string | null
           status?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id?: string
           whatsapp?: string | null
@@ -814,6 +826,7 @@ export type Database = {
           agent_type: string
           created_at: string
           credits_used: number
+          date_used: string | null
           id: string
           month_year: string
           updated_at: string
@@ -823,6 +836,7 @@ export type Database = {
           agent_type: string
           created_at?: string
           credits_used?: number
+          date_used?: string | null
           id?: string
           month_year: string
           updated_at?: string
@@ -832,6 +846,7 @@ export type Database = {
           agent_type?: string
           created_at?: string
           credits_used?: number
+          date_used?: string | null
           id?: string
           month_year?: string
           updated_at?: string
@@ -1017,9 +1032,17 @@ export type Database = {
           unique_ips: number
         }[]
       }
+      get_user_daily_credits_usage: {
+        Args: { p_date?: string; p_user_id: string }
+        Returns: number
+      }
       get_user_monthly_credits_usage: {
         Args: { p_month_year?: string; p_user_id: string }
         Returns: number
+      }
+      is_user_trial_active: {
+        Args: { p_user_id: string }
+        Returns: boolean
       }
       log_auth_attempt: {
         Args: {

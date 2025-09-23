@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "./useSubscription";
 import { useUserRole } from "./useUserRole";
+import { useTrialStatus } from "./useTrialStatus";
 
 
 export type PlanTier = "Essencial" | "Premium" | "Elite";
@@ -12,6 +13,7 @@ type CourseAccess = { plan: string; course_id: string };
 export function usePlanAccess() {
   const { subscription_tier, subscribed } = useSubscription();
   const { isAdmin } = useUserRole();
+  const { isTrialActive, canUseAgent: canUseAgentTrial } = useTrialStatus();
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<AgentAccess[]>([]);
   const [courses, setCourses] = useState<CourseAccess[]>([]);
@@ -48,11 +50,17 @@ export function usePlanAccess() {
   const canAccessAgent = useCallback(
     (agentKey: string) => {
       if (isAdmin) return true;
+      
+      // Trial users: can access all agents with daily credit limit
+      if (isTrialActive) {
+        return canUseAgentTrial(agentKey);
+      }
+      
       // Free users: allow only the "vendas" agent
       if (!subscribed || !tier) return agentKey === "vendas";
       return agents.some((r) => r.plan === tier && r.agent_key === agentKey);
     },
-    [agents, subscribed, tier, isAdmin]
+    [agents, subscribed, tier, isAdmin, isTrialActive, canUseAgentTrial]
   );
 
   const canAccessCourse = useCallback(
@@ -66,5 +74,5 @@ export function usePlanAccess() {
 
   const summary = useMemo(() => ({ agentsCount: agents.length, coursesCount: courses.length }), [agents.length, courses.length]);
 
-  return { loading, error, canAccessAgent, canAccessCourse, refresh: load, tier, subscribed, summary };
+  return { loading, error, canAccessAgent, canAccessCourse, refresh: load, tier, subscribed, summary, isTrialActive };
 }
