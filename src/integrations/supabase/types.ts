@@ -47,13 +47,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "ai_generations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       auth_attempts: {
@@ -126,13 +119,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "community_comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       community_post_likes: {
@@ -167,13 +153,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "community_post_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["user_id"]
           },
         ]
@@ -215,13 +194,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "community_posts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["user_id"]
           },
         ]
@@ -420,13 +392,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "lesson_progress_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["user_id"]
           },
         ]
@@ -708,14 +673,31 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "prompts_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["user_id"]
-          },
         ]
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          display_name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       security_audit_log: {
         Row: {
@@ -861,13 +843,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "trainings_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       user_credits_usage: {
@@ -947,13 +922,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "user_enrollments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       user_notifications: {
@@ -994,27 +962,7 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          display_name: string | null
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          display_name?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          display_name?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       check_auth_rate_limit: {
