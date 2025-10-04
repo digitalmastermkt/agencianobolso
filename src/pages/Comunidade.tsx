@@ -73,33 +73,54 @@ export default function Comunidade() {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: postsData, error: postsError } = await supabase
         .from('community_posts')
-        .select(`
-          *,
-          public_profiles (display_name, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (postsError) throw postsError;
+
+      if (!postsData) {
+        setPosts([]);
+        return;
+      }
+
+      // Fetch all unique user profiles
+      const userIds = [...new Set(postsData.map(post => post.user_id))];
+      const { data: profilesData } = await supabase
+        .from('public_profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
+
+      const profilesMap = new Map(
+        profilesData?.map(p => [p.user_id, p]) || []
+      );
 
       // Check if user liked each post
-      if (user && data) {
+      if (user && postsData) {
         const postsWithLikes = await Promise.all(
-          data.map(async (post) => {
+          postsData.map(async (post) => {
             const { data: like } = await supabase
               .from('community_post_likes')
               .select('id')
               .eq('user_id', user.id)
               .eq('post_id', post.id)
-              .single();
+              .maybeSingle();
 
-            return { ...post, is_liked: !!like };
+            return { 
+              ...post, 
+              is_liked: !!like,
+              public_profiles: profilesMap.get(post.user_id) || { display_name: 'Usuário', avatar_url: null }
+            };
           })
         );
         setPosts(postsWithLikes);
       } else {
-        setPosts(data || []);
+        const postsWithProfiles = postsData.map(post => ({
+          ...post,
+          public_profiles: profilesMap.get(post.user_id) || { display_name: 'Usuário', avatar_url: null }
+        }));
+        setPosts(postsWithProfiles);
       }
     } catch (error) {
       console.error('Erro ao carregar posts:', error);
@@ -169,17 +190,36 @@ export default function Comunidade() {
 
   const fetchComments = async (postId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data: commentsData, error: commentsError } = await supabase
         .from('community_comments')
-        .select(`
-          *,
-          public_profiles (display_name, avatar_url)
-        `)
+        .select('*')
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      setComments(data || []);
+      if (commentsError) throw commentsError;
+
+      if (!commentsData) {
+        setComments([]);
+        return;
+      }
+
+      // Fetch all unique user profiles for comments
+      const userIds = [...new Set(commentsData.map(comment => comment.user_id))];
+      const { data: profilesData } = await supabase
+        .from('public_profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
+
+      const profilesMap = new Map(
+        profilesData?.map(p => [p.user_id, p]) || []
+      );
+
+      const commentsWithProfiles = commentsData.map(comment => ({
+        ...comment,
+        public_profiles: profilesMap.get(comment.user_id) || { display_name: 'Usuário', avatar_url: null }
+      }));
+
+      setComments(commentsWithProfiles);
     } catch (error) {
       console.error('Erro ao carregar comentários:', error);
     }
