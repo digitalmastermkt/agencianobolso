@@ -3,39 +3,40 @@
 @tailwind utilities;
 
 /* SparkAgen AI - Design System for Creative AI Platform
-Vibrant colors and gradients for creativity and innovation
+Tech & AI inspired with cyberpunk vibes
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Base colors - Clean and modern */
+    /* Base colors - Dark tech theme */
     --background: 0 0% 100%;
-    --foreground: 224 71% 4%;
+    --foreground: 222 47% 11%;
 
-    /* Creative primary palette - Purple gradient theme */
-    --primary: 262 83% 58%;
+    /* AI Tech primary palette - Electric blue/cyan */
+    --primary: 197 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 280 100% 70%;
+    --primary-glow: 180 100% 60%;
     
-    /* Secondary - Complementary blue */
-    --secondary: 213 94% 68%;
+    /* Secondary - Neon purple */
+    --secondary: 270 100% 65%;
     --secondary-foreground: 0 0% 100%;
     
-    /* Accent - Energetic pink */
-    --accent: 328 86% 70%;
+    /* Accent - Electric pink */
+    --accent: 320 100% 60%;
     --accent-foreground: 0 0% 100%;
     
-    /* Creative gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 100% 70%));
-    --gradient-secondary: linear-gradient(135deg, hsl(213 94% 68%), hsl(195 100% 75%));
-    --gradient-accent: linear-gradient(135deg, hsl(328 86% 70%), hsl(340 82% 82%));
-    --gradient-creative: linear-gradient(135deg, hsl(262 83% 58%), hsl(213 94% 68%), hsl(328 86% 70%));
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(240 20% 99%));
+    /* Tech gradients with cyberpunk feel */
+    --gradient-primary: linear-gradient(135deg, hsl(197 100% 50%), hsl(270 100% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(180 100% 60%), hsl(197 100% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(320 100% 60%), hsl(270 100% 65%));
+    --gradient-creative: linear-gradient(135deg, hsl(197 100% 50%) 0%, hsl(270 100% 65%) 50%, hsl(320 100% 60%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(210 100% 98%), hsl(220 60% 97%));
+    --gradient-dark: linear-gradient(135deg, hsl(222 47% 11%), hsl(230 35% 7%));
     
     /* Interface colors */
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card-foreground: 222 47% 11%;
     
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
@@ -50,12 +51,13 @@ All colors MUST be HSL.
     --input: 240 20% 92%;
     --ring: 262 83% 58%;
     
-    /* Creative shadows and glows */
-    --shadow-creative: 0 10px 40px -12px hsl(262 83% 58% / 0.25);
-    --shadow-glow: 0 0 40px hsl(280 100% 70% / 0.3);
-    --shadow-card: 0 4px 20px -2px hsl(262 83% 58% / 0.1);
+    /* Tech shadows and glows */
+    --shadow-creative: 0 10px 40px -12px hsl(197 100% 50% / 0.35);
+    --shadow-glow: 0 0 60px hsl(197 100% 50% / 0.4);
+    --shadow-card: 0 4px 30px -2px hsl(197 100% 50% / 0.15);
+    --shadow-neon: 0 0 20px hsl(270 100% 65% / 0.5), 0 0 40px hsl(197 100% 50% / 0.3);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -120,6 +122,11 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
   }
 }
 
@@ -130,5 +137,22 @@ All colors MUST be HSL.
   
   .animation-delay-2000 {
     animation-delay: 2s;
+  }
+  
+  .tech-grid {
+    background-image: 
+      linear-gradient(hsl(197 100% 50% / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(197 100% 50% / 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 20px hsl(197 100% 50% / 0.5), 0 0 40px hsl(270 100% 65% / 0.3);
+  }
+  
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }

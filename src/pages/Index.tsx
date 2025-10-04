@@ -20,33 +20,39 @@ const Index = () => {
     <Layout>
       <div className="min-h-screen">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-creative py-20 lg:py-32">
-          <div className="absolute inset-0 bg-black/20"></div>
+        <section className="relative overflow-hidden bg-gradient-dark py-20 lg:py-32">
+          <div className="absolute inset-0 tech-grid opacity-30"></div>
+          <div className="absolute inset-0 bg-gradient-creative opacity-20"></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <div className="animate-float">
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
+              <div className="animate-slide-up">
+                <div className="inline-block mb-4">
+                  <Badge className="bg-primary/10 text-primary border-primary/20 text-sm px-4 py-1.5 animate-pulse-glow">
+                    🤖 Powered by AI
+                  </Badge>
+                </div>
+                <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 glow-text">
                   Agência no Bolso AI
-                  <span className="block text-2xl md:text-3xl lg:text-4xl font-normal mt-4 text-white/90">
-                    Criatividade Inteligente para Negócios Locais
+                  <span className="block text-2xl md:text-3xl lg:text-4xl font-normal mt-4 text-white/90 bg-gradient-creative bg-clip-text text-transparent">
+                    Inteligência Artificial para Negócios Locais
                   </span>
                 </h1>
-                <p className="text-xl md:text-2xl text-white/80 max-w-4xl mx-auto mb-10 leading-relaxed">
-                  Plataforma criativa de IA com agentes especializados em vídeos curtos, 
-                  stories, banners e engajamento direto nas redes sociais.
+                <p className="text-xl md:text-2xl text-white/70 max-w-4xl mx-auto mb-10 leading-relaxed">
+                  Agentes de IA especializados que criam conteúdo viral para suas redes sociais. 
+                  Vídeos curtos, stories interativos, banners profissionais e muito mais.
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link to="/agentes">
-                  <Button variant="creative" size="xl" className="animate-glow">
-                    <Sparkles className="w-6 h-6 mr-3" />
+                  <Button variant="creative" size="xl" className="shadow-neon hover:shadow-glow transition-all duration-300 group">
+                    <Sparkles className="w-6 h-6 mr-3 group-hover:rotate-180 transition-transform duration-500" />
                     Começar Agora
-                    <ArrowRight className="w-6 h-6 ml-3" />
+                    <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
                 <Link to="/treinamentos">
-                  <Button variant="outline" size="xl" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+                  <Button variant="outline" size="xl" className="glass-effect border-white/30 text-white hover:bg-white/10 hover:border-white/50 transition-all">
                     <BookOpen className="w-6 h-6 mr-3" />
                     Ver Treinamentos
                   </Button>
@@ -57,10 +63,14 @@ const Index = () => {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 bg-gradient-subtle">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-20 bg-gradient-subtle relative overflow-hidden">
+          <div className="absolute inset-0 tech-grid opacity-10"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+                IA Especializada
+              </Badge>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
                 6 Agentes Especializados
               </h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -70,10 +80,10 @@ const Index = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Agent Cards */}
-              <Card className="group hover:shadow-card transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
                       <TrendingUp className="w-6 h-6" />
                     </div>
                     <div>
@@ -89,10 +99,10 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-card transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 text-white">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
                       <Heart className="w-6 h-6" />
                     </div>
                     <div>
@@ -108,10 +118,10 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-card transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 text-white">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
                       <Zap className="w-6 h-6" />
                     </div>
                     <div>
@@ -127,10 +137,10 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-card transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 text-white">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
                       <MessageCircle className="w-6 h-6" />
                     </div>
                     <div>
@@ -146,10 +156,10 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-card transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-orange-500 to-amber-600 text-white">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
                       <Heart className="w-6 h-6" />
                     </div>
                     <div>
@@ -165,10 +175,10 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-card transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 text-white">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
                       <Sparkles className="w-6 h-6" />
                     </div>
                     <div>
@@ -187,10 +197,10 @@ const Index = () => {
 
             <div className="text-center mt-12">
               <Link to="/agentes">
-                <Button variant="gradient" size="lg">
-                  <Sparkles className="w-5 h-5 mr-2" />
+                <Button variant="gradient" size="lg" className="shadow-neon hover:shadow-glow transition-all group">
+                  <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
                   Explorar Todos os Agentes
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
             </div>
@@ -198,25 +208,32 @@ const Index = () => {
         </section>
 
         {/* Planos */}
-        <section className="py-20 bg-gradient-subtle/50">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-20 bg-gradient-dark relative overflow-hidden">
+          <div className="absolute inset-0 tech-grid opacity-20"></div>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="text-center mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Planos</h2>
-              <p className="text-muted-foreground">Escolha o plano e conclua o checkout em poucos cliques.</p>
+              <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+                🚀 Escolha seu Plano
+              </Badge>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2 glow-text">Planos</h2>
+              <p className="text-white/70">Escolha o plano e conclua o checkout em poucos cliques.</p>
             </div>
             <SubscriptionPanel />
           </div>
         </section>
 
         {/* Platform Features */}
-        <section className="py-20">
+        <section className="py-20 bg-gradient-subtle">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              <Badge className="mb-4 bg-secondary/10 text-secondary border-secondary/20">
                 Plataforma Completa
+              </Badge>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Mais que IA, uma Experiência Completa
               </h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Mais que agentes IA - uma experiência completa para criadores e negócios locais.
+                Treinamentos, comunidade e biblioteca de prompts. Tudo que você precisa para criar conteúdo viral.
               </p>
             </div>
 
@@ -255,24 +272,26 @@ const Index = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-gradient-primary/10">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+        <section className="py-20 bg-gradient-dark relative overflow-hidden">
+          <div className="absolute inset-0 tech-grid opacity-20"></div>
+          <div className="absolute inset-0 bg-gradient-creative opacity-10"></div>
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-6 glow-text">
               Transforme sua criatividade em resultados
             </h2>
-            <p className="text-xl text-muted-foreground mb-10">
+            <p className="text-xl text-white/70 mb-10">
               Junte-se a milhares de criadores e negócios que já estão usando IA 
               para criar conteúdo profissional e viral.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/agentes">
-                <Button variant="creative" size="xl">
-                  <Zap className="w-6 h-6 mr-3" />
+                <Button variant="creative" size="xl" className="shadow-neon hover:shadow-glow transition-all group">
+                  <Zap className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" />
                   Começar Agora!
                 </Button>
               </Link>
               <Link to="/comunidade">
-                <Button variant="outline" size="xl">
+                <Button variant="outline" size="xl" className="glass-effect border-white/30 text-white hover:bg-white/10 hover:border-white/50 transition-all">
                   <Users className="w-6 h-6 mr-3" />
                   Ver Comunidade
                 </Button>

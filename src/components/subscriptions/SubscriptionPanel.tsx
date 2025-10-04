@@ -173,15 +173,7 @@ export function SubscriptionPanel() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <PlanCard
-                icon={<Sparkles className="w-5 h-5" />}
-                title="Gratuito"
-                price="R$ 0/mês"
-                features={["1 agente liberado: Vendas"]}
-                onSelect={handleStartFree}
-                ctaLabel="Começar grátis"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <PlanCard
                 icon={<TrendingUp className="w-5 h-5" />}
                 title="Essencial"
