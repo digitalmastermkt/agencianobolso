@@ -112,16 +112,36 @@ export function EditUserDialog({ user, open, onOpenChange, onUpdate }: EditUserD
         });
       }
 
-      // Atualizar perfil
+      // Atualizar perfil (sem role, que agora está em user_roles)
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
           display_name: displayName,
-          role: role,
         })
         .eq("user_id", user.user_id);
 
       if (profileError) throw profileError;
+
+      // Atualizar role na tabela user_roles se houver mudança
+      if (isRoleChange) {
+        // Primeiro, remover a role antiga
+        const { error: deleteError } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", user.user_id);
+
+        if (deleteError) throw deleteError;
+
+        // Depois, inserir a nova role
+        const { error: insertError } = await supabase
+          .from("user_roles")
+          .insert([{
+            user_id: user.user_id,
+            role: role as 'admin' | 'moderator' | 'user',
+          }]);
+
+        if (insertError) throw insertError;
+      }
 
       // Atualizar subscription se necessário
       if (plan !== user.subscription_tier || subscribed !== user.subscribed) {

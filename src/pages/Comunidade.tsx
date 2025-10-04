@@ -77,7 +77,7 @@ export default function Comunidade() {
         .from('community_posts')
         .select(`
           *,
-          public_profiles!user_id (display_name, avatar_url)
+          public_profiles (display_name, avatar_url)
         `)
         .order('created_at', { ascending: false });
 
@@ -173,7 +173,7 @@ export default function Comunidade() {
         .from('community_comments')
         .select(`
           *,
-          public_profiles!user_id (display_name, avatar_url)
+          public_profiles (display_name, avatar_url)
         `)
         .eq('post_id', postId)
         .order('created_at', { ascending: true });

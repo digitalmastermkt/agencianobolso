@@ -20,10 +20,12 @@ export function useUserRole() {
 
       try {
         const { data, error } = await supabase
-          .from('profiles')
+          .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
-          .single();
+          .order('role', { ascending: true }) // admin < moderator < user
+          .limit(1)
+          .maybeSingle();
 
         console.log("🔒 useUserRole: Resultado da query", { data, error });
 
