@@ -25,7 +25,7 @@ interface Post {
   comments_count: number;
   created_at: string;
   user_id: string;
-  profiles: Profile;
+  public_profiles: Profile;
   is_liked?: boolean;
 }
 
@@ -34,7 +34,7 @@ interface Comment {
   content: string;
   created_at: string;
   user_id: string;
-  profiles: Profile;
+  public_profiles: Profile;
 }
 
 export default function Comunidade() {
@@ -77,7 +77,7 @@ export default function Comunidade() {
         .from('community_posts')
         .select(`
           *,
-          profiles:user_id (display_name, avatar_url)
+          public_profiles!user_id (display_name, avatar_url)
         `)
         .order('created_at', { ascending: false });
 
@@ -173,7 +173,7 @@ export default function Comunidade() {
         .from('community_comments')
         .select(`
           *,
-          profiles:user_id (display_name, avatar_url)
+          public_profiles!user_id (display_name, avatar_url)
         `)
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
@@ -293,16 +293,16 @@ export default function Comunidade() {
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        {post.profiles?.avatar_url ? (
-                          <AvatarImage src={post.profiles.avatar_url} alt="Avatar" />
+                        {post.public_profiles?.avatar_url ? (
+                          <AvatarImage src={post.public_profiles.avatar_url} alt="Avatar" />
                         ) : (
                           <AvatarFallback>
-                            {getUserInitials(post.profiles?.display_name || "")}
+                            {getUserInitials(post.public_profiles?.display_name || "")}
                           </AvatarFallback>
                         )}
                       </Avatar>
                       <div>
-                        <p className="font-medium">{post.profiles?.display_name || "Usuário"}</p>
+                        <p className="font-medium">{post.public_profiles?.display_name || "Usuário"}</p>
                         <p className="text-sm text-muted-foreground">
                           {formatDistanceToNow(new Date(post.created_at), { 
                             addSuffix: true, 
@@ -360,17 +360,17 @@ export default function Comunidade() {
                         {comments.map((comment) => (
                           <div key={comment.id} className="flex gap-3">
                             <Avatar className="h-8 w-8">
-                              {comment.profiles?.avatar_url ? (
-                                <AvatarImage src={comment.profiles.avatar_url} alt="Avatar" />
+                              {comment.public_profiles?.avatar_url ? (
+                                <AvatarImage src={comment.public_profiles.avatar_url} alt="Avatar" />
                               ) : (
                                 <AvatarFallback className="text-xs">
-                                  {getUserInitials(comment.profiles?.display_name || "")}
+                                  {getUserInitials(comment.public_profiles?.display_name || "")}
                                 </AvatarFallback>
                               )}
                             </Avatar>
                             <div className="flex-1">
                               <div className="bg-muted rounded-lg p-3">
-                                <p className="font-medium text-sm">{comment.profiles?.display_name || "Usuário"}</p>
+                                <p className="font-medium text-sm">{comment.public_profiles?.display_name || "Usuário"}</p>
                                 <p className="text-sm">{comment.content}</p>
                               </div>
                               <p className="text-xs text-muted-foreground mt-1">
