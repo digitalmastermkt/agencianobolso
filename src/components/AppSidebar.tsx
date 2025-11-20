@@ -17,7 +17,8 @@ import {
   FileText,
   Users,
   CreditCard,
-  Calendar
+  Calendar,
+  Shield
 } from "lucide-react";
 import {
   Sidebar,
@@ -140,6 +141,12 @@ const adminItems = [
     url: "/admin/stripe",
     icon: Settings,
     color: "text-orange-600"
+  },
+  {
+    title: "Logs de Auditoria",
+    url: "/admin/audit-logs",
+    icon: Shield,
+    color: "text-red-600"
   }
 ];
 

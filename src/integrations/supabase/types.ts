@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access_audit: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          resource_ids: string[] | null
+          resource_type: string
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          resource_ids?: string[] | null
+          resource_type: string
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          resource_ids?: string[] | null
+          resource_type?: string
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       ai_generations: {
         Row: {
           agent_type: string
@@ -1084,6 +1123,16 @@ export type Database = {
         Returns: boolean
       }
       is_user_trial_active: { Args: { p_user_id: string }; Returns: boolean }
+      log_admin_access: {
+        Args: {
+          p_action: string
+          p_metadata?: Json
+          p_resource_ids?: string[]
+          p_resource_type?: string
+          p_target_user_id?: string
+        }
+        Returns: undefined
+      }
       log_auth_attempt: {
         Args: {
           p_email?: string

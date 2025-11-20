@@ -42,6 +42,20 @@ export function EditUserStatusDialog({ open, onOpenChange, user, onUserUpdate }:
 
       if (error) throw error;
 
+      // Log admin access
+      await supabase.rpc('log_admin_access', {
+        p_action: 'edit_user_status',
+        p_target_user_id: user.user_id,
+        p_resource_type: 'profiles',
+        p_metadata: {
+          changes: {
+            whatsapp: whatsapp !== (user.whatsapp || ""),
+            status: status !== user.status
+          },
+          new_status: status
+        }
+      });
+
       toast({
         title: "Usuário atualizado",
         description: "Dados do usuário foram atualizados com sucesso"
