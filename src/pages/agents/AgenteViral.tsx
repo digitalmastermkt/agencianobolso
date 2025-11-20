@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToastAction } from "@/components/ui/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Sparkles, Copy, Loader2, RefreshCw } from "lucide-react";
+import { Zap, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -146,85 +147,157 @@ export default function AgenteViral() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="nome_negocio">Nome do Negócio</Label>
-                    <Input
-                      id="nome_negocio"
-                      value={formData.nome_negocio}
-                      onChange={(e) => setFormData({...formData, nome_negocio: e.target.value})}
-                      placeholder="Ex: MinhaEmpresa"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="produto">Produto/Serviço</Label>
-                    <Input
-                      id="produto"
-                      value={formData.produto}
-                      onChange={(e) => setFormData({...formData, produto: e.target.value})}
-                      placeholder="Ex: Curso de marketing digital"
-                      required
-                    />
-                  </div>
+                  <TooltipProvider>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="nome_negocio">Nome do Negócio</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Identificação do seu negócio ou marca</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input
+                        id="nome_negocio"
+                        value={formData.nome_negocio}
+                        onChange={(e) => setFormData({...formData, nome_negocio: e.target.value})}
+                        placeholder="Ex: MinhaEmpresa"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="produto">Produto/Serviço</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>O que você quer promover neste vídeo viral?</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input
+                        id="produto"
+                        value={formData.produto}
+                        onChange={(e) => setFormData({...formData, produto: e.target.value})}
+                        placeholder="Ex: Curso de marketing digital"
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="localizacao">Localização</Label>
-                    <Input
-                      id="localizacao"
-                      value={formData.localizacao}
-                      onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
-                      placeholder="Ex: São Paulo, SP"
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="localizacao">Localização</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Cidade/região (ajuda a personalizar o conteúdo)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input
+                        id="localizacao"
+                        value={formData.localizacao}
+                        onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
+                        placeholder="Ex: São Paulo, SP"
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="publico_alvo">Público-Alvo</Label>
-                    <Input
-                      id="publico_alvo"
-                      value={formData.publico_alvo}
-                      onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})}
-                      placeholder="Ex: Jovens de 18-30 anos interessados em empreendedorismo"
-                      required
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="publico_alvo">Público-Alvo</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Quem você quer que compartilhe este conteúdo?</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input
+                        id="publico_alvo"
+                        value={formData.publico_alvo}
+                        onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})}
+                        placeholder="Ex: Jovens de 18-30 anos interessados em empreendedorismo"
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="beneficio">Principal Benefício</Label>
-                    <Textarea
-                      id="beneficio"
-                      value={formData.beneficio}
-                      onChange={(e) => setFormData({...formData, beneficio: e.target.value})}
-                      placeholder="Ex: Aprenda a ganhar dinheiro online em 30 dias"
-                      required
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="beneficio">Principal Benefício</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>O que torna sua oferta irresistível?</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Textarea
+                        id="beneficio"
+                        value={formData.beneficio}
+                        onChange={(e) => setFormData({...formData, beneficio: e.target.value})}
+                        placeholder="Ex: Aprenda a ganhar dinheiro online em 30 dias"
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="oferta">Oferta</Label>
-                    <Input
-                      id="oferta"
-                      value={formData.oferta}
-                      onChange={(e) => setFormData({...formData, oferta: e.target.value})}
-                      placeholder="Ex: 50% de desconto por tempo limitado"
-                      required
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="oferta">Oferta</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Promoção ou diferencial que gera urgência</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input
+                        id="oferta"
+                        value={formData.oferta}
+                        onChange={(e) => setFormData({...formData, oferta: e.target.value})}
+                        placeholder="Ex: 50% de desconto por tempo limitado"
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="tom">Tom de Voz</Label>
-                    <Select value={formData.tom} onValueChange={(value) => setFormData({...formData, tom: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="jovem">Jovem e Descontraído</SelectItem>
-                        <SelectItem value="energetico">Energético</SelectItem>
-                        <SelectItem value="provocativo">Provocativo</SelectItem>
-                        <SelectItem value="inspirador">Inspirador</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="tom">Tom de Voz</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Escolha o estilo de comunicação para viralizar</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Select value={formData.tom} onValueChange={(value) => setFormData({...formData, tom: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="jovem">Jovem e Descontraído</SelectItem>
+                          <SelectItem value="energetico">Energético</SelectItem>
+                          <SelectItem value="provocativo">Provocativo</SelectItem>
+                          <SelectItem value="inspirador">Inspirador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </TooltipProvider>
 
                   <Button type="submit" className="w-full" disabled={loading} variant="gradient">
                     {loading ? (

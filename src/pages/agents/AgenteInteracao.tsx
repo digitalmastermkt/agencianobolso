@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToastAction } from "@/components/ui/toast";
-import { MessageCircle, Sparkles, Copy, Loader2, RefreshCw } from "lucide-react";
+import { MessageCircle, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -138,39 +139,71 @@ export default function AgenteInteracao() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="publico_alvo">Público-Alvo</Label>
-                    <Input 
-                      id="publico_alvo" 
-                      value={formData.publico_alvo} 
-                      onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
-                      placeholder="Ex: Mulheres de 25-40 anos interessadas em beleza"
-                      required 
-                    />
-                  </div>
+                  <TooltipProvider>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="publico_alvo">Público-Alvo</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Defina quem você quer alcançar: idade, gênero, interesses</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="publico_alvo" 
+                        value={formData.publico_alvo} 
+                        onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
+                        placeholder="Ex: Mulheres de 25-40 anos interessadas em beleza"
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="produto">Produto/Serviço</Label>
-                    <Input 
-                      id="produto" 
-                      value={formData.produto} 
-                      onChange={(e) => setFormData({...formData, produto: e.target.value})} 
-                      placeholder="Ex: Curso de maquiagem profissional"
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="produto">Produto/Serviço</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>O que você está oferecendo? Seja específico e claro</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="produto" 
+                        value={formData.produto} 
+                        onChange={(e) => setFormData({...formData, produto: e.target.value})} 
+                        placeholder="Ex: Curso de maquiagem profissional"
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="acao_desejada">Ação Desejada</Label>
-                    <Textarea 
-                      id="acao_desejada" 
-                      value={formData.acao_desejada} 
-                      onChange={(e) => setFormData({...formData, acao_desejada: e.target.value})} 
-                      placeholder="Ex: Inscrever-se no curso, baixar e-book, seguir perfil, participar de live"
-                      rows={3}
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="acao_desejada">Ação Desejada</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>O que você quer que façam? Ex: comprar, seguir, inscrever-se</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Textarea 
+                        id="acao_desejada" 
+                        value={formData.acao_desejada} 
+                        onChange={(e) => setFormData({...formData, acao_desejada: e.target.value})} 
+                        placeholder="Ex: Inscrever-se no curso, baixar e-book, seguir perfil, participar de live"
+                        rows={3}
+                        required 
+                      />
+                    </div>
+                  </TooltipProvider>
 
                   <Button type="submit" className="w-full" disabled={loading} variant="gradient">
                     {loading ? (
