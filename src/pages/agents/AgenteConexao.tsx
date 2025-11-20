@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToastAction } from "@/components/ui/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Link as LinkIcon, Sparkles, Copy, Loader2, RefreshCw } from "lucide-react";
+import { Link as LinkIcon, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -139,69 +140,131 @@ export default function AgenteConexao() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="nome_negocio">Nome do Negócio/Marca</Label>
-                    <Input value={formData.nome_negocio} onChange={(e) => setFormData({...formData, nome_negocio: e.target.value})} required />
-                  </div>
+                  <TooltipProvider>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="nome_negocio">Nome do Negócio/Marca</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>O nome que identifica seu negócio ou marca pessoal</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input value={formData.nome_negocio} onChange={(e) => setFormData({...formData, nome_negocio: e.target.value})} required />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="produto">Produto/Serviço</Label>
-                    <Input 
-                      id="produto" 
-                      value={formData.produto} 
-                      onChange={(e) => setFormData({...formData, produto: e.target.value})} 
-                      placeholder="Ex: Consultoria em desenvolvimento pessoal"
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="produto">Produto/Serviço</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Descreva o que você oferece de forma clara e objetiva</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="produto" 
+                        value={formData.produto} 
+                        onChange={(e) => setFormData({...formData, produto: e.target.value})} 
+                        placeholder="Ex: Consultoria em desenvolvimento pessoal"
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="objetivo_story">Objetivo do Story</Label>
-                    <Textarea 
-                      id="objetivo_story" 
-                      value={formData.objetivo_story} 
-                      onChange={(e) => setFormData({...formData, objetivo_story: e.target.value})} 
-                      placeholder="Ex: Mostrar bastidores do trabalho, humanizar a marca, criar identificação"
-                      rows={3}
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="objetivo_story">Objetivo do Story</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Qual emoção você quer despertar? Ex: identificação, confiança</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Textarea 
+                        id="objetivo_story" 
+                        value={formData.objetivo_story} 
+                        onChange={(e) => setFormData({...formData, objetivo_story: e.target.value})} 
+                        placeholder="Ex: Mostrar bastidores do trabalho, humanizar a marca, criar identificação"
+                        rows={3}
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="publico_alvo">Público-Alvo</Label>
-                    <Input 
-                      id="publico_alvo" 
-                      value={formData.publico_alvo} 
-                      onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
-                      placeholder="Ex: Pessoas que buscam crescimento pessoal"
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="publico_alvo">Público-Alvo</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Quem você quer conectar com sua história?</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="publico_alvo" 
+                        value={formData.publico_alvo} 
+                        onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
+                        placeholder="Ex: Pessoas que buscam crescimento pessoal"
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="tom">Tom de Voz</Label>
-                    <Select value={formData.tom} onValueChange={(value) => setFormData({...formData, tom: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tom" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pessoal">Pessoal e Próximo</SelectItem>
-                        <SelectItem value="inspirador">Inspirador</SelectItem>
-                        <SelectItem value="autentico">Autêntico e Vulnerável</SelectItem>
-                        <SelectItem value="motivacional">Motivacional</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="tom">Tom de Voz</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Escolha o estilo de comunicação que melhor se encaixa</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Select value={formData.tom} onValueChange={(value) => setFormData({...formData, tom: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tom" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pessoal">Pessoal e Próximo</SelectItem>
+                          <SelectItem value="inspirador">Inspirador</SelectItem>
+                          <SelectItem value="autentico">Autêntico e Vulnerável</SelectItem>
+                          <SelectItem value="motivacional">Motivacional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div>
-                    <Label htmlFor="link_ou_acao">Link ou Ação Desejada</Label>
-                    <Input 
-                      id="link_ou_acao" 
-                      value={formData.link_ou_acao} 
-                      onChange={(e) => setFormData({...formData, link_ou_acao: e.target.value})} 
-                      placeholder="Ex: Link para o site, DM, agendar conversa"
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="link_ou_acao">Link ou Ação Desejada</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Onde direcionar o público após criar conexão?</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="link_ou_acao" 
+                        value={formData.link_ou_acao} 
+                        onChange={(e) => setFormData({...formData, link_ou_acao: e.target.value})} 
+                        placeholder="Ex: Link para o site, DM, agendar conversa"
+                      />
+                    </div>
+                  </TooltipProvider>
 
                   <Button type="submit" className="w-full" disabled={loading} variant="gradient">
                     {loading ? (

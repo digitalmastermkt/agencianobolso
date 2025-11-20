@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToastAction } from "@/components/ui/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Image, Sparkles, Copy, Loader2, RefreshCw } from "lucide-react";
+import { Image, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -144,97 +145,179 @@ export default function AgenteBanner() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="produto">Produto/Serviço</Label>
-                    <Input 
-                      id="produto" 
-                      value={formData.produto} 
-                      onChange={(e) => setFormData({...formData, produto: e.target.value})} 
-                      placeholder="Ex: Curso de Design Gráfico"
-                      required 
-                    />
-                  </div>
+                  <TooltipProvider>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="produto">Produto/Serviço</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>O que você está promovendo neste banner?</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="produto" 
+                        value={formData.produto} 
+                        onChange={(e) => setFormData({...formData, produto: e.target.value})} 
+                        placeholder="Ex: Curso de Design Gráfico"
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="beneficio">Principal Benefício</Label>
-                    <Textarea 
-                      id="beneficio" 
-                      value={formData.beneficio} 
-                      onChange={(e) => setFormData({...formData, beneficio: e.target.value})} 
-                      placeholder="Ex: Aprenda design profissional em 30 dias"
-                      rows={2}
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="beneficio">Principal Benefício</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Qual o maior ganho para quem comprar? Foque no resultado</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Textarea 
+                        id="beneficio" 
+                        value={formData.beneficio} 
+                        onChange={(e) => setFormData({...formData, beneficio: e.target.value})} 
+                        placeholder="Ex: Aprenda design profissional em 30 dias"
+                        rows={2}
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="publico_alvo">Público-Alvo</Label>
-                    <Input 
-                      id="publico_alvo" 
-                      value={formData.publico_alvo} 
-                      onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
-                      placeholder="Ex: Jovens criativos de 18-35 anos"
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="publico_alvo">Público-Alvo</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Para quem este banner é direcionado?</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="publico_alvo" 
+                        value={formData.publico_alvo} 
+                        onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
+                        placeholder="Ex: Jovens criativos de 18-35 anos"
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="identidade_visual">Identidade Visual</Label>
-                    <Input 
-                      id="identidade_visual" 
-                      value={formData.identidade_visual} 
-                      onChange={(e) => setFormData({...formData, identidade_visual: e.target.value})} 
-                      placeholder="Ex: Moderno, minimalista, cores vibrantes"
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="identidade_visual">Identidade Visual</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Estilo visual: cores, fontes, mood (moderno, elegante, etc.)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="identidade_visual" 
+                        value={formData.identidade_visual} 
+                        onChange={(e) => setFormData({...formData, identidade_visual: e.target.value})} 
+                        placeholder="Ex: Moderno, minimalista, cores vibrantes"
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="objetivo_post">Objetivo do Post</Label>
-                    <Input 
-                      id="objetivo_post" 
-                      value={formData.objetivo_post} 
-                      onChange={(e) => setFormData({...formData, objetivo_post: e.target.value})} 
-                      placeholder="Ex: Gerar inscrições no curso"
-                      required 
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="objetivo_post">Objetivo do Post</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Qual ação você espera do público?</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="objetivo_post" 
+                        value={formData.objetivo_post} 
+                        onChange={(e) => setFormData({...formData, objetivo_post: e.target.value})} 
+                        placeholder="Ex: Gerar inscrições no curso"
+                        required 
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="formato_imagem">Formato</Label>
-                    <Select value={formData.formato_imagem} onValueChange={(value) => setFormData({...formData, formato_imagem: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o formato" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="quadrado">Quadrado (1080x1080)</SelectItem>
-                        <SelectItem value="retangular">Retangular (1200x628)</SelectItem>
-                        <SelectItem value="story">Story (1080x1920)</SelectItem>
-                        <SelectItem value="banner">Banner (1200x400)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="formato_imagem">Formato</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Escolha o formato ideal para sua plataforma</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Select value={formData.formato_imagem} onValueChange={(value) => setFormData({...formData, formato_imagem: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o formato" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="quadrado">Quadrado (1080x1080)</SelectItem>
+                          <SelectItem value="retangular">Retangular (1200x628)</SelectItem>
+                          <SelectItem value="story">Story (1080x1920)</SelectItem>
+                          <SelectItem value="banner">Banner (1200x400)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div>
-                    <Label htmlFor="imagem_produto">Imagem do Produto</Label>
-                    <Input 
-                      id="imagem_produto" 
-                      value={formData.imagem_produto} 
-                      onChange={(e) => setFormData({...formData, imagem_produto: e.target.value})} 
-                      placeholder="Ex: Mockup de computador, pessoa estudando"
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="imagem_produto">Imagem do Produto</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Descreva a imagem ou mockup que deseja usar (opcional)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input 
+                        id="imagem_produto" 
+                        value={formData.imagem_produto} 
+                        onChange={(e) => setFormData({...formData, imagem_produto: e.target.value})} 
+                        placeholder="Ex: Mockup de computador, pessoa estudando"
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="informacoes_obrigatorias">Informações Obrigatórias</Label>
-                    <Textarea 
-                      id="informacoes_obrigatorias" 
-                      value={formData.informacoes_obrigatorias} 
-                      onChange={(e) => setFormData({...formData, informacoes_obrigatorias: e.target.value})} 
-                      placeholder="Ex: Preço, data limite, contato"
-                      rows={2}
-                    />
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="informacoes_obrigatorias">Informações Obrigatórias</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Dados essenciais: preço, prazo, contato, etc.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Textarea 
+                        id="informacoes_obrigatorias" 
+                        value={formData.informacoes_obrigatorias} 
+                        onChange={(e) => setFormData({...formData, informacoes_obrigatorias: e.target.value})} 
+                        placeholder="Ex: Preço, data limite, contato"
+                        rows={2}
+                      />
+                    </div>
+                  </TooltipProvider>
 
                   <Button type="submit" className="w-full" disabled={loading} variant="gradient">
                     {loading ? (
