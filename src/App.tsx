@@ -26,6 +26,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminStripe from "./pages/admin/AdminStripe";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import Vendas from "./pages/Vendas";
 import CapturaEvento from "./pages/CapturaEvento";
 import Obrigado from "./pages/Obrigado";
@@ -165,6 +166,13 @@ const App = () => (
             <ProtectedRoute>
               <AdminRoute>
                 <AdminStripe />
+              </AdminRoute>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/audit-logs" element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminAuditLogs />
               </AdminRoute>
             </ProtectedRoute>
           } />

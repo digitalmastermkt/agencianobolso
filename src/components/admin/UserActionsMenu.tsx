@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { EditUserDialog } from "./EditUserDialog";
 import { UserReportDialog } from "./UserReportDialog";
 import { ResetPasswordDialog } from "./ResetPasswordDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserActionsMenuProps {
   user: {
@@ -31,12 +32,24 @@ export function UserActionsMenu({ user, onUserUpdate }: UserActionsMenuProps) {
   const [reportOpen, setReportOpen] = useState(false);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
 
-  const handleSendWhatsApp = () => {
+  const handleSendWhatsApp = async () => {
     if (user.phone) {
       const message = encodeURIComponent(
         `Olá ${user.display_name || 'usuário'}, como posso ajudá-lo?`
       );
       window.open(`https://wa.me/${user.phone.replace(/\D/g, '')}?text=${message}`, '_blank');
+      
+      // Log admin action
+      try {
+        await supabase.rpc('log_admin_access', {
+          p_action: 'send_whatsapp',
+          p_target_user_id: user.user_id,
+          p_resource_type: 'profiles',
+          p_metadata: { phone: user.phone }
+        });
+      } catch (error) {
+        console.error("Failed to log admin action:", error);
+      }
     }
   };
 

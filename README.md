@@ -71,3 +71,59 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+---
+
+## 🔒 Security & Compliance
+
+### Critical Security Features Implemented
+
+#### ✅ Phase 1: Critical Security (COMPLETED)
+
+1. **Secure Role-Based Access Control (RBAC)**
+   - User roles stored in separate `user_roles` table with proper RLS policies
+   - Users can only view their own roles
+   - Admins have elevated privileges with audit logging
+
+2. **Comprehensive Admin Audit Logging**
+   - All administrative access to sensitive data is logged in `admin_access_audit` table
+   - Tracks: admin actions, target users, timestamps, IP addresses, and metadata
+   - Accessible via Admin Panel > Logs de Auditoria
+   - Helps with LGPD/GDPR compliance
+
+3. **Row-Level Security (RLS)**
+   - All tables have proper RLS policies enabled
+   - PII data protected with access controls
+   - Rate limiting on sensitive operations
+
+### ⚠️ IMPORTANT: PostgreSQL Upgrade Required
+
+**Current Status:** PostgreSQL version needs upgrade to latest security patches.
+
+**Action Required:**
+1. Access Supabase dashboard: [Database Settings](https://supabase.com/dashboard/project/mqzbuctebbyryptmprkc/settings/infrastructure)
+2. Follow upgrade guide: [Supabase Upgrade Documentation](https://supabase.com/docs/guides/platform/migrating-and-upgrading-projects)
+3. **CRITICAL:** Create full database backup before upgrade
+4. Test all functionality after upgrade (especially RLS policies and triggers)
+5. Verify audit logging continues to work properly
+
+### Compliance & Data Protection
+
+- **LGPD/GDPR Ready**: Audit logs track all access to personal data
+- **Rate Limiting**: Protection against brute force and abuse
+- **Encrypted Connections**: All data transmitted over HTTPS
+- **Session Management**: Secure JWT-based authentication with auto-refresh
+
+### Security Best Practices for Administrators
+
+1. **Review Audit Logs Regularly**: Check `/admin/audit-logs` weekly for suspicious activity
+2. **Principle of Least Privilege**: Only grant admin access when absolutely necessary
+3. **Monitor Failed Login Attempts**: Watch for patterns indicating attacks
+4. **Keep Dependencies Updated**: Regularly update npm packages
+5. **Backup Strategy**: Maintain regular database backups
+
+### Reporting Security Issues
+
+If you discover a security vulnerability, please email: [your-security-email@example.com]
+
+Do not disclose security issues publicly until they have been addressed.

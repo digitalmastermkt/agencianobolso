@@ -112,6 +112,21 @@ export function EditUserDialog({ user, open, onOpenChange, onUpdate }: EditUserD
         });
       }
 
+      // Log admin access for profile edit
+      await supabase.rpc('log_admin_access', {
+        p_action: 'edit_user_profile',
+        p_target_user_id: user.user_id,
+        p_resource_type: 'profiles',
+        p_metadata: {
+          changes: {
+            display_name: displayName !== user.display_name,
+            role: role !== user.role,
+            plan: plan !== user.subscription_tier,
+            subscribed: subscribed !== user.subscribed
+          }
+        }
+      });
+
       // Atualizar perfil (sem role, que agora está em user_roles)
       const { error: profileError } = await supabase
         .from("profiles")

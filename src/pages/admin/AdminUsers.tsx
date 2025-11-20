@@ -129,6 +129,23 @@ export default function AdminUsers() {
 
       console.log("✅ Usuários processados:", processedUsers);
       setAllUsers(processedUsers);
+
+      // Log admin access to user data
+      if (isAdmin && processedUsers.length > 0) {
+        try {
+          await supabase.rpc('log_admin_access', {
+            p_action: 'view_users_list',
+            p_resource_type: 'profiles',
+            p_resource_ids: processedUsers.map((u: any) => u.user_id),
+            p_metadata: {
+              total_users: processedUsers.length,
+              query_timestamp: new Date().toISOString()
+            }
+          });
+        } catch (logError) {
+          console.error("Failed to log admin access:", logError);
+        }
+      }
     } catch (e) {
       console.error("❌ Erro ao carregar dados de usuários:", e);
       setError(`Erro ao carregar dados: ${e}`);
