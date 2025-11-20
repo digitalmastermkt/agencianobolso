@@ -236,7 +236,7 @@ export type Database = {
           accessed_at: string
           action: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           record_id: string
           table_name: string
           user_agent: string | null
@@ -246,7 +246,7 @@ export type Database = {
           accessed_at?: string
           action: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id: string
           table_name: string
           user_agent?: string | null
@@ -256,7 +256,7 @@ export type Database = {
           accessed_at?: string
           action?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id?: string
           table_name?: string
           user_agent?: string | null
@@ -704,7 +704,7 @@ export type Database = {
           action: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_values: Json | null
           old_values: Json | null
           record_id: string | null
@@ -716,7 +716,7 @@ export type Database = {
           action: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
@@ -728,7 +728,7 @@ export type Database = {
           action?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
@@ -998,18 +998,12 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_event_registration_rate_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      check_event_registration_rate_limit: { Args: never; Returns: boolean }
       check_form_rate_limit: {
         Args: { form_name: string; max_per_hour?: number }
         Returns: boolean
       }
-      decrypt_pii: {
-        Args: { encrypted_data: string }
-        Returns: string
-      }
+      decrypt_pii: { Args: { encrypted_data: string }; Returns: string }
       detect_suspicious_auth_activity: {
         Args: {
           p_ip_address: unknown
@@ -1018,14 +1012,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      encrypt_pii: {
-        Args: { data: string }
-        Returns: string
-      }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      encrypt_pii: { Args: { data: string }; Returns: string }
+      get_current_user_role: { Args: never; Returns: string }
       get_decrypted_event_registration: {
         Args: { registration_id: string }
         Returns: {
@@ -1038,7 +1026,7 @@ export type Database = {
         }[]
       }
       get_decrypted_event_registrations: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -1060,7 +1048,7 @@ export type Database = {
         }[]
       }
       get_event_registrations_masked: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -1071,7 +1059,7 @@ export type Database = {
         }[]
       }
       get_security_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           failed_attempts: number
           successful_attempts: number
@@ -1095,10 +1083,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_user_trial_active: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
+      is_user_trial_active: { Args: { p_user_id: string }; Returns: boolean }
       log_auth_attempt: {
         Args: {
           p_email?: string
