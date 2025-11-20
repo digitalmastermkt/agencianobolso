@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TrialStatusCard } from "@/components/TrialStatusCard";
+import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToastAction } from "@/components/ui/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Sparkles, Copy, Loader2 } from "lucide-react";
+import { Zap, Sparkles, Copy, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -107,6 +109,11 @@ export default function AgenteViral() {
     });
   };
 
+  const handleGenerateVariation = () => {
+    setResult("");
+    handleSubmit(new Event('submit') as any);
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-subtle py-8">
@@ -122,6 +129,11 @@ export default function AgenteViral() {
               Crie vídeos curtos tipo Reels para viralizar nas redes sociais
             </p>
             <Badge variant="secondary" className="mt-2">Estilo: Camilo Coutinho</Badge>
+          </div>
+
+          <div className="mb-8 max-w-md mx-auto">
+            <TrialStatusCard />
+            <SubscriptionStatusCard />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -233,9 +245,14 @@ export default function AgenteViral() {
                 <CardTitle className="flex items-center justify-between">
                   <span>Seu Roteiro Viral</span>
                   {result && (
-                    <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                      <Copy className="w-4 h-4 mr-2" />Copiar
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleGenerateVariation}>
+                        <RefreshCw className="w-4 h-4 mr-2" />Gerar Variação
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                        <Copy className="w-4 h-4 mr-2" />Copiar
+                      </Button>
+                    </div>
                   )}
                 </CardTitle>
               </CardHeader>

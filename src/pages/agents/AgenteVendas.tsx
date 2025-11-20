@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TrialStatusCard } from "@/components/TrialStatusCard";
+import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToastAction } from "@/components/ui/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, Loader2 } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -99,6 +101,11 @@ export default function AgenteVendas() {
     }
   };
 
+  const handleGenerateVariation = () => {
+    setResult("");
+    handleSubmit(new Event('submit') as any);
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen py-12">
@@ -114,6 +121,11 @@ export default function AgenteVendas() {
             <p className="text-lg text-muted-foreground">
               Crie vídeos curtos persuasivos no estilo Bruno Ladeira
             </p>
+          </div>
+
+          <div className="mb-8 max-w-md mx-auto">
+            <TrialStatusCard />
+            <SubscriptionStatusCard />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -231,7 +243,19 @@ export default function AgenteVendas() {
             {/* Result */}
             <Card>
               <CardHeader>
-                <CardTitle>Seu Roteiro de Vendas</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Seu Roteiro de Vendas</span>
+                  {result && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleGenerateVariation}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Gerar Variação
+                    </Button>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TrialStatusCard } from "@/components/TrialStatusCard";
+import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToastAction } from "@/components/ui/toast";
-import { Heart, Sparkles, Copy, Loader2 } from "lucide-react";
+import { Heart, Sparkles, Copy, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -104,6 +106,11 @@ export default function AgenteStorytelling() {
     });
   };
 
+  const handleGenerateVariation = () => {
+    setResult("");
+    handleSubmit(new Event('submit') as any);
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-subtle py-8">
@@ -124,6 +131,11 @@ export default function AgenteStorytelling() {
             <Badge variant="secondary" className="mt-2">
               Estilo: Leandro Aguiari
             </Badge>
+          </div>
+
+          <div className="mb-8 max-w-md mx-auto">
+            <TrialStatusCard />
+            <SubscriptionStatusCard />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -221,14 +233,24 @@ export default function AgenteStorytelling() {
                 <CardTitle className="flex items-center justify-between">
                   <span>Seu Roteiro de Storytelling</span>
                   {result && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyToClipboard}
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copiar
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateVariation}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Gerar Variação
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyToClipboard}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copiar
+                      </Button>
+                    </div>
                   )}
                 </CardTitle>
                 <CardDescription>

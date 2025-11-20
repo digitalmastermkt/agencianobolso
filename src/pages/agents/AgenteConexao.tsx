@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TrialStatusCard } from "@/components/TrialStatusCard";
+import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToastAction } from "@/components/ui/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Link as LinkIcon, Sparkles, Copy, Loader2 } from "lucide-react";
+import { Link as LinkIcon, Sparkles, Copy, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -100,6 +102,11 @@ export default function AgenteConexao() {
     toast({ title: "Copiado!", description: "Stories copiados." });
   };
 
+  const handleGenerateVariation = () => {
+    setResult("");
+    handleSubmit(new Event('submit') as any);
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-subtle py-8">
@@ -116,6 +123,12 @@ export default function AgenteConexao() {
             </p>
             <Badge variant="secondary" className="mt-2">Estilo: Humanização</Badge>
           </div>
+
+          <div className="mb-8 max-w-md mx-auto">
+            <TrialStatusCard />
+            <SubscriptionStatusCard />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card>
               <CardHeader>
@@ -207,7 +220,16 @@ export default function AgenteConexao() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Stories de Conexão</span>
-                  {result && <Button variant="outline" size="sm" onClick={copyToClipboard}><Copy className="w-4 h-4 mr-2" />Copiar</Button>}
+                  {result && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleGenerateVariation}>
+                        <RefreshCw className="w-4 h-4 mr-2" />Gerar Variação
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                        <Copy className="w-4 h-4 mr-2" />Copiar
+                      </Button>
+                    </div>
+                  )}
                 </CardTitle>
                 <CardDescription>
                   Cenas para criar vínculo emocional autêntico
