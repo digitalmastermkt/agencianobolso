@@ -159,16 +159,16 @@ export default function AgenteViral() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 gap-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className={iconSize} />
                   Informações do Conteúdo Viral
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <TooltipProvider>
                     <div>
                       <div className="flex items-center gap-2 mb-2">
@@ -340,23 +340,23 @@ export default function AgenteViral() {
                 <CardTitle className="flex items-center justify-between">
                   <span>Seu Roteiro Viral</span>
                   {result && (
-                     <div className="flex gap-2">
-                       <Button variant="outline" size="sm" onClick={handleGenerateVariation}>
-                         <RefreshCw className="w-4 h-4 mr-2" />Gerar Variação
+                     <div className={isMobile ? "flex flex-col gap-3" : "flex gap-2"}>
+                       <Button variant="outline" size={isMobile ? "default" : "sm"} className={isMobile ? buttonMinHeight : ""} onClick={handleGenerateVariation}>
+                         <RefreshCw className={isMobile ? "w-5 h-5 mr-2" : "w-4 h-4 mr-2"} />Gerar Variação
                        </Button>
-                       <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                         <Copy className="w-4 h-4 mr-2" />Copiar
+                       <Button variant="outline" size={isMobile ? "default" : "sm"} className={isMobile ? buttonMinHeight : ""} onClick={copyToClipboard}>
+                         <Copy className={isMobile ? "w-5 h-5 mr-2" : "w-4 h-4 mr-2"} />Copiar
                        </Button>
                        <ExportButtons
                          content={result}
                          agentType="viral"
-                         size="sm"
+                         size={isMobile ? "default" : "sm"}
                        />
                        <FavoriteButton
                          agentType="viral"
                          content={result}
                          formData={formData}
-                         size="sm"
+                         size={isMobile ? "default" : "sm"}
                        />
                      </div>
                   )}
@@ -368,11 +368,9 @@ export default function AgenteViral() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-5/6" />
                     <Skeleton className="h-4 w-4/6" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
                     <div className="text-center text-muted-foreground text-sm mt-4">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                      Gerando conteúdo viral... pode levar até 15 segundos
+                      <Loader2 className={(isMobile ? "w-6 h-6" : "w-5 h-5") + " animate-spin mx-auto mb-2"} />
+                      {isMobile ? "Gerando..." : "Gerando conteúdo viral... pode levar até 15 segundos"}
                     </div>
                   </div>
                 ) : result ? (

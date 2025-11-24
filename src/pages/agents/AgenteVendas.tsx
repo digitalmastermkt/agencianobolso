@@ -154,21 +154,21 @@ export default function AgenteVendas() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 gap-8">
             {/* Form */}
             <Card>
               <CardHeader>
                 <CardTitle>Dados do Seu Negócio</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <TooltipProvider>
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="nome_negocio">Nome do Negócio</Label>
+                        <Label htmlFor="nome_negocio" className="font-medium">Nome do Negócio</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                            <HelpCircle className={iconSize + " text-muted-foreground cursor-help"} />
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Nome do seu negócio ou marca</p>
@@ -180,16 +180,17 @@ export default function AgenteVendas() {
                         value={formData.nome_negocio}
                         onChange={(e) => setFormData({...formData, nome_negocio: e.target.value})}
                         placeholder="Ex: Pizzaria do João"
+                        className={inputHeight}
                         required
                       />
                     </div>
                     
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="produto">Produto/Serviço</Label>
+                        <Label htmlFor="produto" className="font-medium">Produto/Serviço</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                            <HelpCircle className={iconSize + " text-muted-foreground cursor-help"} />
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Descreva o que você está vendendo</p>
@@ -201,6 +202,7 @@ export default function AgenteVendas() {
                         value={formData.produto}
                         onChange={(e) => setFormData({...formData, produto: e.target.value})}
                         placeholder="Ex: Pizza artesanal com delivery"
+                        className={inputHeight}
                         required
                       />
                     </div>
@@ -313,7 +315,7 @@ export default function AgenteVendas() {
                         <Label htmlFor="tom">Tom de Voz</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                            <HelpCircle className={iconSize + " text-muted-foreground cursor-help"} />
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Como você quer se comunicar com seu público?</p>
@@ -321,7 +323,7 @@ export default function AgenteVendas() {
                         </Tooltip>
                       </div>
                       <Select value={formData.tom} onValueChange={(value) => setFormData({...formData, tom: value})}>
-                        <SelectTrigger>
+                        <SelectTrigger className={inputHeight}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -334,11 +336,11 @@ export default function AgenteVendas() {
                     </div>
                   </TooltipProvider>
 
-                  <Button type="submit" className="w-full" variant="gradient" disabled={loading}>
+                  <Button type="submit" className={"w-full " + buttonMinHeight} size={touchSize} variant="gradient" disabled={loading}>
                     {loading ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Gerando... (pode levar até 15s)
+                        <Loader2 className={iconSize + " mr-2 animate-spin"} />
+                        {isMobile ? "Gerando..." : "Gerando... (pode levar até 15s)"}
                       </>
                     ) : (
                       "Gerar Roteiro de Vendas"
@@ -356,10 +358,10 @@ export default function AgenteVendas() {
                   {result && (
                     <Button 
                       variant="outline" 
-                      size="sm"
+                      size={isMobile ? "default" : "sm"}
                       onClick={handleGenerateVariation}
                     >
-                      <RefreshCw className="w-4 h-4 mr-2" />
+                      <RefreshCw className={isMobile ? "w-5 h-5 mr-2" : "w-4 h-4 mr-2"} />
                       Gerar Variação
                     </Button>
                   )}
@@ -371,11 +373,9 @@ export default function AgenteVendas() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-5/6" />
                     <Skeleton className="h-4 w-4/6" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
                     <div className="text-center text-muted-foreground text-sm mt-4">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                      Gerando roteiro... pode levar até 15 segundos
+                      <Loader2 className={(isMobile ? "w-6 h-6" : "w-5 h-5") + " animate-spin mx-auto mb-2"} />
+                      {isMobile ? "Gerando..." : "Gerando roteiro... pode levar até 15 segundos"}
                     </div>
                   </div>
                 ) : result ? (
@@ -383,9 +383,11 @@ export default function AgenteVendas() {
                     <div className="bg-gradient-subtle p-4 rounded-lg">
                       <pre className="whitespace-pre-wrap text-sm">{result}</pre>
                     </div>
-                    <div className="flex gap-2">
+                    <div className={isMobile ? "flex flex-col gap-3" : "flex gap-2"}>
                       <Button 
-                        variant="outline" 
+                        variant="outline"
+                        size={isMobile ? "default" : "sm"}
+                        className={isMobile ? buttonMinHeight : ""}
                         onClick={() => navigator.clipboard.writeText(result)}
                       >
                         Copiar Roteiro
@@ -393,11 +395,13 @@ export default function AgenteVendas() {
                       <ExportButtons 
                         content={result}
                         agentType="vendas"
+                        size={isMobile ? "default" : "sm"}
                       />
                       <FavoriteButton 
                         agentType="vendas"
                         content={result}
                         formData={formData}
+                        size={isMobile ? "default" : "sm"}
                       />
                     </div>
                   </div>
