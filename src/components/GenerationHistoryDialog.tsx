@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { History, Copy, Trash2, RotateCcw, Calendar } from "lucide-react";
 import { FavoriteButton } from "./FavoriteButton";
+import { ExportButtons } from "./ExportButtons";
 import { useGenerationHistory } from "@/hooks/useGenerationHistory";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -204,12 +205,11 @@ export function GenerationHistoryDialog({
                             </pre>
                           </div>
                         </CardContent>
-                        <CardFooter className="flex gap-2">
+                        <CardFooter className="flex flex-wrap gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => copyToClipboard(item.content)}
-                            className="flex-1"
                           >
                             <Copy className="w-4 h-4 mr-2" />
                             Copiar
@@ -219,12 +219,15 @@ export function GenerationHistoryDialog({
                               variant="secondary"
                               size="sm"
                               onClick={() => handleReuse(item.formData)}
-                              className="flex-1"
                             >
                               <RotateCcw className="w-4 h-4 mr-2" />
-                              Reutilizar dados
+                              Reutilizar
                             </Button>
                           )}
+                          <ExportButtons
+                            content={item.content}
+                            agentType={item.agentType}
+                          />
                           <FavoriteButton
                             agentType={item.agentType}
                             content={item.content}

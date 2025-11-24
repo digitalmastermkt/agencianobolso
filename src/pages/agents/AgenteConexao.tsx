@@ -4,6 +4,7 @@ import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { GenerationHistoryDialog } from "@/components/GenerationHistoryDialog";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { ExportButtons } from "@/components/ExportButtons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -303,20 +304,25 @@ export default function AgenteConexao() {
                 <CardTitle className="flex items-center justify-between">
                   <span>Stories de Conexão</span>
                   {result && (
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={handleGenerateVariation}>
-                        <RefreshCw className="w-4 h-4 mr-2" />Gerar Variação
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                        <Copy className="w-4 h-4 mr-2" />Copiar
-                      </Button>
-                      <FavoriteButton
-                        agentType="conexao"
-                        content={result}
-                        formData={formData}
-                        size="sm"
-                      />
-                    </div>
+                     <div className="flex gap-2">
+                       <Button variant="outline" size="sm" onClick={handleGenerateVariation}>
+                         <RefreshCw className="w-4 h-4 mr-2" />Gerar Variação
+                       </Button>
+                       <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                         <Copy className="w-4 h-4 mr-2" />Copiar
+                       </Button>
+                       <ExportButtons
+                         content={result}
+                         agentType="conexao"
+                         size="sm"
+                       />
+                       <FavoriteButton
+                         agentType="conexao"
+                         content={result}
+                         formData={formData}
+                         size="sm"
+                       />
+                     </div>
                   )}
                 </CardTitle>
                 <CardDescription>

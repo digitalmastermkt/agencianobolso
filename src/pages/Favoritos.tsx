@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, Copy, Trash2, Calendar, RotateCcw } from "lucide-react";
+import { Star, Copy, Trash2, Calendar } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useToast } from "@/hooks/use-toast";
+import { ExportButtons } from "@/components/ExportButtons";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
@@ -195,11 +196,14 @@ export default function Favoritos() {
                           variant="outline"
                           size="sm"
                           onClick={() => copyToClipboard(favorite.generated_content)}
-                          className="flex-1"
                         >
                           <Copy className="w-4 h-4 mr-2" />
                           Copiar
                         </Button>
+                        <ExportButtons
+                          content={favorite.generated_content}
+                          agentType={favorite.agent_type}
+                        />
                       </CardFooter>
                     </Card>
                   ))}
@@ -247,11 +251,14 @@ export default function Favoritos() {
                               variant="outline"
                               size="sm"
                               onClick={() => copyToClipboard(favorite.generated_content)}
-                              className="flex-1"
                             >
                               <Copy className="w-4 h-4 mr-2" />
                               Copiar
                             </Button>
+                            <ExportButtons
+                              content={favorite.generated_content}
+                              agentType={favorite.agent_type}
+                            />
                           </CardFooter>
                         </Card>
                       ))}
