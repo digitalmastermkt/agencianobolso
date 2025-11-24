@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
+import { GenerationHistoryDialog } from "@/components/GenerationHistoryDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +18,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useGenerationHistory } from "@/hooks/useGenerationHistory";
 
 export default function AgenteViral() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
+  const { saveGeneration } = useGenerationHistory();
   const [formData, setFormData] = useState({
     nome_negocio: "",
     produto: "",
@@ -86,6 +89,7 @@ export default function AgenteViral() {
       }
 
       setResult(data.content);
+      saveGeneration('viral', data.content, formData);
       toast({
         title: "Roteiro viral criado!",
         description: "Seu conteúdo viral foi gerado com sucesso."
@@ -115,6 +119,13 @@ export default function AgenteViral() {
     handleSubmit(new Event('submit') as any);
   };
 
+  const handleReuseData = (historicalFormData: Record<string, string>) => {
+    setFormData(prev => ({
+      ...prev,
+      ...historicalFormData
+    }));
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-subtle py-8">
@@ -135,6 +146,13 @@ export default function AgenteViral() {
           <div className="mb-8 max-w-md mx-auto">
             <TrialStatusCard />
             <SubscriptionStatusCard />
+          </div>
+
+          <div className="mb-6 flex justify-center">
+            <GenerationHistoryDialog 
+              currentAgentType="viral"
+              onReuse={handleReuseData}
+            />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

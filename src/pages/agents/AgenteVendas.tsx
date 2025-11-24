@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
+import { GenerationHistoryDialog } from "@/components/GenerationHistoryDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,11 +17,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useGenerationHistory } from "@/hooks/useGenerationHistory";
 
 export default function AgenteVendas() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { saveGeneration } = useGenerationHistory();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>("");
   const [formData, setFormData] = useState({
@@ -86,6 +89,10 @@ export default function AgenteVendas() {
       }
 
       setResult(data.content);
+      
+      // Salvar no histórico local
+      saveGeneration('vendas', data.content, formData);
+      
       toast({
         title: "Roteiro criado!",
         description: "Seu roteiro de vendas foi gerado com sucesso."
@@ -105,6 +112,13 @@ export default function AgenteVendas() {
   const handleGenerateVariation = () => {
     setResult("");
     handleSubmit(new Event('submit') as any);
+  };
+
+  const handleReuseData = (historicalFormData: Record<string, string>) => {
+    setFormData(prev => ({
+      ...prev,
+      ...historicalFormData
+    }));
   };
 
   return (
@@ -127,6 +141,13 @@ export default function AgenteVendas() {
           <div className="mb-8 max-w-md mx-auto">
             <TrialStatusCard />
             <SubscriptionStatusCard />
+          </div>
+
+          <div className="mb-6 flex justify-center">
+            <GenerationHistoryDialog 
+              currentAgentType="vendas"
+              onReuse={handleReuseData}
+            />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

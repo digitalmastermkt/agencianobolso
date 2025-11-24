@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
+import { GenerationHistoryDialog } from "@/components/GenerationHistoryDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +17,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useGenerationHistory } from "@/hooks/useGenerationHistory";
 
 export default function AgenteInteracao() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
+  const { saveGeneration } = useGenerationHistory();
   const [formData, setFormData] = useState({
     publico_alvo: "",
     produto: "",
@@ -82,6 +85,7 @@ export default function AgenteInteracao() {
       }
 
       setResult(data.content);
+      saveGeneration('interacao', data.content, formData);
       toast({ title: "Stories criados!", description: "Sua sequência de stories foi gerada com sucesso." });
     } catch (error) {
       console.error('Erro inesperado:', error);
@@ -106,6 +110,13 @@ export default function AgenteInteracao() {
     handleSubmit(new Event('submit') as any);
   };
 
+  const handleReuseData = (historicalFormData: Record<string, string>) => {
+    setFormData(prev => ({
+      ...prev,
+      ...historicalFormData
+    }));
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-subtle py-8">
@@ -127,6 +138,13 @@ export default function AgenteInteracao() {
           <div className="mb-8 max-w-md mx-auto">
             <TrialStatusCard />
             <SubscriptionStatusCard />
+          </div>
+
+          <div className="mb-6 flex justify-center">
+            <GenerationHistoryDialog 
+              currentAgentType="interacao"
+              onReuse={handleReuseData}
+            />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
