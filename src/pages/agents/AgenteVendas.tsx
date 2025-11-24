@@ -18,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { useNavigate } from "react-router-dom";
 import { useGenerationHistory } from "@/hooks/useGenerationHistory";
 
@@ -26,6 +27,7 @@ export default function AgenteVendas() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { saveGeneration } = useGenerationHistory();
+  const { isMobile, touchSize, iconSize, inputHeight, buttonMinHeight } = useMobileOptimization();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>("");
   const [formData, setFormData] = useState({

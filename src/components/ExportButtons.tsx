@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { FileDown, FileText, Share2 } from "lucide-react";
 import { useContentExport } from "@/hooks/useContentExport";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileExportSheet } from "./mobile/MobileExportSheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,16 +19,21 @@ interface ExportButtonsProps {
 
 export function ExportButtons({ content, agentType, variant = "outline", size = "sm" }: ExportButtonsProps) {
   const { exportToPDF, exportToTXT, shareWhatsApp } = useContentExport();
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return <MobileExportSheet content={content} agentType={agentType} />;
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant} size={size} className="gap-2">
+        <Button variant={variant} size={size} className="gap-2 min-h-[44px]">
           <Share2 className="w-4 h-4" />
           Exportar
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="z-50 bg-background">
         <DropdownMenuItem onClick={() => exportToPDF(content, agentType)}>
           <FileText className="w-4 h-4 mr-2" />
           Exportar PDF

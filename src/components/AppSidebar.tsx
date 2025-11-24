@@ -195,8 +195,8 @@ export function AppSidebar() {
       <Sidebar className="w-64" collapsible="icon">
         <SidebarHeader className="border-b">
           <div className="flex items-center gap-3 p-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
               <h2 className="font-bold text-lg">SparkAgen</h2>
@@ -215,7 +215,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavClass}>
-                        <item.icon className="mr-2 h-4 w-4" />
+                        <item.icon className="mr-2 h-5 w-5" />
                         <span>{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
@@ -234,10 +234,10 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavClass}>
-                        <item.icon className="mr-2 h-4 w-4" />
+                        <item.icon className="mr-2 h-5 w-5" />
                         <span>{item.title}</span>
                         {isActive(item.url) && (
-                          <ChevronRight className="ml-auto h-4 w-4" />
+                          <ChevronRight className="ml-auto h-5 w-5" />
                         )}
                       </NavLink>
                     </SidebarMenuButton>
@@ -256,10 +256,10 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavClass}>
-                        <item.icon className={`mr-2 h-4 w-4 ${item.color}`} />
+                        <item.icon className={`mr-2 h-5 w-5 ${item.color}`} />
                         <span>{item.title}</span>
                         {isActive(item.url) && (
-                          <ChevronRight className="ml-auto h-4 w-4" />
+                          <ChevronRight className="ml-auto h-5 w-5" />
                         )}
                       </NavLink>
                     </SidebarMenuButton>
@@ -279,10 +279,10 @@ export function AppSidebar() {
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink to={item.url} className={getNavClass}>
-                          <item.icon className={`mr-2 h-4 w-4 ${item.color}`} />
+                          <item.icon className={`mr-2 h-5 w-5 ${item.color}`} />
                           <span>{item.title}</span>
                           {currentPath.startsWith(item.url) && (
-                            <ChevronRight className="ml-auto h-4 w-4" />
+                            <ChevronRight className="ml-auto h-5 w-5" />
                           )}
                         </NavLink>
                       </SidebarMenuButton>
@@ -298,8 +298,8 @@ export function AppSidebar() {
           <div className="p-4 space-y-2">
             {/* User Profile */}
             <div className="flex items-center gap-3">
-              <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+              <Avatar className="w-10 h-10">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                   {user?.email ? getUserInitials(user.email) : "U"}
                 </AvatarFallback>
               </Avatar>
@@ -315,20 +315,20 @@ export function AppSidebar() {
             <div className="flex gap-1">
               <Button
                 variant="ghost"
-                size="sm"
+                size="default"
                 onClick={() => setProfileOpen(true)}
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
               >
-                <User className="h-4 w-4" />
+                <User className="h-5 w-5" />
                 <span className="ml-2">Perfil</span>
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
+                size="default"
                 onClick={handleSignOut}
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5" />
                 <span className="ml-2">Sair</span>
               </Button>
             </div>

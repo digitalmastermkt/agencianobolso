@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Image, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +27,7 @@ export default function AgenteBanner() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const { saveGeneration } = useGenerationHistory();
+  const { isMobile, touchSize, iconSize, spacing, inputHeight, buttonMinHeight } = useMobileOptimization();
   const [formData, setFormData] = useState({
     produto: "",
     beneficio: "",
@@ -152,7 +154,7 @@ export default function AgenteBanner() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-2 gap-8"}>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -164,14 +166,14 @@ export default function AgenteBanner() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className={isMobile ? "space-y-6" : "space-y-4"}>
                   <TooltipProvider>
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="produto">Produto/Serviço</Label>
+                        <Label htmlFor="produto" className={isMobile ? "text-sm font-medium" : ""}>Produto/Serviço</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                            <HelpCircle className={`${iconSize} text-muted-foreground cursor-help`} />
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>O que você está promovendo neste banner?</p>
@@ -183,6 +185,7 @@ export default function AgenteBanner() {
                         value={formData.produto} 
                         onChange={(e) => setFormData({...formData, produto: e.target.value})} 
                         placeholder="Ex: Curso de Design Gráfico"
+                        className={inputHeight}
                         required 
                       />
                     </div>
@@ -339,11 +342,11 @@ export default function AgenteBanner() {
                     </div>
                   </TooltipProvider>
 
-                  <Button type="submit" className="w-full" disabled={loading} variant="gradient">
+                  <Button type="submit" className={`w-full ${buttonMinHeight}`} disabled={loading} variant="gradient" size={touchSize}>
                     {loading ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Gerando... (pode levar até 15s)
+                        <Loader2 className={`${iconSize} mr-2 animate-spin`} />
+                        {isMobile ? "Gerando..." : "Gerando... (pode levar até 15s)"}
                       </>
                     ) : (
                       "Gerar Banner"
@@ -356,27 +359,26 @@ export default function AgenteBanner() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Seu Banner</span>
-                  {result && (
-                     <div className="flex gap-2">
-                       <Button variant="outline" size="sm" onClick={handleGenerateVariation}>
-                         <RefreshCw className="w-4 h-4 mr-2" />Gerar Variação
-                       </Button>
-                       <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                         <Copy className="w-4 h-4 mr-2" />Copiar
-                       </Button>
-                       <ExportButtons
-                         content={result}
-                         agentType="banner"
-                         size="sm"
-                       />
-                       <FavoriteButton
-                         agentType="banner"
-                         content={result}
-                         formData={formData}
-                         size="sm"
-                       />
-                     </div>
-                  )}
+                   {result && (
+                      <div className={isMobile ? "flex flex-col gap-3" : "flex gap-2"}>
+                        <Button variant="outline" size={touchSize} onClick={handleGenerateVariation} className={buttonMinHeight}>
+                          <RefreshCw className={`${iconSize} mr-2`} />Gerar Variação
+                        </Button>
+                        <Button variant="outline" size={touchSize} onClick={copyToClipboard} className={buttonMinHeight}>
+                          <Copy className={`${iconSize} mr-2`} />Copiar
+                        </Button>
+                        <ExportButtons
+                          content={result}
+                          agentType="banner"
+                        />
+                        <FavoriteButton
+                          agentType="banner"
+                          content={result}
+                          formData={formData}
+                          size={touchSize}
+                        />
+                      </div>
+                   )}
                 </CardTitle>
                 <CardDescription>
                   Conceito completo e prompt para IA
@@ -391,8 +393,11 @@ export default function AgenteBanner() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
                     <div className="text-center text-muted-foreground text-sm mt-4">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                      Gerando conceito... pode levar até 15 segundos
+                      <Loader2 className={`${isMobile ? "w-6 h-6" : "w-5 h-5"} animate-spin mx-auto mb-2`} />
+                      <p className={isMobile ? "text-base font-medium" : ""}>
+                        {isMobile ? "Gerando..." : "Gerando conceito... pode levar até 15 segundos"}
+                      </p>
+                      {isMobile && <p className="text-xs text-muted-foreground mt-1">Aguarde 10-15s</p>}
                     </div>
                   </div>
                 ) : result ? (
