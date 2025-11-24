@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -10,6 +11,108 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Validation schemas for each agent type
+const baseFieldSchema = z.string().trim().max(500, 'Campo muito longo (máximo 500 caracteres)');
+const shortFieldSchema = z.string().trim().max(200, 'Campo muito longo (máximo 200 caracteres)');
+
+const vendasSchema = z.object({
+  nome_negocio: shortFieldSchema,
+  produto: baseFieldSchema,
+  localizacao: shortFieldSchema.optional().default(''),
+  publico_alvo: baseFieldSchema,
+  beneficio: baseFieldSchema,
+  prova_social: baseFieldSchema.optional().default(''),
+  oferta: baseFieldSchema,
+  tom: shortFieldSchema,
+});
+
+const storytellingSchema = z.object({
+  nome_negocio: shortFieldSchema,
+  produto: baseFieldSchema,
+  localizacao: shortFieldSchema.optional().default(''),
+  publico_alvo: baseFieldSchema,
+  valores_marca: baseFieldSchema,
+  tom: shortFieldSchema,
+});
+
+const viralSchema = z.object({
+  nome_negocio: shortFieldSchema,
+  produto: baseFieldSchema,
+  localizacao: shortFieldSchema.optional().default(''),
+  publico_alvo: baseFieldSchema,
+  beneficio: baseFieldSchema,
+  oferta: baseFieldSchema,
+  tom: shortFieldSchema,
+});
+
+const interacaoSchema = z.object({
+  publico_alvo: baseFieldSchema,
+  produto: baseFieldSchema,
+  acao_desejada: baseFieldSchema,
+});
+
+const conexaoSchema = z.object({
+  nome_negocio: shortFieldSchema,
+  produto: baseFieldSchema,
+  objetivo_story: baseFieldSchema,
+  publico_alvo: baseFieldSchema,
+  tom: shortFieldSchema,
+  link_ou_acao: baseFieldSchema,
+});
+
+const bannerSchema = z.object({
+  produto: baseFieldSchema,
+  beneficio: baseFieldSchema,
+  identidade_visual: baseFieldSchema,
+  publico_alvo: baseFieldSchema,
+  imagem_produto: baseFieldSchema.optional().default(''),
+  objetivo_post: baseFieldSchema,
+  formato_imagem: shortFieldSchema,
+  informacoes_obrigatorias: baseFieldSchema.optional().default(''),
+});
+
+const validationSchemas = {
+  vendas: vendasSchema,
+  storytelling: storytellingSchema,
+  viral: viralSchema,
+  interacao: interacaoSchema,
+  conexao: conexaoSchema,
+  banner: bannerSchema,
+};
+
+// Secure logging utility - removes PII
+function secureLog(level: 'info' | 'warn' | 'error', message: string, metadata?: Record<string, unknown>) {
+  const sanitizedMetadata = metadata ? {
+    ...metadata,
+    userId: metadata.userId ? '***' : undefined,
+    email: metadata.email ? '***' : undefined,
+    formData: metadata.formData ? '[REDACTED]' : undefined,
+  } : {};
+  
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...sanitizedMetadata
+  };
+  
+  console.log(JSON.stringify(logEntry));
+}
+
+// Sanitize input to prevent prompt injection
+function sanitizeInput(input: string): string {
+  // Remove suspicious patterns that could be prompt injection attempts
+  return input
+    .replace(/\bignore\s+(previous|above|all)\s+(instructions?|prompts?|rules?)\b/gi, '')
+    .replace(/\byou\s+are\s+(now|a)\s+/gi, '')
+    .replace(/\bsystem\s*:/gi, '')
+    .replace(/\bassistant\s*:/gi, '')
+    .replace(/\buser\s*:/gi, '')
+    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+    .trim();
+}
 
 // Agent prompts for different content types
 const agentPrompts = {
@@ -223,32 +326,92 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  secureLog('info', 'Request received', { requestId, method: req.method });
+
   try {
     const { agentType, formData, userId } = await req.json();
+    
+    secureLog('info', 'Processing request', { 
+      requestId, 
+      agentType, 
+      hasUserId: !!userId,
+      fieldCount: Object.keys(formData || {}).length 
+    });
 
     if (!openAIApiKey) {
+      secureLog('error', 'OpenAI API key not configured', { requestId });
       return new Response(
         JSON.stringify({ error: 'OpenAI API key not configured' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
-    // Get the appropriate prompt template
+    // Validate agent type
     const promptTemplate = agentPrompts[agentType as keyof typeof agentPrompts];
     if (!promptTemplate) {
+      secureLog('warn', 'Invalid agent type', { requestId, agentType });
       return new Response(
         JSON.stringify({ error: 'Invalid agent type' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // Replace variables in prompt with form data
+    // Validate input data based on agent type
+    const validationSchema = validationSchemas[agentType as keyof typeof validationSchemas];
+    if (!validationSchema) {
+      secureLog('error', 'No validation schema for agent type', { requestId, agentType });
+      return new Response(
+        JSON.stringify({ error: 'Agent type not supported' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    let validatedData;
+    try {
+      validatedData = validationSchema.parse(formData);
+      secureLog('info', 'Input validation passed', { requestId, agentType });
+    } catch (validationError) {
+      secureLog('warn', 'Input validation failed', { 
+        requestId, 
+        agentType,
+        errors: validationError instanceof z.ZodError ? validationError.errors.length : 'unknown'
+      });
+      
+      if (validationError instanceof z.ZodError) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Dados inválidos', 
+            details: validationError.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+      throw validationError;
+    }
+
+    // Sanitize all input fields to prevent prompt injection
+    const sanitizedData: Record<string, string> = {};
+    for (const [key, value] of Object.entries(validatedData)) {
+      if (typeof value === 'string') {
+        sanitizedData[key] = sanitizeInput(value);
+      }
+    }
+    
+    secureLog('info', 'Input sanitization completed', { requestId });
+
+    // Replace variables in prompt with sanitized data
     let prompt = promptTemplate;
-    Object.entries(formData).forEach(([key, value]) => {
-      prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), value as string);
+    Object.entries(sanitizedData).forEach(([key, value]) => {
+      prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
     });
+    
+    secureLog('info', 'Prompt prepared', { requestId, promptLength: prompt.length });
 
     // Call OpenAI API
+    secureLog('info', 'Calling OpenAI API', { requestId, model: 'gpt-5-mini-2025-08-07' });
+    const startTime = Date.now();
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -269,15 +432,28 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      secureLog('error', 'OpenAI API error', { 
+        requestId, 
+        status: response.status,
+        hasErrorText: !!errorText
+      });
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
     const generatedContent = data.choices[0].message.content;
+    const duration = Date.now() - startTime;
+    
+    secureLog('info', 'OpenAI response received', { 
+      requestId, 
+      durationMs: duration,
+      contentLength: generatedContent?.length || 0
+    });
 
     // Save to database and track credits if userId is provided
     if (userId) {
-      console.log(`🔍 Verificando créditos para usuário: ${userId}`);
+      secureLog('info', 'Processing credit check', { requestId, hasUserId: true });
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       
       // Buscar informações do usuário incluindo dados do trial
@@ -288,7 +464,7 @@ serve(async (req) => {
         .single();
       
       if (profileError) {
-        console.error('❌ Erro ao buscar perfil:', profileError);
+        secureLog('error', 'Profile fetch error', { requestId });
         throw new Error('Erro ao verificar dados do usuário');
       }
 
@@ -297,10 +473,10 @@ serve(async (req) => {
         profile?.trial_end_date && 
         new Date(profile.trial_end_date) > new Date();
 
-      console.log('🎯 Status do trial:', { 
+      secureLog('info', 'Trial status checked', { 
+        requestId,
         isTrialActive, 
-        trialEnd: profile?.trial_end_date,
-        dailyLimit: profile?.daily_credits_limit 
+        hasTrialEndDate: !!profile?.trial_end_date
       });
 
       if (isTrialActive) {
@@ -309,17 +485,17 @@ serve(async (req) => {
           .rpc('get_user_daily_credits_usage', { p_user_id: userId });
 
         if (dailyUsageError) {
-          console.error('❌ Erro ao buscar uso diário:', dailyUsageError);
+          secureLog('error', 'Daily usage fetch error', { requestId });
           throw new Error('Erro ao verificar uso diário de créditos');
         }
 
         const dailyLimit = profile?.daily_credits_limit || 10;
         const dailyUsed = dailyUsage || 0;
 
-        console.log(`📊 Trial - Créditos diários: ${dailyUsed}/${dailyLimit}`);
+        secureLog('info', 'Daily credits checked', { requestId, dailyUsed, dailyLimit });
 
         if (dailyUsed >= dailyLimit) {
-          console.log('🚫 Limite diário de créditos excedido no trial');
+          secureLog('warn', 'Daily limit exceeded', { requestId, dailyUsed, dailyLimit });
           throw new Error(`Limite diário de créditos excedido (${dailyUsed}/${dailyLimit}). Volte amanhã ou faça upgrade para acesso ilimitado.`);
         }
       } else {
@@ -327,11 +503,15 @@ serve(async (req) => {
         const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('check-subscription');
         
         if (subscriptionError) {
-          console.error('❌ Erro ao verificar assinatura:', subscriptionError);
+          secureLog('error', 'Subscription check error', { requestId });
           throw new Error('Erro ao verificar assinatura');
         }
 
-        console.log('📊 Status da assinatura:', subscriptionData);
+        secureLog('info', 'Subscription checked', { 
+          requestId, 
+          subscribed: subscriptionData.subscribed,
+          hasTier: !!subscriptionData.subscription_tier
+        });
 
         // Verificar acesso ao agente para usuários não-trial
         if (!subscriptionData.subscribed && agentType !== 'vendas') {
@@ -356,13 +536,19 @@ serve(async (req) => {
         const planSettings = planSettingsRes.data;
         const monthlyUsage = monthlyUsageRes.data || 0;
         
-        console.log(`📈 Plano: ${subscriptionData.subscription_tier}`);
-        console.log(`💳 Créditos mensais permitidos: ${planSettings?.monthly_credits || 0}`);
-        console.log(`🔥 Créditos usados este mês: ${monthlyUsage}`);
+        secureLog('info', 'Monthly credits checked', { 
+          requestId,
+          monthlyUsage,
+          monthlyLimit: planSettings?.monthly_credits || 0
+        });
 
         // Verificar se excedeu o limite mensal
         if (planSettings && monthlyUsage >= planSettings.monthly_credits) {
-          console.log('🚫 Limite mensal de créditos excedido');
+          secureLog('warn', 'Monthly limit exceeded', { 
+            requestId,
+            monthlyUsage,
+            monthlyLimit: planSettings.monthly_credits
+          });
           throw new Error(`Limite mensal de créditos excedido (${monthlyUsage}/${planSettings.monthly_credits}). Seu plano ${subscriptionData.subscription_tier} permite ${planSettings.monthly_credits} créditos por mês.`);
         }
       }
@@ -378,7 +564,7 @@ serve(async (req) => {
         });
 
       if (insertError) {
-        console.error('❌ Erro ao salvar geração:', insertError);
+        secureLog('error', 'Failed to save generation', { requestId });
         // Não bloquear a resposta por erro de salvamento
       }
 
@@ -397,13 +583,15 @@ serve(async (req) => {
         });
 
       if (creditsError) {
-        console.error('❌ Erro ao registrar créditos:', creditsError);
+        secureLog('error', 'Failed to register credits', { requestId });
         // Não bloquear a resposta por erro de registro
       }
 
-      console.log('✅ Geração salva e créditos registrados com sucesso');
+      secureLog('info', 'Generation saved and credits registered', { requestId });
     }
 
+    secureLog('info', 'Request completed successfully', { requestId });
+    
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -414,7 +602,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in generate-ai-content function:', error);
+    secureLog('error', 'Request failed', { 
+      requestId,
+      errorMessage: error.message,
+      errorType: error.constructor.name
+    });
+    
     return new Response(
       JSON.stringify({ 
         error: 'An unexpected error occurred', 
