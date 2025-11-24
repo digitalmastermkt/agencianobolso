@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { GenerationHistoryDialog } from "@/components/GenerationHistoryDialog";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -309,6 +310,12 @@ export default function AgenteConexao() {
                       <Button variant="outline" size="sm" onClick={copyToClipboard}>
                         <Copy className="w-4 h-4 mr-2" />Copiar
                       </Button>
+                      <FavoriteButton
+                        agentType="conexao"
+                        content={result}
+                        formData={formData}
+                        size="sm"
+                      />
                     </div>
                   )}
                 </CardTitle>

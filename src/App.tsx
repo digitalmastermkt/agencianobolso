@@ -13,6 +13,7 @@ import AgenteViral from "./pages/agents/AgenteViral";
 import AgenteInteracao from "./pages/agents/AgenteInteracao";
 import AgenteConexao from "./pages/agents/AgenteConexao";
 import AgenteBanner from "./pages/agents/AgenteBanner";
+import Favoritos from "./pages/Favoritos";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Treinamentos from "./pages/Treinamentos";
@@ -124,6 +125,11 @@ const App = () => (
               <PlanGuard requiredPlan="Essencial">
                 <Comunidade />
               </PlanGuard>
+            </ProtectedRoute>
+          } />
+          <Route path="/favoritos" element={
+            <ProtectedRoute>
+              <Favoritos />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={<Navigate to="/admin/trainings" replace />} />
