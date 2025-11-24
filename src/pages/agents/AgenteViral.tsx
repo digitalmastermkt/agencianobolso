@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Zap, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +27,7 @@ export default function AgenteViral() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const { saveGeneration } = useGenerationHistory();
+  const { isMobile, touchSize, iconSize, inputHeight, buttonMinHeight } = useMobileOptimization();
   const [formData, setFormData] = useState({
     nome_negocio: "",
     produto: "",

@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Copy, Trash2, Calendar } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileTabSelect } from "@/components/mobile/MobileTabSelect";
 import { ExportButtons } from "@/components/ExportButtons";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -34,6 +36,7 @@ const agentColors: Record<string, string> = {
 export default function Favoritos() {
   const { favorites, loading, removeFavorite, getFavoritesByAgent, totalFavorites } = useFavorites();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("todos");
 
   const favoritesByAgent = getFavoritesByAgent();
@@ -112,6 +115,96 @@ export default function Favoritos() {
     );
   }
 
+  const tabOptions = [
+    { value: "todos", label: "Todos", count: totalFavorites },
+    ...Object.keys(agentNames).map(agentType => ({
+      value: agentType,
+      label: agentNames[agentType],
+      count: favoritesByAgent[agentType]?.length || 0
+    }))
+  ];
+
+  const renderFavoriteCard = (favorite: any) => (
+    <Card key={favorite.id} className="overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className={isMobile ? "w-full" : "flex items-center gap-3"}>
+            {activeTab === "todos" && !isMobile && (
+              <div className={`p-2 rounded-lg bg-gradient-to-r ${agentColors[favorite.agent_type]} text-white`}>
+                <Star className="w-5 h-5 fill-current" />
+              </div>
+            )}
+            <div className="flex-1">
+              {activeTab === "todos" && (
+                <CardTitle className="text-base flex items-center gap-2 mb-2">
+                  {agentNames[favorite.agent_type]}
+                  <Badge variant="outline">{favorite.agent_type}</Badge>
+                </CardTitle>
+              )}
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Calendar className={isMobile ? "w-4 h-4" : "w-3 h-3"} />
+                {format(new Date(favorite.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={isMobile ? "h-11 w-11 text-destructive hover:text-destructive" : "h-8 w-8 text-destructive hover:text-destructive"}
+            onClick={() => handleDelete(favorite.id)}
+          >
+            <Trash2 className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-3">
+        <div className="bg-muted/50 p-4 rounded-lg">
+          <pre className={isMobile ? "text-sm whitespace-pre-wrap" : "text-sm whitespace-pre-wrap font-mono"}>
+            {favorite.generated_content}
+          </pre>
+        </div>
+      </CardContent>
+      <CardFooter className={isMobile ? "flex flex-col gap-3" : "flex gap-2"}>
+        <Button
+          variant="outline"
+          size={isMobile ? "default" : "sm"}
+          onClick={() => copyToClipboard(favorite.generated_content)}
+          className={isMobile ? "w-full min-h-[44px]" : ""}
+        >
+          <Copy className={isMobile ? "w-5 h-5 mr-2" : "w-4 h-4 mr-2"} />
+          Copiar
+        </Button>
+        <ExportButtons
+          content={favorite.generated_content}
+          agentType={favorite.agent_type}
+        />
+      </CardFooter>
+    </Card>
+  );
+
+  const renderTabContent = (tabValue: string) => {
+    const displayFavorites = tabValue === "todos" ? favorites : favoritesByAgent[tabValue] || [];
+    
+    if (displayFavorites.length === 0) {
+      return (
+        <div className="text-center py-12 text-muted-foreground">
+          <Star className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">
+            {tabValue === "todos" ? "Nenhum favorito ainda" : "Nenhum favorito para este agente"}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <ScrollArea className={isMobile ? "h-[calc(100vh-320px)]" : "h-[600px] pr-4"}>
+        <div className={isMobile ? "space-y-3" : "space-y-4"}>
+          {displayFavorites.map(renderFavoriteCard)}
+        </div>
+      </ScrollArea>
+    );
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen py-12">
@@ -128,146 +221,52 @@ export default function Favoritos() {
             </p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
-              <TabsTrigger value="todos">
-                Todos
-                <Badge variant="secondary" className="ml-1 text-xs">
-                  {totalFavorites}
-                </Badge>
-              </TabsTrigger>
-              {Object.keys(agentNames).map(agentType => (
-                <TabsTrigger 
-                  key={agentType} 
-                  value={agentType}
-                  disabled={!availableAgents.includes(agentType)}
-                >
-                  {agentNames[agentType]}
-                  {favoritesByAgent[agentType] && (
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {favoritesByAgent[agentType].length}
-                    </Badge>
-                  )}
+          {isMobile ? (
+            <div className="space-y-6">
+              <MobileTabSelect
+                value={activeTab}
+                onValueChange={setActiveTab}
+                options={tabOptions}
+                placeholder="Selecione uma categoria"
+              />
+              {renderTabContent(activeTab)}
+            </div>
+          ) : (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-7">
+                <TabsTrigger value="todos">
+                  Todos
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {totalFavorites}
+                  </Badge>
                 </TabsTrigger>
-              ))}
-            </TabsList>
+                {Object.keys(agentNames).map(agentType => (
+                  <TabsTrigger 
+                    key={agentType} 
+                    value={agentType}
+                    disabled={!availableAgents.includes(agentType)}
+                  >
+                    {agentNames[agentType]}
+                    {favoritesByAgent[agentType] && (
+                      <Badge variant="secondary" className="ml-1 text-xs">
+                        {favoritesByAgent[agentType].length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-            <TabsContent value="todos" className="mt-6">
-              <ScrollArea className="h-[600px] pr-4">
-                <div className="space-y-4">
-                  {favorites.map((favorite) => (
-                    <Card key={favorite.id} className="overflow-hidden">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg bg-gradient-to-r ${agentColors[favorite.agent_type]} text-white`}>
-                              <Star className="w-5 h-5 fill-current" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-base flex items-center gap-2">
-                                {agentNames[favorite.agent_type]}
-                                <Badge variant="outline">{favorite.agent_type}</Badge>
-                              </CardTitle>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                <Calendar className="w-3 h-3" />
-                                {format(new Date(favorite.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(favorite.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pb-3">
-                        <div className="bg-muted/50 p-4 rounded-lg">
-                          <pre className="text-sm whitespace-pre-wrap font-mono">
-                            {favorite.generated_content}
-                          </pre>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(favorite.generated_content)}
-                        >
-                          <Copy className="w-4 h-4 mr-2" />
-                          Copiar
-                        </Button>
-                        <ExportButtons
-                          content={favorite.generated_content}
-                          agentType={favorite.agent_type}
-                        />
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-
-            {Object.keys(agentNames).map(agentType => (
-              <TabsContent key={agentType} value={agentType} className="mt-6">
-                <ScrollArea className="h-[600px] pr-4">
-                  {!favoritesByAgent[agentType] || favoritesByAgent[agentType].length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Star className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Nenhum favorito para este agente</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {favoritesByAgent[agentType].map((favorite) => (
-                        <Card key={favorite.id} className="overflow-hidden">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Calendar className="w-3 h-3" />
-                                {format(new Date(favorite.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => handleDelete(favorite.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pb-3">
-                            <div className="bg-muted/50 p-4 rounded-lg">
-                              <pre className="text-sm whitespace-pre-wrap font-mono">
-                                {favorite.generated_content}
-                              </pre>
-                            </div>
-                          </CardContent>
-                          <CardFooter className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => copyToClipboard(favorite.generated_content)}
-                            >
-                              <Copy className="w-4 h-4 mr-2" />
-                              Copiar
-                            </Button>
-                            <ExportButtons
-                              content={favorite.generated_content}
-                              agentType={favorite.agent_type}
-                            />
-                          </CardFooter>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
+              <TabsContent value="todos" className="mt-6">
+                {renderTabContent("todos")}
               </TabsContent>
-            ))}
-          </Tabs>
+
+              {Object.keys(agentNames).map(agentType => (
+                <TabsContent key={agentType} value={agentType} className="mt-6">
+                  {renderTabContent(agentType)}
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
         </div>
       </div>
     </DashboardLayout>
