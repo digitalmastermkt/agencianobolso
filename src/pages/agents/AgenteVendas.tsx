@@ -4,6 +4,7 @@ import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { GenerationHistoryDialog } from "@/components/GenerationHistoryDialog";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { ExportButtons } from "@/components/ExportButtons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -384,10 +385,13 @@ export default function AgenteVendas() {
                       <Button 
                         variant="outline" 
                         onClick={() => navigator.clipboard.writeText(result)}
-                        className="flex-1"
                       >
                         Copiar Roteiro
                       </Button>
+                      <ExportButtons 
+                        content={result}
+                        agentType="vendas"
+                      />
                       <FavoriteButton 
                         agentType="vendas"
                         content={result}
