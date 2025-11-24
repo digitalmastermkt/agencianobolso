@@ -963,6 +963,44 @@ export type Database = {
           },
         ]
       }
+      user_favorites: {
+        Row: {
+          agent_type: string
+          created_at: string
+          generated_content: string
+          id: string
+          input_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type: string
+          created_at?: string
+          generated_content: string
+          id?: string
+          input_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string
+          generated_content?: string
+          id?: string
+          input_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_notifications: {
         Row: {
           created_at: string

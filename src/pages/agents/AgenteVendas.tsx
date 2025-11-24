@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { GenerationHistoryDialog } from "@/components/GenerationHistoryDialog";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -379,13 +380,20 @@ export default function AgenteVendas() {
                     <div className="bg-gradient-subtle p-4 rounded-lg">
                       <pre className="whitespace-pre-wrap text-sm">{result}</pre>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => navigator.clipboard.writeText(result)}
-                      className="w-full"
-                    >
-                      Copiar Roteiro
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => navigator.clipboard.writeText(result)}
+                        className="flex-1"
+                      >
+                        Copiar Roteiro
+                      </Button>
+                      <FavoriteButton 
+                        agentType="vendas"
+                        content={result}
+                        formData={formData}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground py-8">

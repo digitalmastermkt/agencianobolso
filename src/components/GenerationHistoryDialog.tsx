@@ -13,6 +13,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { History, Copy, Trash2, RotateCcw, Calendar } from "lucide-react";
+import { FavoriteButton } from "./FavoriteButton";
 import { useGenerationHistory } from "@/hooks/useGenerationHistory";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -224,6 +225,12 @@ export function GenerationHistoryDialog({
                               Reutilizar dados
                             </Button>
                           )}
+                          <FavoriteButton
+                            agentType={item.agentType}
+                            content={item.content}
+                            formData={item.formData}
+                            size="sm"
+                          />
                         </CardFooter>
                       </Card>
                     ))}

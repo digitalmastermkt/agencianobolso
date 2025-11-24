@@ -18,7 +18,8 @@ import {
   Users,
   CreditCard,
   Calendar,
-  Shield
+  Shield,
+  Star
 } from "lucide-react";
 import {
   Sidebar,
@@ -84,6 +85,11 @@ const mainItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard
+  },
+  {
+    title: "Favoritos",
+    url: "/favoritos",
+    icon: Star
   }
 ];
 
