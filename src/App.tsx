@@ -1,41 +1,55 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
-import Index from "./pages/Index";
-import Agentes from "./pages/Agentes";
-import AgenteVendas from "./pages/agents/AgenteVendas";
-import AgenteStorytelling from "./pages/agents/AgenteStorytelling";
-import AgenteViral from "./pages/agents/AgenteViral";
-import AgenteInteracao from "./pages/agents/AgenteInteracao";
-import AgenteConexao from "./pages/agents/AgenteConexao";
-import AgenteBanner from "./pages/agents/AgenteBanner";
-import Favoritos from "./pages/Favoritos";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Treinamentos from "./pages/Treinamentos";
-import CourseView from "./pages/CourseView";
-import Prompts from "./pages/Prompts";
-import Comunidade from "./pages/Comunidade";
-import Admin from "./pages/Admin";
-import AdminTrainings from "./pages/admin/AdminTrainings";
-import AdminPrompts from "./pages/admin/AdminPrompts";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminPlans from "./pages/admin/AdminPlans";
-import AdminEvents from "./pages/admin/AdminEvents";
-import AdminStripe from "./pages/admin/AdminStripe";
-import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
-import Vendas from "./pages/Vendas";
-import CapturaEvento from "./pages/CapturaEvento";
-import Obrigado from "./pages/Obrigado";
-import NotFound from "./pages/NotFound";
 import { PlanGuard } from "@/components/PlanGuard";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PaymentCanceled from "./pages/PaymentCanceled";
-import { Navigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+
+// Eager load critical pages
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+
+// Lazy load all other pages
+const Agentes = lazy(() => import("./pages/Agentes"));
+const AgenteVendas = lazy(() => import("./pages/agents/AgenteVendas"));
+const AgenteStorytelling = lazy(() => import("./pages/agents/AgenteStorytelling"));
+const AgenteViral = lazy(() => import("./pages/agents/AgenteViral"));
+const AgenteInteracao = lazy(() => import("./pages/agents/AgenteInteracao"));
+const AgenteConexao = lazy(() => import("./pages/agents/AgenteConexao"));
+const AgenteBanner = lazy(() => import("./pages/agents/AgenteBanner"));
+const Favoritos = lazy(() => import("./pages/Favoritos"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Treinamentos = lazy(() => import("./pages/Treinamentos"));
+const CourseView = lazy(() => import("./pages/CourseView"));
+const Prompts = lazy(() => import("./pages/Prompts"));
+const Comunidade = lazy(() => import("./pages/Comunidade"));
+const AdminTrainings = lazy(() => import("./pages/admin/AdminTrainings"));
+const AdminPrompts = lazy(() => import("./pages/admin/AdminPrompts"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminPlans = lazy(() => import("./pages/admin/AdminPlans"));
+const AdminEvents = lazy(() => import("./pages/admin/AdminEvents"));
+const AdminStripe = lazy(() => import("./pages/admin/AdminStripe"));
+const AdminAuditLogs = lazy(() => import("./pages/admin/AdminAuditLogs"));
+const Vendas = lazy(() => import("./pages/Vendas"));
+const CapturaEvento = lazy(() => import("./pages/CapturaEvento"));
+const Obrigado = lazy(() => import("./pages/Obrigado"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PaymentCanceled = lazy(() => import("./pages/PaymentCanceled"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-4">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Carregando...</p>
+    </div>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -45,7 +59,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/evento" element={<CapturaEvento />} />
@@ -195,6 +210,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
