@@ -306,23 +306,23 @@ export default function AgenteConexao() {
                 <CardTitle className="flex items-center justify-between">
                   <span>Stories de Conexão</span>
                   {result && (
-                     <div className="flex gap-2">
-                       <Button variant="outline" size="sm" onClick={handleGenerateVariation}>
-                         <RefreshCw className="w-4 h-4 mr-2" />Gerar Variação
+                     <div className={isMobile ? "flex flex-col gap-3" : "flex gap-2"}>
+                       <Button variant="outline" size={isMobile ? "default" : "sm"} className={isMobile ? buttonMinHeight : ""} onClick={handleGenerateVariation}>
+                         <RefreshCw className={isMobile ? "w-5 h-5 mr-2" : "w-4 h-4 mr-2"} />Gerar Variação
                        </Button>
-                       <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                         <Copy className="w-4 h-4 mr-2" />Copiar
+                       <Button variant="outline" size={isMobile ? "default" : "sm"} className={isMobile ? buttonMinHeight : ""} onClick={copyToClipboard}>
+                         <Copy className={isMobile ? "w-5 h-5 mr-2" : "w-4 h-4 mr-2"} />Copiar
                        </Button>
                        <ExportButtons
                          content={result}
                          agentType="conexao"
-                         size="sm"
+                         size={isMobile ? "default" : "sm"}
                        />
                        <FavoriteButton
                          agentType="conexao"
                          content={result}
                          formData={formData}
-                         size="sm"
+                         size={isMobile ? "default" : "sm"}
                        />
                      </div>
                   )}
@@ -337,11 +337,9 @@ export default function AgenteConexao() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-5/6" />
                     <Skeleton className="h-4 w-4/6" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
                     <div className="text-center text-muted-foreground text-sm mt-4">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                      Gerando stories... pode levar até 15 segundos
+                      <Loader2 className={(isMobile ? "w-6 h-6" : "w-5 h-5") + " animate-spin mx-auto mb-2"} />
+                      {isMobile ? "Gerando..." : "Gerando stories... pode levar até 15 segundos"}
                     </div>
                   </div>
                 ) : result ? (

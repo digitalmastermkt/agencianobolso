@@ -161,12 +161,12 @@ export default function AgenteStorytelling() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 gap-8">
             {/* Formulário */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className={iconSize} />
                   Informações do Storytelling
                 </CardTitle>
                 <CardDescription>
@@ -174,14 +174,14 @@ export default function AgenteStorytelling() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <TooltipProvider>
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="produto">Produto/Serviço</Label>
+                        <Label htmlFor="produto" className="font-medium">Produto/Serviço</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                            <HelpCircle className={iconSize + " text-muted-foreground cursor-help"} />
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>O que você está oferecendo através desta história?</p>
@@ -193,13 +193,14 @@ export default function AgenteStorytelling() {
                         value={formData.produto}
                         onChange={(e) => setFormData({...formData, produto: e.target.value})}
                         placeholder="Ex: Curso de desenvolvimento pessoal"
+                        className={inputHeight}
                         required
                       />
                     </div>
 
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="publicoAlvo">Público-Alvo</Label>
+                        <Label htmlFor="publicoAlvo" className="font-medium">Público-Alvo</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
@@ -308,33 +309,35 @@ export default function AgenteStorytelling() {
                 <CardTitle className="flex items-center justify-between">
                   <span>Seu Roteiro de Storytelling</span>
                   {result && (
-                    <div className="flex gap-2">
+                    <div className={isMobile ? "flex flex-col gap-3" : "flex gap-2"}>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={isMobile ? "default" : "sm"}
+                        className={isMobile ? buttonMinHeight : ""}
                         onClick={handleGenerateVariation}
                       >
-                        <RefreshCw className="w-4 h-4 mr-2" />
+                        <RefreshCw className={isMobile ? "w-5 h-5 mr-2" : "w-4 h-4 mr-2"} />
                         Gerar Variação
                       </Button>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={isMobile ? "default" : "sm"}
+                        className={isMobile ? buttonMinHeight : ""}
                         onClick={copyToClipboard}
                       >
-                        <Copy className="w-4 h-4 mr-2" />
+                        <Copy className={isMobile ? "w-5 h-5 mr-2" : "w-4 h-4 mr-2"} />
                         Copiar
                       </Button>
                       <ExportButtons
                         content={result}
                         agentType="storytelling"
-                        size="sm"
+                        size={isMobile ? "default" : "sm"}
                       />
                       <FavoriteButton
                         agentType="storytelling"
                         content={result}
                         formData={formData}
-                        size="sm"
+                        size={isMobile ? "default" : "sm"}
                       />
                     </div>
                   )}
@@ -349,11 +352,9 @@ export default function AgenteStorytelling() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-5/6" />
                     <Skeleton className="h-4 w-4/6" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
                     <div className="text-center text-muted-foreground text-sm mt-4">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                      Gerando storytelling... pode levar até 15 segundos
+                      <Loader2 className={(isMobile ? "w-6 h-6" : "w-5 h-5") + " animate-spin mx-auto mb-2"} />
+                      {isMobile ? "Gerando..." : "Gerando storytelling... pode levar até 15 segundos"}
                     </div>
                   </div>
                 ) : result ? (
