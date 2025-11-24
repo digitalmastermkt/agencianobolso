@@ -155,4 +155,37 @@ All colors MUST be HSL.
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
+
+  /* Mobile Performance: Reduce animations on mobile and respect user preferences */
+  @media (max-width: 768px) {
+    * {
+      animation-duration: 0.3s !important;
+      transition-duration: 0.2s !important;
+    }
+    
+    .glow-text {
+      text-shadow: none;
+    }
+    
+    .shadow-neon,
+    .shadow-glow {
+      box-shadow: none;
+    }
+  }
+
+  /* Respect user motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    
+    .glow-text {
+      text-shadow: none;
+    }
+  }
 }

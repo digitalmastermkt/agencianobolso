@@ -1,7 +1,9 @@
+import { Suspense, lazy } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Sparkles, 
   TrendingUp, 
@@ -13,7 +15,16 @@ import {
   MessageCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { SubscriptionPanel } from "@/components/subscriptions/SubscriptionPanel";
+
+// Lazy load heavy component
+const SubscriptionPanel = lazy(() => import("@/components/subscriptions/SubscriptionPanel").then(module => ({ default: module.SubscriptionPanel })));
+
+// Loading skeleton for SubscriptionPanel
+const SubscriptionPanelSkeleton = () => (
+  <div className="space-y-4">
+    <Skeleton className="h-64 w-full" />
+  </div>
+);
 
 const Index = () => {
   return (
@@ -218,7 +229,9 @@ const Index = () => {
               <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2 glow-text">Planos</h2>
               <p className="text-white/70">Escolha o plano e conclua o checkout em poucos cliques.</p>
             </div>
-            <SubscriptionPanel />
+            <Suspense fallback={<SubscriptionPanelSkeleton />}>
+              <SubscriptionPanel />
+            </Suspense>
           </div>
         </section>
 
