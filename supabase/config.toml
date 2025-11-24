@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.customer-portal]
 verify_jwt = true
+
+[functions.generate-ai-content]
+verify_jwt = true

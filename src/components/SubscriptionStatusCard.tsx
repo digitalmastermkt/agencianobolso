@@ -6,14 +6,51 @@ import { Crown, Zap, TrendingUp } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
 
 export function SubscriptionStatusCard() {
   const { subscribed, subscription_tier, loading: subLoading } = useSubscription();
   const { isTrialActive, loading: trialLoading } = useTrialStatus();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [creditsUsed, setCreditsUsed] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Buscar créditos mensais reais
+  useEffect(() => {
+    const fetchMonthlyCredits = async () => {
+      if (!user || !subscribed) {
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        
+        const { data, error } = await supabase
+          .rpc('get_user_monthly_credits_usage', {
+            p_user_id: user.id,
+            p_month_year: currentMonth
+          });
+        
+        if (error) throw error;
+        setCreditsUsed(data || 0);
+      } catch (error) {
+        console.error('Erro ao buscar créditos mensais:', error);
+        setCreditsUsed(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMonthlyCredits();
+  }, [user, subscribed]);
 
   // Mostrar apenas se tiver assinatura e não estiver em trial
-  if (trialLoading || subLoading) {
+  if (trialLoading || subLoading || loading) {
     return (
       <Card className="border-dashed border-primary/20">
         <CardContent className="p-6">
@@ -38,9 +75,6 @@ export function SubscriptionStatusCard() {
     Elite: 1000,
   }[subscription_tier] || 0;
 
-  // TODO: Buscar uso real de créditos mensais do banco
-  // Por enquanto, usar valores mock
-  const creditsUsed = 0;
   const creditsRemaining = monthlyCredits - creditsUsed;
   const creditsProgress = (creditsUsed / monthlyCredits) * 100;
 
