@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { PlanGuard } from "@/components/PlanGuard";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { Loader2 } from "lucide-react";
 
 // Eager load critical pages
@@ -14,6 +15,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 
 // Lazy load all other pages
+const Install = lazy(() => import("./pages/Install"));
 const Agentes = lazy(() => import("./pages/Agentes"));
 const AgenteVendas = lazy(() => import("./pages/agents/AgenteVendas"));
 const AgenteStorytelling = lazy(() => import("./pages/agents/AgenteStorytelling"));
@@ -58,10 +60,12 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <PWAInstallPrompt />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/install" element={<Install />} />
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/evento" element={<CapturaEvento />} />
           <Route path="/obrigado" element={<Obrigado />} />
