@@ -454,7 +454,17 @@ serve(async (req) => {
     // Save to database and track credits if userId is provided
     if (userId) {
       secureLog('info', 'Processing credit check', { requestId, hasUserId: true });
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Reutiliza o token de autorização do request original para checar assinatura
+      const authHeader = req.headers.get('Authorization') || undefined;
+
+      const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+        global: {
+          headers: authHeader
+            ? { Authorization: authHeader }
+            : {},
+        },
+      });
       
       // Buscar informações do usuário incluindo dados do trial
       const { data: profile, error: profileError } = await supabase
