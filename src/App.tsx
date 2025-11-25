@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { PlanGuard } from "@/components/PlanGuard";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import { Loader2 } from "lucide-react";
 
 // Eager load critical pages
@@ -60,6 +61,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <PWAUpdatePrompt />
       <PWAInstallPrompt />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
