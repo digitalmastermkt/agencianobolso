@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.generate-ai-content]
 verify_jwt = true
+
+[functions.generate-banner-images]
+verify_jwt = true

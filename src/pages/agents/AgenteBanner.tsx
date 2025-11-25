@@ -5,6 +5,7 @@ import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { GenerationHistoryDialog } from "@/components/GenerationHistoryDialog";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { ExportButtons } from "@/components/ExportButtons";
+import { BannerCarousel } from "@/components/BannerCarousel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { ToastAction } from "@/components/ui/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Image, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
+import { Image as ImageIcon, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
@@ -26,6 +28,9 @@ import { useGenerationHistory } from "@/hooks/useGenerationHistory";
 export default function AgenteBanner() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
+  const [bannerImages, setBannerImages] = useState<any[]>([]);
+  const [generatingImages, setGeneratingImages] = useState(false);
+  const [generateImages, setGenerateImages] = useState(true);
   const { saveGeneration } = useGenerationHistory();
   const { isMobile, touchSize, iconSize, spacing, inputHeight, buttonMinHeight } = useMobileOptimization();
   const [formData, setFormData] = useState({
@@ -44,67 +49,116 @@ export default function AgenteBanner() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Autenticação necessária",
+        description: "Faça login para usar o gerador de banners",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
     setLoading(true);
-    setResult("");
+    setResult('');
+    setBannerImages([]);
 
     try {
-      const { data, error } = await supabase.functions.invoke('generate-ai-content', {
-        body: {
-          agentType: 'banner',
-          formData,
-          userId: user?.id
-        }
+      // Step 1: Gerar conceito textual
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('generate-ai-content', {
+        body: { agentType: 'banner', formData, userId: user.id }
       });
 
-      if (error) {
-        console.error('Erro na geração:', error);
-        
-        const errorMessage = error.message?.toLowerCase() || '';
-        
-        if (errorMessage.includes('limite diário') || errorMessage.includes('daily limit')) {
-          toast({
-            title: "Limite diário atingido",
-            description: "Você atingiu o limite de 10 gerações diárias do período trial.",
-            variant: "destructive",
-            action: <ToastAction altText="Ver Planos" onClick={() => navigate('/dashboard')}>Ver Planos</ToastAction>
-          });
-        } else if (errorMessage.includes('limite mensal') || errorMessage.includes('monthly limit')) {
-          toast({
-            title: "Limite mensal atingido",
-            description: "Você atingiu o limite mensal do seu plano.",
-            variant: "destructive",
-            action: <ToastAction altText="Fazer Upgrade" onClick={() => navigate('/dashboard')}>Fazer Upgrade</ToastAction>
-          });
-        } else if (errorMessage.includes('plano necessário') || errorMessage.includes('subscription required')) {
-          toast({
-            title: "Assinatura necessária",
-            description: "Este agente requer um plano ativo.",
-            variant: "destructive",
-            action: <ToastAction altText="Ver Planos" onClick={() => navigate('/dashboard')}>Ver Planos</ToastAction>
-          });
-        } else {
-          toast({
-            title: "Erro ao gerar conteúdo",
-            description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
-            variant: "destructive"
-          });
-        }
-        
-        return;
-      }
+      if (functionError) throw functionError;
 
-      setResult(data.content);
-      saveGeneration('banner', data.content, formData);
-      toast({ title: "Banner criado!", description: "Seu conceito de banner foi gerado com sucesso." });
-    } catch (error) {
-      console.error('Erro inesperado:', error);
+      const generatedText = functionData.content;
+      setResult(generatedText);
+      saveGeneration('banner', generatedText, formData);
+      
       toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro inesperado. Verifique sua conexão e tente novamente.",
-        variant: "destructive"
+        title: "Conceito gerado! 🎨",
+        description: generateImages ? "Gerando imagens..." : "Seu conceito está pronto",
       });
+
+      // Step 2: Gerar imagens se opção estiver ativada
+      if (generateImages) {
+        setGeneratingImages(true);
+        
+        try {
+          // Extrair prompt do conceito gerado
+          const promptMatch = generatedText.match(/\*\*PROMPT PARA GERAÇÃO DE IMAGEM:\*\*\s*\n([^\*]+)/i);
+          const basePrompt = promptMatch ? promptMatch[1].trim() : `Professional banner design for ${formData.produto}. ${formData.beneficio}`;
+
+          const { data: imagesData, error: imagesError } = await supabase.functions.invoke('generate-banner-images', {
+            body: {
+              basePrompt,
+              formato: formData.formato_imagem,
+              identidadeVisual: formData.identidade_visual
+            }
+          });
+
+          if (imagesError) {
+            console.error('Erro ao gerar imagens:', imagesError);
+            toast({
+              title: "Imagens não geradas",
+              description: "O conceito foi criado, mas as imagens falharam. Tente gerar novamente.",
+              variant: "destructive",
+            });
+          } else {
+            setBannerImages(imagesData.images || []);
+            toast({
+              title: "Banners gerados! 🎉",
+              description: `${imagesData.totalGenerated} variações criadas com sucesso`,
+            });
+          }
+        } catch (imageError) {
+          console.error('Erro ao gerar imagens:', imageError);
+          toast({
+            title: "Erro nas imagens",
+            description: "O conceito foi gerado, mas houve um problema nas imagens",
+            variant: "destructive",
+          });
+        } finally {
+          setGeneratingImages(false);
+        }
+      }
+    } catch (error: any) {
+      console.error('Erro na geração:', error);
+      
+      const errorMessage = error.message?.toLowerCase() || '';
+      
+      if (errorMessage.includes('limite diário') || errorMessage.includes('daily limit')) {
+        toast({
+          title: "Limite diário atingido",
+          description: "Você atingiu o limite de 10 gerações diárias do período trial.",
+          variant: "destructive",
+          action: <ToastAction altText="Ver Planos" onClick={() => navigate('/dashboard')}>Ver Planos</ToastAction>
+        });
+      } else if (errorMessage.includes('limite mensal') || errorMessage.includes('monthly limit')) {
+        toast({
+          title: "Limite mensal atingido",
+          description: "Você atingiu o limite mensal do seu plano.",
+          variant: "destructive",
+          action: <ToastAction altText="Fazer Upgrade" onClick={() => navigate('/dashboard')}>Fazer Upgrade</ToastAction>
+        });
+      } else if (errorMessage.includes('plano necessário') || errorMessage.includes('subscription required')) {
+        toast({
+          title: "Assinatura necessária",
+          description: "Este agente requer um plano ativo.",
+          variant: "destructive",
+          action: <ToastAction altText="Ver Planos" onClick={() => navigate('/dashboard')}>Ver Planos</ToastAction>
+        });
+      } else {
+        toast({
+          title: "Erro ao gerar conteúdo",
+          description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
+      setGeneratingImages(false);
     }
   };
 
@@ -115,6 +169,7 @@ export default function AgenteBanner() {
 
   const handleGenerateVariation = () => {
     setResult("");
+    setBannerImages([]);
     handleSubmit(new Event('submit') as any);
   };
 
@@ -128,18 +183,18 @@ export default function AgenteBanner() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-subtle py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
               <div className="p-3 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white">
-                <Image className="w-8 h-8" />
+                <ImageIcon className="w-8 h-8" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">CRIADOR DE BANNER</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">CRIADOR DE BANNER COM IA</h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Design Profissional
+              Conceito profissional + 3 variações visuais geradas automaticamente
             </p>
-            <Badge variant="secondary" className="mt-2">Estilo: Profissional</Badge>
+            <Badge variant="secondary" className="mt-2">Powered by Lovable AI</Badge>
           </div>
 
           <div className="mb-8 max-w-md mx-auto">
@@ -155,6 +210,7 @@ export default function AgenteBanner() {
           </div>
 
           <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-2 gap-8"}>
+            {/* Formulário */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -342,74 +398,156 @@ export default function AgenteBanner() {
                     </div>
                   </TooltipProvider>
 
-                  <Button type="submit" className={`w-full ${buttonMinHeight}`} disabled={loading} variant="gradient" size={touchSize}>
-                    {loading ? (
+                  {/* Toggle para gerar imagens */}
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="generate-images" className="text-base font-medium">
+                        Gerar imagens automaticamente
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Cria 3 variações visuais do banner usando IA
+                      </p>
+                    </div>
+                    <Switch
+                      id="generate-images"
+                      checked={generateImages}
+                      onCheckedChange={setGenerateImages}
+                    />
+                  </div>
+
+                  <Button type="submit" className={`w-full ${buttonMinHeight}`} disabled={loading || generatingImages} variant="gradient" size={touchSize}>
+                    {loading || generatingImages ? (
                       <>
                         <Loader2 className={`${iconSize} mr-2 animate-spin`} />
-                        {isMobile ? "Gerando..." : "Gerando... (pode levar até 15s)"}
+                        {generatingImages ? "Gerando imagens..." : "Gerando conceito..."}
                       </>
                     ) : (
-                      "Gerar Banner"
+                      <>
+                        <ImageIcon className={`${iconSize} mr-2`} />
+                        {generateImages ? "Gerar Banner + Imagens" : "Gerar Conceito"}
+                      </>
                     )}
                   </Button>
                 </form>
               </CardContent>
             </Card>
+
+            {/* Resultado */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Seu Banner</span>
-                   {result && (
-                      <div className={isMobile ? "flex flex-col gap-3" : "flex gap-2"}>
-                        <Button variant="outline" size={touchSize} onClick={handleGenerateVariation} className={buttonMinHeight}>
-                          <RefreshCw className={`${iconSize} mr-2`} />Gerar Variação
-                        </Button>
-                        <Button variant="outline" size={touchSize} onClick={copyToClipboard} className={buttonMinHeight}>
-                          <Copy className={`${iconSize} mr-2`} />Copiar
-                        </Button>
-                        <ExportButtons
-                          content={result}
-                          agentType="banner"
-                        />
-                        <FavoriteButton
-                          agentType="banner"
-                          content={result}
-                          formData={formData}
-                          size={touchSize}
-                        />
-                      </div>
-                   )}
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  Resultado
                 </CardTitle>
-                <CardDescription>
-                  Conceito completo e prompt para IA
-                </CardDescription>
               </CardHeader>
-              <CardContent>
-                {loading ? (
+              <CardContent className="space-y-6">
+                {/* Carrossel de Imagens */}
+                {generatingImages && (
                   <div className="space-y-3">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                    <Skeleton className="h-4 w-4/6" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <div className="text-center text-muted-foreground text-sm mt-4">
-                      <Loader2 className={`${isMobile ? "w-6 h-6" : "w-5 h-5"} animate-spin mx-auto mb-2`} />
-                      <p className={isMobile ? "text-base font-medium" : ""}>
-                        {isMobile ? "Gerando..." : "Gerando conceito... pode levar até 15 segundos"}
-                      </p>
-                      {isMobile && <p className="text-xs text-muted-foreground mt-1">Aguarde 10-15s</p>}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <ImageIcon className="w-4 h-4 animate-pulse" />
+                      <span>Gerando 3 variações visuais...</span>
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-64 w-full rounded-lg" />
+                      <div className="flex gap-2">
+                        <Skeleton className="h-10 flex-1" />
+                        <Skeleton className="h-10 flex-1" />
+                      </div>
                     </div>
                   </div>
-                ) : result ? (
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <pre className="whitespace-pre-wrap text-sm text-foreground">{result}</pre>
-                  </div>
-                ) : (
-                  <div className="text-center text-muted-foreground py-12">
-                    <Image className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Preencha o formulário para gerar seu banner profissional</p>
+                )}
+
+                {bannerImages.length > 0 && !generatingImages && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Variações Geradas</h3>
+                      <Badge variant="secondary">{bannerImages.filter(img => img.success).length} imagens</Badge>
+                    </div>
+                    <BannerCarousel
+                      images={bannerImages}
+                      onFavorite={(imageUrl, style) => {
+                        toast({
+                          title: "Em breve! ⭐",
+                          description: `Favoritar imagens individuais será implementado em breve`,
+                        });
+                      }}
+                      onRegenerateVariation={(style) => {
+                        toast({
+                          title: "Em breve 🔄",
+                          description: `Regeneração de variação específica será implementada`,
+                        });
+                      }}
+                    />
                   </div>
                 )}
+
+                {/* Conceito Textual */}
+                {loading && !generatingImages ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ) : result ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Conceito do Banner</h3>
+                    </div>
+                    <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap p-4 bg-muted rounded-lg">
+                      {result}
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={handleGenerateVariation}
+                        variant="outline"
+                        size={isMobile ? "default" : "default"}
+                        className="flex-1 md:flex-initial min-w-[160px]"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Gerar Variação
+                      </Button>
+
+                      <Button
+                        onClick={copyToClipboard}
+                        variant="outline"
+                        size={isMobile ? "default" : "default"}
+                        className="flex-1 md:flex-initial min-w-[140px]"
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copiar
+                      </Button>
+
+                      <ExportButtons 
+                        content={result}
+                        agentType="banner"
+                      />
+
+                      <FavoriteButton
+                        agentType="banner"
+                        content={result}
+                        formData={formData}
+                        variant="outline"
+                        size={isMobile ? "default" : "default"}
+                        className="flex-1 md:flex-initial min-w-[140px]"
+                      />
+                    </div>
+                  </div>
+                ) : !loading && !generatingImages ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Preencha o formulário e clique em "Gerar Banner" para começar</p>
+                    {generateImages && (
+                      <p className="text-sm mt-2 flex items-center justify-center gap-2">
+                        <ImageIcon className="w-4 h-4" />
+                        3 variações visuais serão geradas automaticamente
+                      </p>
+                    )}
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           </div>
