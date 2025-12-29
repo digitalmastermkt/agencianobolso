@@ -87,6 +87,11 @@ export default function AgenteBanner() {
       });
 
       if (functionError) throw functionError;
+      
+      // Check for error in response body (backend returns 4xx with error message)
+      if (functionData?.error) {
+        throw new Error(functionData.error);
+      }
 
       const generatedText = functionData.content;
       setResult(generatedText);
@@ -156,10 +161,10 @@ export default function AgenteBanner() {
           variant: "destructive",
           action: <ToastAction altText="Fazer Upgrade" onClick={() => navigate('/dashboard')}>Fazer Upgrade</ToastAction>
         });
-      } else if (errorMessage.includes('plano necessário') || errorMessage.includes('subscription required')) {
+      } else if (errorMessage.includes('plano necessário') || errorMessage.includes('subscription required') || errorMessage.includes('plano pago') || errorMessage.includes('usuários gratuitos')) {
         toast({
           title: "Assinatura necessária",
-          description: "Este agente requer um plano ativo.",
+          description: "Este agente requer um plano ativo para gerar conteúdo.",
           variant: "destructive",
           action: <ToastAction altText="Ver Planos" onClick={() => navigate('/dashboard')}>Ver Planos</ToastAction>
         });

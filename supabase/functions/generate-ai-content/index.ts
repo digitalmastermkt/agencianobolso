@@ -478,6 +478,34 @@ serve(async (req) => {
             : {},
         },
       });
+
+      // Check if user is admin - admins bypass all restrictions
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      const isAdmin = !rolesError && userRoles?.some(r => r.role === 'admin');
+      
+      secureLog('info', 'Admin status checked', { requestId, isAdmin });
+
+      if (isAdmin) {
+        secureLog('info', 'Admin user - bypassing all restrictions', { requestId });
+        // Admin users bypass all trial/subscription/credit checks
+        // Just save the generation and return
+        await supabase.from('ai_generations').insert({
+          user_id: userId,
+          agent_type: agentType,
+          input_data: formData,
+          output_content: generatedContent,
+          credits_used: 0 // Admins don't use credits
+        });
+
+        return new Response(
+          JSON.stringify({ content: generatedContent }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       
       // Buscar informações do usuário incluindo dados do trial
       const { data: profile, error: profileError } = await supabase
@@ -519,7 +547,10 @@ serve(async (req) => {
 
         if (dailyUsed >= dailyLimit) {
           secureLog('warn', 'Daily limit exceeded', { requestId, dailyUsed, dailyLimit });
-          throw new Error(`Limite diário de créditos excedido (${dailyUsed}/${dailyLimit}). Volte amanhã ou faça upgrade para acesso ilimitado.`);
+          return new Response(
+            JSON.stringify({ error: `Limite diário de créditos excedido (${dailyUsed}/${dailyLimit}). Volte amanhã ou faça upgrade para acesso ilimitado.` }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+          );
         }
       } else {
         // Verificar status da assinatura para usuários fora do trial
@@ -538,7 +569,11 @@ serve(async (req) => {
 
         // Verificar acesso ao agente para usuários não-trial
         if (!subscriptionData.subscribed && agentType !== 'vendas') {
-          throw new Error('Este agente requer um plano pago. Usuários gratuitos podem usar apenas o agente de vendas.');
+          secureLog('warn', 'User blocked - no subscription for premium agent', { requestId, agentType });
+          return new Response(
+            JSON.stringify({ error: 'Este agente requer um plano pago. Usuários gratuitos podem usar apenas o agente de vendas.' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+          );
         }
 
         // Obter configurações do plano e uso mensal de créditos
