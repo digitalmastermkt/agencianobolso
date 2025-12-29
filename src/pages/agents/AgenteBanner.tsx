@@ -107,11 +107,23 @@ export default function AgenteBanner() {
         
         try {
           const promptMatch = generatedText.match(/\*\*PROMPT PARA GERAÇÃO DE IMAGEM:\*\*\s*\n([^\*]+)/i);
-          const basePrompt = promptMatch ? promptMatch[1].trim() : `Professional banner design for ${formData.produto}. ${formData.beneficio}`;
+          
+          // Extrair headline e CTA do texto gerado
+          const headlineMatch = generatedText.match(/\*\*(?:HEADLINE|Headline|Título)[:\s]*\*\*\s*["""]?([^"""\n]+)["""]?/i);
+          const ctaMatch = generatedText.match(/\*\*(?:CTA|Call[- ]to[- ]Action|Chamada)[:\s]*\*\*\s*["""]?([^"""\n]+)["""]?/i);
+          
+          const headline = headlineMatch ? headlineMatch[1].trim() : formData.objetivo_post;
+          const cta = ctaMatch ? ctaMatch[1].trim() : 'Saiba Mais';
+          
+          const basePrompt = promptMatch 
+            ? promptMatch[1].trim() 
+            : `Professional banner for ${formData.produto}. ${formData.beneficio}`;
 
           const { data: imagesData, error: imagesError } = await supabase.functions.invoke('generate-banner-images', {
             body: {
               basePrompt,
+              headline,
+              cta,
               formato: formData.formato_imagem,
               identidadeVisual: formData.identidade_visual
             }
