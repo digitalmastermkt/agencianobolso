@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -339,10 +339,10 @@ serve(async (req) => {
       fieldCount: Object.keys(formData || {}).length 
     });
 
-    if (!openAIApiKey) {
-      secureLog('error', 'OpenAI API key not configured', { requestId });
+    if (!lovableApiKey) {
+      secureLog('error', 'LOVABLE_API_KEY not configured', { requestId });
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
@@ -408,18 +408,18 @@ serve(async (req) => {
     
     secureLog('info', 'Prompt prepared', { requestId, promptLength: prompt.length });
 
-    // Call OpenAI API
-    secureLog('info', 'Calling OpenAI API', { requestId, model: 'gpt-5-mini-2025-08-07' });
+    // Call Lovable AI Gateway
+    secureLog('info', 'Calling Lovable AI Gateway', { requestId, model: 'google/gemini-2.5-flash' });
     const startTime = Date.now();
     
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-08-07',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { 
             role: 'system', 
@@ -427,25 +427,38 @@ serve(async (req) => {
           },
           { role: 'user', content: prompt }
         ],
-        max_completion_tokens: 1000,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      secureLog('error', 'OpenAI API error', { 
+      secureLog('error', 'Lovable AI Gateway error', { 
         requestId, 
         status: response.status,
         hasErrorText: !!errorText
       });
-      throw new Error(`OpenAI API error: ${response.status}`);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Créditos insuficientes. Adicione créditos na sua conta Lovable.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+        );
+      }
+      
+      throw new Error(`AI API error: ${response.status}`);
     }
 
     const data = await response.json();
     const generatedContent = data.choices[0].message.content;
     const duration = Date.now() - startTime;
     
-    secureLog('info', 'OpenAI response received', { 
+    secureLog('info', 'Lovable AI response received', { 
       requestId, 
       durationMs: duration,
       contentLength: generatedContent?.length || 0
