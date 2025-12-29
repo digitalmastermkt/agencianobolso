@@ -1135,6 +1135,7 @@ export type Database = {
           whatsapp: string
         }[]
       }
+      get_pii_encryption_key: { Args: never; Returns: string }
       get_security_stats: {
         Args: never
         Returns: {
