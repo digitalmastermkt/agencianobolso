@@ -284,41 +284,44 @@ Formato de entrega:
 **EXTRAS/BASTIDORES:**
 [Sugestões adicionais]`,
 
-  banner: `Você é um especialista em design de banners para redes sociais.
+  banner: `Você é um especialista em design de banners publicitários para redes sociais e anúncios.
 
-Baseado nas informações:
-- Produto/serviço: {{produto}}
-- Principal benefício: {{beneficio}}
-- Identidade visual: {{identidade_visual}}
+Baseado nos dados abaixo:
+- Produto/Serviço: {{produto}}
+- Benefício principal: {{beneficio}}
 - Público-alvo: {{publico_alvo}}
-- Imagem do produto: {{imagem_produto}}
 - Objetivo do post: {{objetivo_post}}
+- Identidade visual (se houver): {{identidade_visual}}
+- Informações obrigatórias (se houver): {{informacoes_obrigatorias}}
 - Formato: {{formato_imagem}}
-- Informações obrigatórias: {{informacoes_obrigatorias}}
 
-Crie um conceito completo de banner que:
-1. Comunique o benefício claramente
-2. Seja visualmente atraente
-3. Gere ação imediata
+Crie um conceito completo de banner.
 
-Formato de entrega:
-**COPY PUBLICITÁRIA:**
-[Texto curto e persuasivo]
+⚠️ REGRAS CRÍTICAS:
+1. SEMPRE gere HEADLINE e CTA
+2. HEADLINE deve ser curta, clara e chamativa (máximo 8 palavras)
+3. CTA deve ser direto e orientado à ação
+4. Nunca deixe HEADLINE ou CTA vazios
 
-**TÍTULO PRINCIPAL:**
-[Título de destaque]
+### FORMATO DE RESPOSTA (OBRIGATÓRIO):
 
-**DESCRIÇÃO VISUAL DO BANNER:**
-[Layout, cores, elementos, disposição]
+HEADLINE:
+[Título principal em até 8 palavras]
 
-**PALETA SUGERIDA:**
-[3-4 cores específicas]
+CTA:
+[Call to action direto e curto]
 
-**PROMPT PARA GERAÇÃO DE IMAGEM:**
-[Prompt detalhado para Midjourney/DALL-E]
+COPY PUBLICITÁRIA:
+[Texto persuasivo curto]
 
-**CTA VISUAL:**
-[Como destacar o call-to-action]`
+DESCRIÇÃO VISUAL DO BANNER:
+[Layout, cores, hierarquia visual, elementos gráficos]
+
+PALETA SUGERIDA:
+[#HEX1, #HEX2, #HEX3]
+
+PROMPT BASE PARA GERAÇÃO DE IMAGEM:
+[Prompt detalhado descrevendo o visual do banner, sem texto embutido]`
 };
 
 serve(async (req) => {
