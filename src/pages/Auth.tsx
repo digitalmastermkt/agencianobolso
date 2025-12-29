@@ -17,6 +17,8 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [signupData, setSignupData] = useState({ email: "", password: "", confirmPassword: "" });
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -118,6 +120,50 @@ export default function Auth() {
       toast({
         title: "Erro no login",
         description: error.message || "Email ou senha incorretos",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const sanitizedEmail = sanitizeInput(resetEmail);
+    
+    if (!validateInputSafety(sanitizedEmail)) {
+      toast({
+        title: "Entrada inválida",
+        description: "Email contém caracteres não permitidos.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
+        redirectTo: `${window.location.origin}/auth`
+      });
+
+      if (error) throw error;
+
+      await logSecurityEvent('password_reset_requested', { email: sanitizedEmail });
+
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha."
+      });
+      
+      setShowResetPassword(false);
+      setResetEmail("");
+    } catch (error: any) {
+      console.error('Erro ao enviar email de recuperação:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao enviar email de recuperação",
         variant: "destructive"
       });
     } finally {
@@ -326,7 +372,57 @@ export default function Auth() {
                     >
                       {loading ? "Entrando..." : "Entrar"}
                     </Button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowResetPassword(true)}
+                      className="w-full text-sm text-primary hover:underline mt-2"
+                    >
+                      Esqueci minha senha
+                    </button>
                   </form>
+
+                  {showResetPassword && (
+                    <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+                      <h3 className="font-medium mb-2">Recuperar senha</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Digite seu email para receber um link de recuperação.
+                      </p>
+                      <form onSubmit={handleResetPassword} className="space-y-3">
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="email"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            placeholder="seu@email.com"
+                            className="pl-10"
+                            required
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowResetPassword(false);
+                              setResetEmail("");
+                            }}
+                            className="flex-1"
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1"
+                          >
+                            {loading ? "Enviando..." : "Enviar"}
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="signup">
