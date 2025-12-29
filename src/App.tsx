@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 
 // Lazy load all other pages
 const Install = lazy(() => import("./pages/Install"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Agentes = lazy(() => import("./pages/Agentes"));
 const AgenteVendas = lazy(() => import("./pages/agents/AgenteVendas"));
 const AgenteStorytelling = lazy(() => import("./pages/agents/AgenteStorytelling"));
@@ -72,6 +73,7 @@ const App = () => (
           <Route path="/evento" element={<CapturaEvento />} />
           <Route path="/obrigado" element={<Obrigado />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/agentes" element={
             <ProtectedRoute>
               <Agentes />
