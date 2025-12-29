@@ -16,7 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ToastAction } from "@/components/ui/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Image as ImageIcon, Sparkles, Copy, Loader2, RefreshCw, HelpCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Image as ImageIcon, Sparkles, Copy, Loader2, RefreshCw, HelpCircle, Wand2, Instagram } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
@@ -24,6 +25,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useGenerationHistory } from "@/hooks/useGenerationHistory";
+
+// Personalized mode components
+import { InstagramAnalyzer } from "@/components/banner/InstagramAnalyzer";
+import { PersonPhotoUpload, PersonAnalysis } from "@/components/banner/PersonPhotoUpload";
+import { DesignGeneratorForm } from "@/components/banner/DesignGeneratorForm";
+import { PersonalizedModeStepper } from "@/components/banner/PersonalizedModeStepper";
+import { VisualIdentity } from "@/components/banner/IdentityVisualCard";
 
 export default function AgenteBanner() {
   const [loading, setLoading] = useState(false);
@@ -33,6 +41,8 @@ export default function AgenteBanner() {
   const [generateImages, setGenerateImages] = useState(true);
   const { saveGeneration } = useGenerationHistory();
   const { isMobile, touchSize, iconSize, spacing, inputHeight, buttonMinHeight } = useMobileOptimization();
+  
+  // Simple mode form data
   const [formData, setFormData] = useState({
     produto: "",
     beneficio: "",
@@ -43,6 +53,13 @@ export default function AgenteBanner() {
     formato_imagem: "",
     informacoes_obrigatorias: ""
   });
+  
+  // Personalized mode state
+  const [mode, setMode] = useState<"simple" | "personalized">("simple");
+  const [currentStep, setCurrentStep] = useState(1);
+  const [identity, setIdentity] = useState<VisualIdentity | null>(null);
+  const [person, setPerson] = useState<PersonAnalysis | null>(null);
+  
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -65,7 +82,6 @@ export default function AgenteBanner() {
     setBannerImages([]);
 
     try {
-      // Step 1: Gerar conceito textual
       const { data: functionData, error: functionError } = await supabase.functions.invoke('generate-ai-content', {
         body: { agentType: 'banner', formData, userId: user.id }
       });
@@ -81,12 +97,10 @@ export default function AgenteBanner() {
         description: generateImages ? "Gerando imagens..." : "Seu conceito está pronto",
       });
 
-      // Step 2: Gerar imagens se opção estiver ativada
       if (generateImages) {
         setGeneratingImages(true);
         
         try {
-          // Extrair prompt do conceito gerado
           const promptMatch = generatedText.match(/\*\*PROMPT PARA GERAÇÃO DE IMAGEM:\*\*\s*\n([^\*]+)/i);
           const basePrompt = promptMatch ? promptMatch[1].trim() : `Professional banner design for ${formData.produto}. ${formData.beneficio}`;
 
@@ -180,6 +194,28 @@ export default function AgenteBanner() {
     }));
   };
 
+  // Personalized mode handlers
+  const handleIdentityExtracted = (extractedIdentity: VisualIdentity) => {
+    setIdentity(extractedIdentity);
+    setCurrentStep(2);
+  };
+
+  const handlePersonAnalyzed = (analyzedPerson: PersonAnalysis) => {
+    setPerson(analyzedPerson);
+    setCurrentStep(3);
+  };
+
+  const handlePersonalizedImagesGenerated = (images: any[]) => {
+    setBannerImages(images);
+  };
+
+  const resetPersonalizedMode = () => {
+    setIdentity(null);
+    setPerson(null);
+    setCurrentStep(1);
+    setBannerImages([]);
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-subtle py-8">
@@ -209,348 +245,470 @@ export default function AgenteBanner() {
             />
           </div>
 
-          <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-2 gap-8"}>
-            {/* Formulário */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Formulário
-                </CardTitle>
-                <CardDescription>
-                  Preencha os dados para criar seu banner profissional
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className={isMobile ? "space-y-6" : "space-y-4"}>
-                  <TooltipProvider>
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="produto" className={isMobile ? "text-sm font-medium" : ""}>Produto/Serviço</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className={`${iconSize} text-muted-foreground cursor-help`} />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>O que você está promovendo neste banner?</p>
-                          </TooltipContent>
-                        </Tooltip>
+          {/* Mode Tabs */}
+          <Tabs value={mode} onValueChange={(v) => { setMode(v as "simple" | "personalized"); resetPersonalizedMode(); }} className="mb-6">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+              <TabsTrigger value="simple" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Modo Simples
+              </TabsTrigger>
+              <TabsTrigger value="personalized" className="flex items-center gap-2">
+                <Instagram className="w-4 h-4" />
+                Design Personalizado
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Simple Mode */}
+            <TabsContent value="simple">
+              <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-2 gap-8"}>
+                {/* Formulário */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5" />
+                      Formulário
+                    </CardTitle>
+                    <CardDescription>
+                      Preencha os dados para criar seu banner profissional
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleSubmit} className={isMobile ? "space-y-6" : "space-y-4"}>
+                      <TooltipProvider>
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Label htmlFor="produto" className={isMobile ? "text-sm font-medium" : ""}>Produto/Serviço</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className={`${iconSize} text-muted-foreground cursor-help`} />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>O que você está promovendo neste banner?</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input 
+                            id="produto" 
+                            value={formData.produto} 
+                            onChange={(e) => setFormData({...formData, produto: e.target.value})} 
+                            placeholder="Ex: Curso de Design Gráfico"
+                            className={inputHeight}
+                            required 
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Label htmlFor="beneficio">Principal Benefício</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Qual o maior ganho para quem comprar? Foque no resultado</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Textarea 
+                            id="beneficio" 
+                            value={formData.beneficio} 
+                            onChange={(e) => setFormData({...formData, beneficio: e.target.value})} 
+                            placeholder="Ex: Aprenda design profissional em 30 dias"
+                            rows={2}
+                            required 
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Label htmlFor="publico_alvo">Público-Alvo</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Para quem este banner é direcionado?</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input 
+                            id="publico_alvo" 
+                            value={formData.publico_alvo} 
+                            onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
+                            placeholder="Ex: Jovens criativos de 18-35 anos"
+                            required 
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Label htmlFor="identidade_visual">Identidade Visual</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Estilo visual: cores, fontes, mood (moderno, elegante, etc.)</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input 
+                            id="identidade_visual" 
+                            value={formData.identidade_visual} 
+                            onChange={(e) => setFormData({...formData, identidade_visual: e.target.value})} 
+                            placeholder="Ex: Moderno, minimalista, cores vibrantes"
+                            required 
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Label htmlFor="objetivo_post">Objetivo do Post</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Qual ação você espera do público?</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input 
+                            id="objetivo_post" 
+                            value={formData.objetivo_post} 
+                            onChange={(e) => setFormData({...formData, objetivo_post: e.target.value})} 
+                            placeholder="Ex: Gerar inscrições no curso"
+                            required 
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Label htmlFor="formato_imagem">Formato</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Escolha o formato ideal para sua plataforma</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Select value={formData.formato_imagem} onValueChange={(value) => setFormData({...formData, formato_imagem: value})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o formato" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="quadrado">Quadrado (1080x1080)</SelectItem>
+                              <SelectItem value="retangular">Retangular (1200x628)</SelectItem>
+                              <SelectItem value="story">Story (1080x1920)</SelectItem>
+                              <SelectItem value="banner">Banner (1200x400)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Label htmlFor="imagem_produto">Imagem do Produto</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Descreva a imagem ou mockup que deseja usar (opcional)</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Input 
+                            id="imagem_produto" 
+                            value={formData.imagem_produto} 
+                            onChange={(e) => setFormData({...formData, imagem_produto: e.target.value})} 
+                            placeholder="Ex: Mockup de computador, pessoa estudando"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Label htmlFor="informacoes_obrigatorias">Informações Obrigatórias</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Dados essenciais: preço, prazo, contato, etc.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Textarea 
+                            id="informacoes_obrigatorias" 
+                            value={formData.informacoes_obrigatorias} 
+                            onChange={(e) => setFormData({...formData, informacoes_obrigatorias: e.target.value})} 
+                            placeholder="Ex: Preço, data limite, contato"
+                            rows={2}
+                          />
+                        </div>
+                      </TooltipProvider>
+
+                      {/* Toggle para gerar imagens */}
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="generate-images" className="text-base font-medium">
+                            Gerar imagens automaticamente
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Cria 3 variações visuais do banner usando IA
+                          </p>
+                        </div>
+                        <Switch
+                          id="generate-images"
+                          checked={generateImages}
+                          onCheckedChange={setGenerateImages}
+                        />
                       </div>
-                      <Input 
-                        id="produto" 
-                        value={formData.produto} 
-                        onChange={(e) => setFormData({...formData, produto: e.target.value})} 
-                        placeholder="Ex: Curso de Design Gráfico"
-                        className={inputHeight}
-                        required 
-                      />
-                    </div>
 
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="beneficio">Principal Benefício</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Qual o maior ganho para quem comprar? Foque no resultado</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Textarea 
-                        id="beneficio" 
-                        value={formData.beneficio} 
-                        onChange={(e) => setFormData({...formData, beneficio: e.target.value})} 
-                        placeholder="Ex: Aprenda design profissional em 30 dias"
-                        rows={2}
-                        required 
-                      />
-                    </div>
+                      <Button type="submit" className={`w-full ${buttonMinHeight}`} disabled={loading || generatingImages} variant="gradient" size={touchSize}>
+                        {loading || generatingImages ? (
+                          <>
+                            <Loader2 className={`${iconSize} mr-2 animate-spin`} />
+                            {generatingImages ? "Gerando imagens..." : "Gerando conceito..."}
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className={`${iconSize} mr-2`} />
+                            {generateImages ? "Gerar Banner + Imagens" : "Gerar Conceito"}
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
 
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="publico_alvo">Público-Alvo</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Para quem este banner é direcionado?</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Input 
-                        id="publico_alvo" 
-                        value={formData.publico_alvo} 
-                        onChange={(e) => setFormData({...formData, publico_alvo: e.target.value})} 
-                        placeholder="Ex: Jovens criativos de 18-35 anos"
-                        required 
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="identidade_visual">Identidade Visual</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Estilo visual: cores, fontes, mood (moderno, elegante, etc.)</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Input 
-                        id="identidade_visual" 
-                        value={formData.identidade_visual} 
-                        onChange={(e) => setFormData({...formData, identidade_visual: e.target.value})} 
-                        placeholder="Ex: Moderno, minimalista, cores vibrantes"
-                        required 
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="objetivo_post">Objetivo do Post</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Qual ação você espera do público?</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Input 
-                        id="objetivo_post" 
-                        value={formData.objetivo_post} 
-                        onChange={(e) => setFormData({...formData, objetivo_post: e.target.value})} 
-                        placeholder="Ex: Gerar inscrições no curso"
-                        required 
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="formato_imagem">Formato</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Escolha o formato ideal para sua plataforma</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Select value={formData.formato_imagem} onValueChange={(value) => setFormData({...formData, formato_imagem: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o formato" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="quadrado">Quadrado (1080x1080)</SelectItem>
-                          <SelectItem value="retangular">Retangular (1200x628)</SelectItem>
-                          <SelectItem value="story">Story (1080x1920)</SelectItem>
-                          <SelectItem value="banner">Banner (1200x400)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="imagem_produto">Imagem do Produto</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Descreva a imagem ou mockup que deseja usar (opcional)</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Input 
-                        id="imagem_produto" 
-                        value={formData.imagem_produto} 
-                        onChange={(e) => setFormData({...formData, imagem_produto: e.target.value})} 
-                        placeholder="Ex: Mockup de computador, pessoa estudando"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="informacoes_obrigatorias">Informações Obrigatórias</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Dados essenciais: preço, prazo, contato, etc.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Textarea 
-                        id="informacoes_obrigatorias" 
-                        value={formData.informacoes_obrigatorias} 
-                        onChange={(e) => setFormData({...formData, informacoes_obrigatorias: e.target.value})} 
-                        placeholder="Ex: Preço, data limite, contato"
-                        rows={2}
-                      />
-                    </div>
-                  </TooltipProvider>
-
-                  {/* Toggle para gerar imagens */}
-                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="generate-images" className="text-base font-medium">
-                        Gerar imagens automaticamente
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Cria 3 variações visuais do banner usando IA
-                      </p>
-                    </div>
-                    <Switch
-                      id="generate-images"
-                      checked={generateImages}
-                      onCheckedChange={setGenerateImages}
-                    />
-                  </div>
-
-                  <Button type="submit" className={`w-full ${buttonMinHeight}`} disabled={loading || generatingImages} variant="gradient" size={touchSize}>
-                    {loading || generatingImages ? (
-                      <>
-                        <Loader2 className={`${iconSize} mr-2 animate-spin`} />
-                        {generatingImages ? "Gerando imagens..." : "Gerando conceito..."}
-                      </>
-                    ) : (
-                      <>
-                        <ImageIcon className={`${iconSize} mr-2`} />
-                        {generateImages ? "Gerar Banner + Imagens" : "Gerar Conceito"}
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            {/* Resultado */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  Resultado
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Carrossel de Imagens */}
-                {generatingImages && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <ImageIcon className="w-4 h-4 animate-pulse" />
-                      <span>Gerando 3 variações visuais...</span>
-                    </div>
-                    <div className="space-y-2">
-                      <Skeleton className="h-64 w-full rounded-lg" />
-                      <div className="flex gap-2">
-                        <Skeleton className="h-10 flex-1" />
-                        <Skeleton className="h-10 flex-1" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {bannerImages.length > 0 && !generatingImages && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <ImageIcon className="w-5 h-5 text-primary" />
-                      <h3 className="text-lg font-semibold">Variações Geradas</h3>
-                      <Badge variant="secondary">{bannerImages.filter(img => img.success).length} imagens</Badge>
-                    </div>
-                    <BannerCarousel
-                      images={bannerImages}
-                      onFavorite={(imageUrl, style) => {
-                        toast({
-                          title: "Em breve! ⭐",
-                          description: `Favoritar imagens individuais será implementado em breve`,
-                        });
-                      }}
-                      onRegenerateVariation={(style) => {
-                        toast({
-                          title: "Em breve 🔄",
-                          description: `Regeneração de variação específica será implementada`,
-                        });
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Conceito Textual */}
-                {loading && !generatingImages ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                ) : result ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
+                {/* Resultado */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-primary" />
-                      <h3 className="text-lg font-semibold">Conceito do Banner</h3>
-                    </div>
-                    <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap p-4 bg-muted rounded-lg">
-                      {result}
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        onClick={handleGenerateVariation}
-                        variant="outline"
-                        size={isMobile ? "default" : "default"}
-                        className="flex-1 md:flex-initial min-w-[160px]"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Gerar Variação
-                      </Button>
-
-                      <Button
-                        onClick={copyToClipboard}
-                        variant="outline"
-                        size={isMobile ? "default" : "default"}
-                        className="flex-1 md:flex-initial min-w-[140px]"
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copiar
-                      </Button>
-
-                      <ExportButtons 
-                        content={result}
-                        agentType="banner"
-                      />
-
-                      <FavoriteButton
-                        agentType="banner"
-                        content={result}
-                        formData={formData}
-                        variant="outline"
-                        size={isMobile ? "default" : "default"}
-                        className="flex-1 md:flex-initial min-w-[140px]"
-                      />
-                    </div>
-                  </div>
-                ) : !loading && !generatingImages ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Preencha o formulário e clique em "Gerar Banner" para começar</p>
-                    {generateImages && (
-                      <p className="text-sm mt-2 flex items-center justify-center gap-2">
-                        <ImageIcon className="w-4 h-4" />
-                        3 variações visuais serão geradas automaticamente
-                      </p>
+                      Resultado
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {generatingImages && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <ImageIcon className="w-4 h-4 animate-pulse" />
+                          <span>Gerando 3 variações visuais...</span>
+                        </div>
+                        <div className="space-y-2">
+                          <Skeleton className="h-64 w-full rounded-lg" />
+                          <div className="flex gap-2">
+                            <Skeleton className="h-10 flex-1" />
+                            <Skeleton className="h-10 flex-1" />
+                          </div>
+                        </div>
+                      </div>
                     )}
+
+                    {bannerImages.length > 0 && !generatingImages && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="w-5 h-5 text-primary" />
+                          <h3 className="text-lg font-semibold">Variações Geradas</h3>
+                          <Badge variant="secondary">{bannerImages.filter(img => img.success).length} imagens</Badge>
+                        </div>
+                        <BannerCarousel
+                          images={bannerImages}
+                          onFavorite={(imageUrl, style) => {
+                            toast({
+                              title: "Em breve! ⭐",
+                              description: `Favoritar imagens individuais será implementado em breve`,
+                            });
+                          }}
+                          onRegenerateVariation={(style) => {
+                            toast({
+                              title: "Em breve 🔄",
+                              description: `Regeneração de variação específica será implementada`,
+                            });
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {loading && !generatingImages ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                    ) : result ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-primary" />
+                          <h3 className="text-lg font-semibold">Conceito do Banner</h3>
+                        </div>
+                        <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap p-4 bg-muted rounded-lg">
+                          {result}
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            onClick={handleGenerateVariation}
+                            variant="outline"
+                            size={isMobile ? "default" : "default"}
+                            className="flex-1 md:flex-initial min-w-[160px]"
+                          >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Gerar Variação
+                          </Button>
+
+                          <Button
+                            onClick={copyToClipboard}
+                            variant="outline"
+                            size={isMobile ? "default" : "default"}
+                            className="flex-1 md:flex-initial min-w-[140px]"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copiar
+                          </Button>
+
+                          <ExportButtons 
+                            content={result}
+                            agentType="banner"
+                          />
+
+                          <FavoriteButton
+                            agentType="banner"
+                            content={result}
+                            formData={formData}
+                            variant="outline"
+                            size={isMobile ? "default" : "default"}
+                            className="flex-1 md:flex-initial min-w-[140px]"
+                          />
+                        </div>
+                      </div>
+                    ) : !loading && !generatingImages ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>Preencha o formulário e clique em "Gerar Banner" para começar</p>
+                        {generateImages && (
+                          <p className="text-sm mt-2 flex items-center justify-center gap-2">
+                            <ImageIcon className="w-4 h-4" />
+                            3 variações visuais serão geradas automaticamente
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Personalized Mode */}
+            <TabsContent value="personalized">
+              <div className="space-y-6">
+                {/* Stepper */}
+                <PersonalizedModeStepper
+                  currentStep={currentStep}
+                  identityComplete={!!identity}
+                  personComplete={!!person}
+                />
+
+                <div className={isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-2 gap-8"}>
+                  {/* Left Column - Steps */}
+                  <div className="space-y-6">
+                    {currentStep === 1 && (
+                      <InstagramAnalyzer
+                        onIdentityExtracted={handleIdentityExtracted}
+                        onIdentityChange={setIdentity}
+                      />
+                    )}
+
+                    {currentStep === 2 && identity && (
+                      <PersonPhotoUpload
+                        onPersonAnalyzed={handlePersonAnalyzed}
+                        onPersonChange={setPerson}
+                      />
+                    )}
+
+                    {currentStep === 3 && identity && person && (
+                      <DesignGeneratorForm
+                        identity={identity}
+                        person={person}
+                        onImagesGenerated={handlePersonalizedImagesGenerated}
+                      />
+                    )}
+
+                    {/* Navigation */}
+                    <div className="flex gap-2">
+                      {currentStep > 1 && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setCurrentStep(currentStep - 1)}
+                        >
+                          Voltar
+                        </Button>
+                      )}
+                      {currentStep === 1 && identity && (
+                        <Button onClick={() => setCurrentStep(2)}>
+                          Continuar para Foto
+                        </Button>
+                      )}
+                      {currentStep === 2 && person && (
+                        <Button onClick={() => setCurrentStep(3)}>
+                          Continuar para Geração
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          </div>
+
+                  {/* Right Column - Results */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Wand2 className="w-5 h-5 text-primary" />
+                        Resultado Personalizado
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {bannerImages.length > 0 ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <ImageIcon className="w-5 h-5 text-primary" />
+                            <h3 className="text-lg font-semibold">Artes Personalizadas</h3>
+                            <Badge variant="secondary">{bannerImages.filter(img => img.success).length} imagens</Badge>
+                          </div>
+                          <BannerCarousel
+                            images={bannerImages}
+                            onFavorite={(imageUrl, style) => {
+                              toast({
+                                title: "Em breve! ⭐",
+                                description: `Favoritar imagens será implementado em breve`,
+                              });
+                            }}
+                            onRegenerateVariation={(style) => {
+                              toast({
+                                title: "Em breve 🔄",
+                                description: `Regeneração será implementada`,
+                              });
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 text-muted-foreground">
+                          <Wand2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p className="font-medium mb-2">Modo Design Personalizado</p>
+                          <p className="text-sm">
+                            {currentStep === 1 && "Faça upload de prints do Instagram para extrair a identidade visual"}
+                            {currentStep === 2 && "Faça upload da foto da pessoa para incluir no design"}
+                            {currentStep === 3 && "Configure os detalhes finais e gere suas artes personalizadas"}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </DashboardLayout>
