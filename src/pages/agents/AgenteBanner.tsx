@@ -106,18 +106,29 @@ export default function AgenteBanner() {
         setGeneratingImages(true);
         
         try {
-          const promptMatch = generatedText.match(/\*\*PROMPT PARA GERAÇÃO DE IMAGEM:\*\*\s*\n([^\*]+)/i);
+          // Extrair HEADLINE e CTA do novo formato
+          const headlineMatch = generatedText.match(/^HEADLINE:\s*\n(.+?)(?:\n|$)/im);
+          const ctaMatch = generatedText.match(/^CTA:\s*\n(.+?)(?:\n|$)/im);
+          const promptMatch = generatedText.match(/^PROMPT BASE PARA GERAÇÃO DE IMAGEM:\s*\n([\s\S]+?)(?:\n\n|$)/im);
           
-          // Extrair headline e CTA do texto gerado
-          const headlineMatch = generatedText.match(/\*\*(?:HEADLINE|Headline|Título)[:\s]*\*\*\s*["""]?([^"""\n]+)["""]?/i);
-          const ctaMatch = generatedText.match(/\*\*(?:CTA|Call[- ]to[- ]Action|Chamada)[:\s]*\*\*\s*["""]?([^"""\n]+)["""]?/i);
+          const headline = headlineMatch ? headlineMatch[1].trim() : null;
+          const cta = ctaMatch ? ctaMatch[1].trim() : null;
           
-          const headline = headlineMatch ? headlineMatch[1].trim() : formData.objetivo_post;
-          const cta = ctaMatch ? ctaMatch[1].trim() : 'Saiba Mais';
+          // Validação obrigatória - não aceitar fallbacks silenciosos
+          if (!headline || !cta) {
+            console.error('HEADLINE ou CTA não extraídos:', { headline, cta });
+            toast({
+              title: "Erro na extração",
+              description: "O conceito foi gerado mas HEADLINE/CTA não foram identificados. Tente novamente.",
+              variant: "destructive",
+            });
+            setGeneratingImages(false);
+            return;
+          }
           
           const basePrompt = promptMatch 
             ? promptMatch[1].trim() 
-            : `Professional banner for ${formData.produto}. ${formData.beneficio}`;
+            : `Professional marketing banner for ${formData.produto}. ${formData.beneficio}`;
 
           const { data: imagesData, error: imagesError } = await supabase.functions.invoke('generate-banner-images', {
             body: {
