@@ -10,6 +10,8 @@ const corsHeaders = {
 
 interface ImageGenerationRequest {
   basePrompt: string;
+  headline: string;
+  cta: string;
   formato: string;
   identidadeVisual: string;
 }
@@ -22,7 +24,7 @@ serve(async (req) => {
   console.log('[BANNER-IMAGES] Request received');
 
   try {
-    const { basePrompt, formato, identidadeVisual }: ImageGenerationRequest = await req.json();
+    const { basePrompt, headline, cta, formato, identidadeVisual }: ImageGenerationRequest = await req.json();
 
     if (!lovableApiKey) {
       console.error('[BANNER-IMAGES] LOVABLE_API_KEY not configured');
@@ -31,6 +33,9 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
+
+    console.log('[BANNER-IMAGES] Headline:', headline);
+    console.log('[BANNER-IMAGES] CTA:', cta);
 
     // Define 3 diferentes estilos visuais
     const styles = [
@@ -64,7 +69,27 @@ serve(async (req) => {
 
     // Gerar 3 imagens em paralelo
     const imagePromises = styles.map(async (style, index) => {
-      const enhancedPrompt = `${basePrompt}. ${style.modifier}. Visual identity: ${identidadeVisual}. Format: ${formato}. High quality banner design for social media, professional marketing material, ultra high resolution.`;
+      // Prompt otimizado com headline e CTA explícitos
+      const enhancedPrompt = `Create a marketing banner image with these EXACT TEXT ELEMENTS that MUST appear clearly written on the image:
+
+HEADLINE TEXT (must be displayed prominently in large bold letters): "${headline}"
+
+CALL-TO-ACTION BUTTON TEXT (must appear in a button or highlighted area): "${cta}"
+
+${basePrompt}
+
+CRITICAL TYPOGRAPHY REQUIREMENTS:
+1. The headline "${headline}" MUST be written in large, bold, readable typography - this is the main text
+2. The CTA "${cta}" MUST appear as a clickable button element with contrasting colors
+3. Text must have excellent contrast against the background
+4. Use professional marketing typography hierarchy
+5. The text is the MOST IMPORTANT element of this banner
+
+Visual style: ${style.modifier}
+Brand colors/identity: ${identidadeVisual}
+Format: ${formato} (${width}x${height}px)
+
+This is a social media advertising banner. The text elements are mandatory and must be clearly readable. Professional marketing quality, ultra high resolution.`;
 
       console.log(`[BANNER-IMAGES] Generating variation ${index + 1}: ${style.name}`);
 
