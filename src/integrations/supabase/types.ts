@@ -762,6 +762,47 @@ export type Database = {
         }
         Relationships: []
       }
+      project_generations: {
+        Row: {
+          banner_text: string | null
+          created_at: string
+          cta: string | null
+          formats: string[]
+          id: string
+          images: Json
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          banner_text?: string | null
+          created_at?: string
+          cta?: string | null
+          formats?: string[]
+          id?: string
+          images?: Json
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          banner_text?: string | null
+          created_at?: string
+          cta?: string | null
+          formats?: string[]
+          id?: string
+          images?: Json
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_generations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "brand_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prompts: {
         Row: {
           category: string
