@@ -128,6 +128,7 @@ export type Database = {
           mood: string | null
           name: string
           overall_description: string | null
+          person_photos: Json | null
           recurring_elements: string[] | null
           typography: Json | null
           updated_at: string
@@ -143,6 +144,7 @@ export type Database = {
           mood?: string | null
           name: string
           overall_description?: string | null
+          person_photos?: Json | null
           recurring_elements?: string[] | null
           typography?: Json | null
           updated_at?: string
@@ -158,6 +160,7 @@ export type Database = {
           mood?: string | null
           name?: string
           overall_description?: string | null
+          person_photos?: Json | null
           recurring_elements?: string[] | null
           typography?: Json | null
           updated_at?: string

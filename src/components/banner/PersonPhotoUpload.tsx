@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { User, Upload, X, Loader2, CheckCircle2, RefreshCw } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { User, Upload, X, Loader2, CheckCircle2, RefreshCw, ImageIcon, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { BrandPersonPhotosManager, PersonPhoto } from "./BrandPersonPhotosManager";
 
 export interface PersonAnalysis {
   description: string;
@@ -20,12 +22,20 @@ export interface PersonAnalysis {
   expression: string;
 }
 
+interface BrandProfile {
+  id: string;
+  name: string;
+  person_photos?: PersonPhoto[];
+}
+
 interface PersonPhotoUploadProps {
   onPersonAnalyzed: (person: PersonAnalysis) => void;
   onPersonChange?: (person: PersonAnalysis) => void;
   projectId?: string | null;
   initialPhotoUrl?: string | null;
   initialAnalysis?: PersonAnalysis | null;
+  brandProfile?: BrandProfile | null;
+  onBrandPhotosChange?: (photos: PersonPhoto[]) => void;
 }
 
 export function PersonPhotoUpload({ 
@@ -33,7 +43,9 @@ export function PersonPhotoUpload({
   onPersonChange, 
   projectId,
   initialPhotoUrl,
-  initialAnalysis 
+  initialAnalysis,
+  brandProfile,
+  onBrandPhotosChange
 }: PersonPhotoUploadProps) {
   const [image, setImage] = useState<string | null>(initialPhotoUrl || null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -41,7 +53,12 @@ export function PersonPhotoUpload({
   const [person, setPerson] = useState<PersonAnalysis | null>(initialAnalysis || null);
   const [progress, setProgress] = useState(0);
   const [isFromProject, setIsFromProject] = useState(!!initialPhotoUrl);
+  const [selectedBrandPhotoId, setSelectedBrandPhotoId] = useState<string | null>(null);
+  const [showUploadMode, setShowUploadMode] = useState(false);
   const { toast } = useToast();
+
+  // Photos from brand profile
+  const brandPhotos: PersonPhoto[] = (brandProfile?.person_photos || []) as PersonPhoto[];
 
   // Update state when initial values change (project selection)
   useEffect(() => {
@@ -94,6 +111,8 @@ export function PersonPhotoUpload({
       setImage(reader.result as string);
       setPerson(null);
       setIsFromProject(false);
+      setSelectedBrandPhotoId(null);
+      setShowUploadMode(false);
       // Auto-analyze when image is uploaded
       analyzeImage(reader.result as string);
     };
@@ -104,6 +123,8 @@ export function PersonPhotoUpload({
     setImage(null);
     setPerson(null);
     setIsFromProject(false);
+    setSelectedBrandPhotoId(null);
+    setShowUploadMode(false);
   };
 
   const analyzeImage = async (imageData: string) => {
@@ -158,26 +179,74 @@ export function PersonPhotoUpload({
     setImage(null);
     setPerson(null);
     setIsFromProject(false);
+    setSelectedBrandPhotoId(null);
+  };
+
+  // Handle selecting a photo from the brand profile
+  const handleSelectBrandPhoto = (photo: PersonPhoto) => {
+    setSelectedBrandPhotoId(photo.id);
+    setImage(photo.photo_url);
+    setPerson(photo.analysis);
+    setIsFromProject(false);
+    onPersonAnalyzed(photo.analysis);
+    
+    // Save to project if projectId is provided
+    if (projectId) {
+      saveToProject(photo.analysis, photo.photo_url);
+    }
+    
+    toast({
+      title: "Foto selecionada! ✓",
+      description: `Usando "${photo.name}" para o design`,
+    });
+  };
+
+  // Handle photos change from brand manager
+  const handleBrandPhotosChange = (photos: PersonPhoto[]) => {
+    onBrandPhotosChange?.(photos);
   };
 
   // Helper to check if current photo is base64 (new upload) vs URL (stored)
   const isBase64Image = image?.startsWith('data:');
 
+  // If brand profile has photos, show selection mode
+  const hasBrandPhotos = brandPhotos.length > 0;
+
   return (
     <div className="space-y-4">
+      {/* Brand Profile Photos Manager */}
+      {brandProfile && (
+        <BrandPersonPhotosManager
+          brandProfileId={brandProfile.id}
+          photos={brandPhotos}
+          onPhotosChange={handleBrandPhotosChange}
+          selectedPhotoId={selectedBrandPhotoId}
+          onSelectPhoto={handleSelectBrandPhoto}
+        />
+      )}
+
+      {/* Photo Selection / Upload Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5 text-blue-500" />
-            Foto da Pessoa
+            Foto para o Design
             {isFromProject && (
               <Badge variant="outline" className="ml-2 text-xs bg-green-500/10 text-green-600 border-green-500/30">
                 Salva no projeto
               </Badge>
             )}
+            {selectedBrandPhotoId && (
+              <Badge variant="outline" className="ml-2 text-xs bg-primary/10 text-primary border-primary/30">
+                Do perfil
+              </Badge>
+            )}
           </CardTitle>
           <CardDescription>
-            Faça upload de uma foto da pessoa para incluir no design
+            {hasBrandPhotos 
+              ? "Selecione uma foto salva acima ou faça upload de uma nova"
+              : "Faça upload de uma foto da pessoa para incluir no design"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -198,7 +267,7 @@ export function PersonPhotoUpload({
               >
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <div className="text-sm text-muted-foreground">
-                  <span className="text-primary font-medium">Clique para enviar</span> a foto
+                  <span className="text-primary font-medium">Clique para enviar</span> uma nova foto
                 </div>
                 <p className="text-xs text-muted-foreground">
                   A análise será feita automaticamente
