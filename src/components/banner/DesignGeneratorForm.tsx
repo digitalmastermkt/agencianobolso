@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,23 +20,45 @@ interface BannerImage {
   prompt?: string;
 }
 
+interface ProjectConfig {
+  defaultFormats: string[];
+  variationsCount: number;
+}
+
 interface DesignGeneratorFormProps {
   identity: VisualIdentity;
   person: PersonAnalysis;
   onImagesGenerated: (images: BannerImage[]) => void;
+  projectConfig?: ProjectConfig | null;
 }
 
-export function DesignGeneratorForm({ identity, person, onImagesGenerated }: DesignGeneratorFormProps) {
+export function DesignGeneratorForm({ identity, person, onImagesGenerated, projectConfig }: DesignGeneratorFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState("");
   const [formData, setFormData] = useState({
     bannerText: "",
     cta: "",
-    formato: "quadrado",
+    formato: projectConfig?.defaultFormats?.[0] || "quadrado",
     additionalInfo: ""
   });
   const { toast } = useToast();
+
+  // Update format when projectConfig changes
+  useEffect(() => {
+    if (projectConfig?.defaultFormats?.length) {
+      // Map project formats to form format values
+      const formatMap: Record<string, string> = {
+        'feed': 'quadrado',
+        'story': 'story',
+        'reels': 'story',
+        'carousel': 'quadrado',
+        'banner': 'banner',
+      };
+      const defaultFormat = formatMap[projectConfig.defaultFormats[0]] || 'quadrado';
+      setFormData(prev => ({ ...prev, formato: defaultFormat }));
+    }
+  }, [projectConfig]);
 
   const handleGenerate = async () => {
     if (!formData.bannerText.trim()) {
