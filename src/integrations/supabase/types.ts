@@ -118,6 +118,101 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_profiles: {
+        Row: {
+          colors: string[] | null
+          created_at: string
+          id: string
+          instagram_images: string[] | null
+          logo_url: string | null
+          mood: string | null
+          name: string
+          overall_description: string | null
+          recurring_elements: string[] | null
+          typography: Json | null
+          updated_at: string
+          user_id: string
+          visual_style: string | null
+        }
+        Insert: {
+          colors?: string[] | null
+          created_at?: string
+          id?: string
+          instagram_images?: string[] | null
+          logo_url?: string | null
+          mood?: string | null
+          name: string
+          overall_description?: string | null
+          recurring_elements?: string[] | null
+          typography?: Json | null
+          updated_at?: string
+          user_id: string
+          visual_style?: string | null
+        }
+        Update: {
+          colors?: string[] | null
+          created_at?: string
+          id?: string
+          instagram_images?: string[] | null
+          logo_url?: string | null
+          mood?: string | null
+          name?: string
+          overall_description?: string | null
+          recurring_elements?: string[] | null
+          typography?: Json | null
+          updated_at?: string
+          user_id?: string
+          visual_style?: string | null
+        }
+        Relationships: []
+      }
+      brand_projects: {
+        Row: {
+          brand_profile_id: string | null
+          created_at: string
+          default_formats: string[] | null
+          id: string
+          name: string
+          person_analysis: Json | null
+          person_photo_url: string | null
+          updated_at: string
+          user_id: string
+          variations_count: number | null
+        }
+        Insert: {
+          brand_profile_id?: string | null
+          created_at?: string
+          default_formats?: string[] | null
+          id?: string
+          name: string
+          person_analysis?: Json | null
+          person_photo_url?: string | null
+          updated_at?: string
+          user_id: string
+          variations_count?: number | null
+        }
+        Update: {
+          brand_profile_id?: string | null
+          created_at?: string
+          default_formats?: string[] | null
+          id?: string
+          name?: string
+          person_analysis?: Json | null
+          person_photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+          variations_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_projects_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_comments: {
         Row: {
           content: string
