@@ -38,7 +38,29 @@ interface BannerRequest {
   cta: string;
   formato: string;
   additionalInfo?: string;
+  generationStyle?: string;
 }
+
+const STYLE_CONFIGS: Record<string, { name: string; focus: string; lighting: string; composition: string }> = {
+  'editorial_premium': {
+    name: 'Editorial Premium',
+    focus: 'high-fashion editorial aesthetic, dramatic contrast, magazine cover quality',
+    lighting: 'dramatic rim light with soft key light, cinematic shadows, luminous highlights',
+    composition: 'asymmetric editorial layout with bold negative space, fashion photography framing'
+  },
+  'corporate_elegante': {
+    name: 'Corporate Elegante', 
+    focus: 'refined sophistication, clean minimalism, luxury brand aesthetic',
+    lighting: 'soft diffused lighting, subtle gradients, professional studio setup',
+    composition: 'balanced golden ratio composition, generous white space, elegant restraint'
+  },
+  'dinamico_impactante': {
+    name: 'Dinâmico Impactante',
+    focus: 'high-energy visual impact, bold colors, dynamic movement',
+    lighting: 'dramatic colored rim lights, strong contrast, energetic light effects',
+    composition: 'dynamic diagonal lines, motion blur elements, action-oriented framing'
+  }
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -46,7 +68,9 @@ serve(async (req) => {
   }
 
   try {
-    const { identity, person, bannerText, cta, formato, additionalInfo }: BannerRequest = await req.json();
+    const { identity, person, bannerText, cta, formato, additionalInfo, generationStyle }: BannerRequest = await req.json();
+    
+    const selectedStyleConfig = STYLE_CONFIGS[generationStyle || 'editorial_premium'] || STYLE_CONFIGS['editorial_premium'];
     
     if (!identity || !person) {
       return new Response(
@@ -129,6 +153,13 @@ Sua especialidade é criar prompts que geram imagens de campanhas publicitárias
             role: "user",
             content: `Crie 3 prompts ULTRA PROFISSIONAIS para gerar banners de campanha publicitária de alto impacto.
 
+## ESTILO DE GERAÇÃO SELECIONADO: ${selectedStyleConfig.name}
+- Foco visual: ${selectedStyleConfig.focus}
+- Iluminação preferida: ${selectedStyleConfig.lighting}
+- Composição: ${selectedStyleConfig.composition}
+
+IMPORTANTE: Todos os 3 prompts devem seguir o estilo "${selectedStyleConfig.name}" com variações sutis de composição e iluminação.
+
 ## IDENTIDADE VISUAL DA MARCA:
 - Paleta de cores: ${identity.colors.join(', ')}
 - Tipografia: ${identity.typography.style} (${identity.typography.weight})
@@ -157,15 +188,15 @@ Sua especialidade é criar prompts que geram imagens de campanhas publicitárias
 {
   "prompts": [
     {
-      "style": "Editorial Premium",
+      "style": "${selectedStyleConfig.name} - Variação A",
       "prompt": "prompt ultra detalhado com todos os elementos técnicos..."
     },
     {
-      "style": "Corporate Elegante",
+      "style": "${selectedStyleConfig.name} - Variação B",
       "prompt": "prompt ultra detalhado com todos os elementos técnicos..."
     },
     {
-      "style": "Dinâmico Impactante",
+      "style": "${selectedStyleConfig.name} - Variação C",
       "prompt": "prompt ultra detalhado com todos os elementos técnicos..."
     }
   ]
@@ -173,12 +204,12 @@ Sua especialidade é criar prompts que geram imagens de campanhas publicitárias
 
 IMPORTANTE: Cada prompt DEVE ter 150-200 palavras e incluir TODOS estes elementos:
 1. Descrição detalhada da pessoa integrada naturalmente no design
-2. Tipo específico de iluminação profissional (rim light, key light, etc)
-3. Composição com regra dos terços e espaço para texto
+2. Tipo específico de iluminação conforme o estilo: ${selectedStyleConfig.lighting}
+3. Composição: ${selectedStyleConfig.composition}
 4. Cores exatas da paleta aplicadas (gradientes, fundos, elementos)
 5. Atmosfera e mood específicos
 6. Qualidade técnica: "8K, commercial photography, professional retouching"
-7. Referência de estilo: tipo Apple, Nike, ou luxury brand
+7. Referência de estilo: ${selectedStyleConfig.focus}
 8. DO NOT include any text in the generated image`
           }
         ],
@@ -233,23 +264,25 @@ IMPORTANTE: Cada prompt DEVE ter 150-200 palavras e incluir TODOS estes elemento
       generatedPrompts = parsed.prompts;
     } catch (parseError) {
       console.error('Failed to parse prompts, using professional fallbacks:', parseError);
-      // Professional fallback prompts
+      // Professional fallback prompts based on selected style
       const primaryColor = identity.colors[0] || '#1a1a1a';
       const secondaryColor = identity.colors[1] || '#ffffff';
       const accentColor = identity.colors[2] || '#ff6b35';
       
+      const basePrompt = `Ultra professional advertising campaign photograph. ${person.description} in ${person.pose} pose with ${person.expression} expression, perfectly integrated into a ${identity.visualStyle} environment. ${selectedStyleConfig.lighting}. Color palette: dominant ${primaryColor} with ${secondaryColor} highlights and ${accentColor} accents. ${identity.mood} atmosphere. ${selectedStyleConfig.composition}. Premium textures, professional depth of field. 8K resolution, commercial photography quality, ${selectedStyleConfig.focus}. DO NOT include any text in the image.`;
+
       generatedPrompts = [
         {
-          style: "Editorial Premium",
-          prompt: `Ultra high-end advertising campaign photograph. ${person.description} in ${person.pose} pose with ${person.expression} expression, perfectly integrated into a sophisticated ${identity.visualStyle} environment. Professional studio lighting with dramatic rim light creating a luminous halo around the subject, soft key light illuminating the face, subtle fill light for shadow detail. Color palette: dominant ${primaryColor} background with ${secondaryColor} highlights and ${accentColor} accent elements creating visual tension. ${identity.mood} atmosphere with cinematic depth. Rule of thirds composition with subject positioned at left intersection, leaving clean negative space on right for text overlay "${bannerText}". Premium material textures, subtle gradient background transitioning from dark to light. 8K resolution, commercial photography quality, professional color grading, magazine editorial standard. Style reference: Apple product campaign meets high-fashion editorial. DO NOT include any text in the image.`
+          style: `${selectedStyleConfig.name} - Variação A`,
+          prompt: basePrompt + ` Emphasizing dramatic lighting with subject at left third, clean space for headline "${bannerText}".`
         },
         {
-          style: "Corporate Elegante",
-          prompt: `Sophisticated corporate advertising photograph for premium brand campaign. ${person.description} with ${person.style} aesthetic, ${person.expression} expression conveying confidence and professionalism. Clean, minimal ${identity.visualStyle} environment with refined geometric elements. Three-point professional lighting: soft diffused key light at 45 degrees, subtle rim light for separation, balanced fill. Color scheme: elegant ${primaryColor} as primary tone, ${secondaryColor} for clean space, subtle ${accentColor} accents in geometric shapes. ${identity.mood} mood throughout. Asymmetric composition following golden ratio, subject at right third with expansive clean area for headline "${bannerText}" and CTA. Ultra-refined texture, subtle gradients, professional depth of field with creamy bokeh. 8K ultra sharp, commercial billboard quality, luxury brand aesthetic. Reference: Hermès campaign sophistication meets tech company clean design. DO NOT include any text in the image.`
+          style: `${selectedStyleConfig.name} - Variação B`,
+          prompt: basePrompt + ` Centered subject with symmetrical composition, atmospheric gradients blending ${primaryColor} to ${secondaryColor}.`
         },
         {
-          style: "Dinâmico Impactante",
-          prompt: `High-energy advertising campaign image with striking visual impact. ${person.description} in dynamic ${person.pose} pose, ${person.expression} expression radiating energy and confidence. Bold ${identity.visualStyle} environment with motion elements and dramatic atmosphere. Dramatic lighting setup: strong backlight creating silhouette edge, powerful key light with high contrast, colored rim lights in brand colors. Vibrant color palette: energetic ${primaryColor} dominates, bold ${secondaryColor} creates contrast, electric ${accentColor} for focal points. ${identity.mood} atmosphere amplified with subtle motion blur effects and light particles. Strong diagonal composition creating movement, subject anchored at golden point, dynamic negative space flowing toward text area for "${bannerText}". Premium production value: lens flares, depth layers, cinematic color grading. 8K resolution, Nike/Adidas campaign energy level, award-winning creative direction. DO NOT include any text in the image.`
+          style: `${selectedStyleConfig.name} - Variação C`,
+          prompt: basePrompt + ` Dynamic diagonal composition with subject at golden ratio point, energetic atmosphere for CTA "${cta}".`
         }
       ];
     }

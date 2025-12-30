@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, Wand2, Layers } from "lucide-react";
+import { Sparkles, Loader2, Wand2, Layers, Palette, Type, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +47,27 @@ const FORMAT_OPTIONS = [
   { value: "banner", label: "Banner (1200x400)", projectValue: "banner" },
 ];
 
+const STYLE_OPTIONS = [
+  { 
+    value: "editorial_premium", 
+    label: "Editorial Premium", 
+    description: "Estilo revista de moda, iluminação dramática, alto contraste",
+    icon: "✨"
+  },
+  { 
+    value: "corporate_elegante", 
+    label: "Corporate Elegante", 
+    description: "Clean, minimalista, tons neutros com accent color da marca",
+    icon: "💼"
+  },
+  { 
+    value: "dinamico_impactante", 
+    label: "Dinâmico Impactante", 
+    description: "Cores vibrantes, composição assimétrica, energia visual alta",
+    icon: "⚡"
+  },
+];
+
 export function DesignGeneratorForm({ 
   identity, 
   person, 
@@ -62,6 +83,7 @@ export function DesignGeneratorForm({
   const [progressText, setProgressText] = useState("");
   const [multiFormatMode, setMultiFormatMode] = useState(false);
   const [selectedFormats, setSelectedFormats] = useState<string[]>(["quadrado"]);
+  const [selectedStyle, setSelectedStyle] = useState("editorial_premium");
   const [formData, setFormData] = useState({
     bannerText: "",
     cta: "",
@@ -185,7 +207,8 @@ export function DesignGeneratorForm({
             bannerText: formData.bannerText,
             cta: formData.cta,
             formato: formato,
-            additionalInfo: formData.additionalInfo
+            additionalInfo: formData.additionalInfo,
+            generationStyle: selectedStyle
           }
         });
 
@@ -246,32 +269,93 @@ export function DesignGeneratorForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
-            <div className="text-xs font-medium text-pink-600 dark:text-pink-400 mb-1">
-              Identidade Visual
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {identity.colors.slice(0, 4).map((color, i) => (
+        {/* Identity Preview Card */}
+        <div className="p-4 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
+          <div className="flex items-center gap-2 mb-3">
+            <Palette className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium">Identidade Visual do Perfil</span>
+          </div>
+          
+          {/* Colors */}
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-xs text-muted-foreground">Cores:</span>
+            <div className="flex gap-1.5">
+              {identity.colors.slice(0, 6).map((color, i) => (
                 <div
                   key={i}
-                  className="w-4 h-4 rounded-full border border-background"
+                  className="w-6 h-6 rounded-md border border-background shadow-sm"
                   style={{ backgroundColor: color }}
+                  title={color}
                 />
               ))}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {identity.visualStyle}
+          </div>
+          
+          {/* Typography & Style */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex items-center gap-1.5">
+              <Type className="w-3 h-3 text-muted-foreground" />
+              <Badge variant="secondary" className="text-xs">
+                {identity.typography.style}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {identity.typography.weight}
+              </Badge>
             </div>
           </div>
-          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-            <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
-              Pessoa
+          
+          {/* Visual Style & Mood */}
+          <div className="flex flex-wrap gap-2">
+            <Badge className="bg-primary/10 text-primary text-xs">
+              {identity.visualStyle}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              {identity.mood}
+            </Badge>
+          </div>
+
+          {/* Generation Style Selector */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" />
+              <Label>Estilo de Geração</Label>
             </div>
-            <div className="text-xs text-muted-foreground line-clamp-2">
-              {person.description}
+            <div className="grid gap-2">
+              {STYLE_OPTIONS.map((style) => (
+                <div
+                  key={style.value}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                    selectedStyle === style.value
+                      ? "border-primary bg-primary/10 shadow-sm"
+                      : "border-border hover:border-primary/50 hover:bg-muted/50"
+                  }`}
+                  onClick={() => setSelectedStyle(style.value)}
+                >
+                  <div className="text-xl">{style.icon}</div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{style.label}</div>
+                    <div className="text-xs text-muted-foreground">{style.description}</div>
+                  </div>
+                  {selectedStyle === style.value && (
+                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                      <Sparkles className="w-3 h-3 text-primary-foreground" />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
+          </div>
+        </div>
+
+        {/* Person Summary */}
+        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Pessoa no Design</span>
+          </div>
+          <p className="text-xs text-muted-foreground line-clamp-2">{person.description}</p>
+          <div className="flex flex-wrap gap-1 mt-2">
+            <Badge variant="secondary" className="text-xs">{person.pose}</Badge>
+            <Badge variant="outline" className="text-xs">{person.expression}</Badge>
           </div>
         </div>
 
