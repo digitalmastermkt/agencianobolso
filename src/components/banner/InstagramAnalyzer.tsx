@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Instagram, Upload, X, Loader2, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { Instagram, Upload, X, Loader2, Image as ImageIcon, CheckCircle2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { IdentityVisualCard, VisualIdentity } from "./IdentityVisualCard";
@@ -17,6 +17,7 @@ interface InstagramAnalyzerProps {
 export function InstagramAnalyzer({ onIdentityExtracted, onIdentityChange, selectedBrandProfileId }: InstagramAnalyzerProps) {
   const [images, setImages] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [identity, setIdentity] = useState<VisualIdentity | null>(null);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
@@ -45,6 +46,47 @@ export function InstagramAnalyzer({ onIdentityExtracted, onIdentityChange, selec
     setImages(prev => prev.filter((_, i) => i !== index));
     if (identity) {
       setIdentity(null);
+    }
+  };
+
+  // Save identity to brand profile
+  const saveIdentityToProfile = async (extractedIdentity: VisualIdentity) => {
+    if (!selectedBrandProfileId) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("brand_profiles")
+        .update({
+          colors: extractedIdentity.colors,
+          visual_style: extractedIdentity.visualStyle,
+          mood: extractedIdentity.mood,
+          overall_description: extractedIdentity.overallDescription,
+          recurring_elements: extractedIdentity.recurringElements,
+          typography: {
+            style: extractedIdentity.typography.style,
+            weight: extractedIdentity.typography.weight,
+            description: extractedIdentity.typography.description,
+          },
+          instagram_images: images.slice(0, 3), // Save up to 3 reference images
+        })
+        .eq("id", selectedBrandProfileId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Perfil atualizado! ✨",
+        description: "Identidade visual salva no perfil de marca",
+      });
+    } catch (error) {
+      console.error("Erro ao salvar identidade:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar a identidade no perfil",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -79,8 +121,14 @@ export function InstagramAnalyzer({ onIdentityExtracted, onIdentityChange, selec
       }
 
       setProgress(100);
-      setIdentity(data.identity);
-      onIdentityExtracted(data.identity);
+      const extractedIdentity = data.identity as VisualIdentity;
+      setIdentity(extractedIdentity);
+      onIdentityExtracted(extractedIdentity);
+
+      // Auto-save to brand profile if one is selected
+      if (selectedBrandProfileId) {
+        await saveIdentityToProfile(extractedIdentity);
+      }
 
       toast({
         title: "Análise concluída! 🎨",
@@ -166,20 +214,30 @@ export function InstagramAnalyzer({ onIdentityExtracted, onIdentityChange, selec
           )}
 
           {/* Progress Bar */}
-          {isAnalyzing && (
+          {(isAnalyzing || isSaving) && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Analisando identidade visual...</span>
+                <span>{isSaving ? "Salvando no perfil..." : "Analisando identidade visual..."}</span>
               </div>
               <Progress value={progress} className="h-2" />
+            </div>
+          )}
+
+          {/* Info about saving */}
+          {selectedBrandProfileId && !identity && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <Save className="w-4 h-4 text-primary shrink-0" />
+              <p className="text-sm text-muted-foreground">
+                A identidade visual será salva automaticamente no perfil selecionado
+              </p>
             </div>
           )}
 
           {/* Analyze Button */}
           <Button
             onClick={analyzeImages}
-            disabled={images.length === 0 || isAnalyzing}
+            disabled={images.length === 0 || isAnalyzing || isSaving}
             className="w-full"
             variant="gradient"
           >
@@ -187,6 +245,11 @@ export function InstagramAnalyzer({ onIdentityExtracted, onIdentityChange, selec
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Analisando...
+              </>
+            ) : isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
               </>
             ) : identity ? (
               <>
