@@ -783,6 +783,19 @@ export default function AgenteBanner() {
                         projectId={selectedProjectId}
                         initialPhotoUrl={selectedProject?.person_photo_url || null}
                         initialAnalysis={selectedProject?.person_analysis as unknown as PersonAnalysis | null}
+                        brandProfile={selectedBrandProfile ? {
+                          id: selectedBrandProfile.id,
+                          name: selectedBrandProfile.name,
+                          person_photos: (selectedBrandProfile as any).person_photos || []
+                        } : null}
+                        onBrandPhotosChange={(photos) => {
+                          if (selectedBrandProfile) {
+                            setSelectedBrandProfile({
+                              ...selectedBrandProfile,
+                              person_photos: photos
+                            } as any);
+                          }
+                        }}
                       />
                     )}
 
