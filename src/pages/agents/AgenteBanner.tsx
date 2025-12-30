@@ -273,10 +273,28 @@ export default function AgenteBanner() {
   };
 
   // Handle project change and sync with brand profile
-  const handleProjectChange = (project: BrandProject | null) => {
+  const handleProjectChange = async (project: BrandProject | null) => {
     setSelectedProject(project);
-    // If project has a brand_profile_id, we could auto-select that profile
-    // For now, we let the user manage profile selection separately
+    
+    // Auto-sync brand profile when project is selected
+    if (project?.brand_profile_id && project.brand_profile_id !== selectedBrandProfile?.id) {
+      try {
+        const { data: profile, error } = await supabase
+          .from('brand_profiles')
+          .select('*')
+          .eq('id', project.brand_profile_id)
+          .single();
+        
+        if (!error && profile) {
+          handleSelectBrandProfile(profile as BrandProfile);
+        }
+      } catch (err) {
+        console.error('Error syncing brand profile:', err);
+      }
+    } else if (!project?.brand_profile_id) {
+      // Clear profile selection if project has no linked profile
+      handleSelectBrandProfile(null);
+    }
   };
 
   // Handle brand profile selection and load its identity if available
