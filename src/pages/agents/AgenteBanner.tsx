@@ -34,6 +34,7 @@ import { PersonalizedModeStepper } from "@/components/banner/PersonalizedModeSte
 import { VisualIdentity } from "@/components/banner/IdentityVisualCard";
 import { BrandProfileSelector } from "@/components/banner/BrandProfileSelector";
 import { ProjectConfigForm } from "@/components/banner/ProjectConfigForm";
+import { ProjectGenerationsHistory } from "@/components/banner/ProjectGenerationsHistory";
 
 interface BrandProfile {
   id: string;
@@ -86,6 +87,11 @@ export default function AgenteBanner() {
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<BrandProject | null>(null);
+  
+  // State for history reuse
+  const [historyBannerText, setHistoryBannerText] = useState<string>("");
+  const [historyCta, setHistoryCta] = useState<string>("");
+  const [historyFormats, setHistoryFormats] = useState<string[]>([]);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -264,11 +270,20 @@ export default function AgenteBanner() {
     setBannerImages(images);
   };
 
+  const handleHistoryReuse = (bannerText: string, cta: string, formats: string[]) => {
+    setHistoryBannerText(bannerText);
+    setHistoryCta(cta);
+    setHistoryFormats(formats);
+  };
+
   const resetPersonalizedMode = () => {
     setIdentity(null);
     setPerson(null);
     setCurrentStep(1);
     setBannerImages([]);
+    setHistoryBannerText("");
+    setHistoryCta("");
+    setHistoryFormats([]);
     // Keep selectedBrandProfile and selectedProject - don't reset them when switching modes
   };
 
@@ -772,16 +787,29 @@ export default function AgenteBanner() {
                     )}
 
                     {currentStep === 3 && identity && person && (
-                      <DesignGeneratorForm
-                        identity={identity}
-                        person={person}
-                        onImagesGenerated={handlePersonalizedImagesGenerated}
-                        projectId={selectedProjectId}
-                        projectConfig={selectedProject ? {
-                          defaultFormats: selectedProject.default_formats || ['feed'],
-                          variationsCount: selectedProject.variations_count || 3
-                        } : null}
-                      />
+                      <div className="space-y-3">
+                        {selectedProjectId && (
+                          <div className="flex justify-end">
+                            <ProjectGenerationsHistory
+                              projectId={selectedProjectId}
+                              onReuse={handleHistoryReuse}
+                            />
+                          </div>
+                        )}
+                        <DesignGeneratorForm
+                          identity={identity}
+                          person={person}
+                          onImagesGenerated={handlePersonalizedImagesGenerated}
+                          projectId={selectedProjectId}
+                          projectConfig={selectedProject ? {
+                            defaultFormats: selectedProject.default_formats || ['feed'],
+                            variationsCount: selectedProject.variations_count || 3
+                          } : null}
+                          initialBannerText={historyBannerText}
+                          initialCta={historyCta}
+                          initialFormats={historyFormats}
+                        />
+                      </div>
                     )}
 
                     {/* Navigation */}

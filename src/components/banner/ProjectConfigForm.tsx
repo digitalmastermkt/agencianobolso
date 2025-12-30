@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, FolderOpen, Trash2, Settings2, Loader2, Image, Palette, Save, User } from "lucide-react";
+import { Plus, FolderOpen, Trash2, Settings2, Loader2, Image, Palette, Save, User, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -245,6 +245,49 @@ export function ProjectConfigForm({
     }
   };
 
+  const handleDuplicateProject = async (project: BrandProject) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("brand_projects")
+        .insert({
+          user_id: user.id,
+          name: `${project.name} (cópia)`,
+          brand_profile_id: project.brand_profile_id,
+          person_photo_url: project.person_photo_url,
+          person_analysis: project.person_analysis ? JSON.parse(JSON.stringify(project.person_analysis)) : null,
+          default_formats: project.default_formats,
+          variations_count: project.variations_count,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newProject: BrandProject = {
+        ...data,
+        default_formats: (data.default_formats as string[]) || ["feed"],
+        person_analysis: data.person_analysis as Record<string, unknown> | null
+      };
+
+      setProjects([newProject, ...projects]);
+      onSelectProject(data.id);
+
+      toast({
+        title: "Projeto duplicado! 📋",
+        description: `"${newProject.name}" criado com sucesso`,
+      });
+    } catch (error) {
+      console.error("Erro ao duplicar projeto:", error);
+      toast({
+        title: "Erro ao duplicar",
+        description: "Tente novamente",
+        variant: "destructive",
+      });
+    }
+  };
+
   const toggleFormat = (format: string) => {
     if (editFormats.includes(format)) {
       if (editFormats.length > 1) {
@@ -374,35 +417,49 @@ export function ProjectConfigForm({
                         </div>
                       </div>
                     </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir projeto?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            O projeto "{project.name}" será excluído permanentemente.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteProject(project.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicateProject(project);
+                        }}
+                        title="Duplicar projeto"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir projeto?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              O projeto "{project.name}" será excluído permanentemente.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteProject(project.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 );
               })}
