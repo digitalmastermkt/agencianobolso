@@ -11,9 +11,10 @@ import { IdentityVisualCard, VisualIdentity } from "./IdentityVisualCard";
 interface InstagramAnalyzerProps {
   onIdentityExtracted: (identity: VisualIdentity) => void;
   onIdentityChange?: (identity: VisualIdentity) => void;
+  selectedBrandProfileId?: string | null;
 }
 
-export function InstagramAnalyzer({ onIdentityExtracted, onIdentityChange }: InstagramAnalyzerProps) {
+export function InstagramAnalyzer({ onIdentityExtracted, onIdentityChange, selectedBrandProfileId }: InstagramAnalyzerProps) {
   const [images, setImages] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [identity, setIdentity] = useState<VisualIdentity | null>(null);

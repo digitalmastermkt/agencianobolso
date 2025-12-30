@@ -32,6 +32,18 @@ import { PersonPhotoUpload, PersonAnalysis } from "@/components/banner/PersonPho
 import { DesignGeneratorForm } from "@/components/banner/DesignGeneratorForm";
 import { PersonalizedModeStepper } from "@/components/banner/PersonalizedModeStepper";
 import { VisualIdentity } from "@/components/banner/IdentityVisualCard";
+import { BrandProfileSelector } from "@/components/banner/BrandProfileSelector";
+
+interface BrandProfile {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  colors: string[] | null;
+  visual_style: string | null;
+  mood: string | null;
+  overall_description: string | null;
+  created_at: string;
+}
 
 export default function AgenteBanner() {
   const [loading, setLoading] = useState(false);
@@ -59,6 +71,7 @@ export default function AgenteBanner() {
   const [currentStep, setCurrentStep] = useState(1);
   const [identity, setIdentity] = useState<VisualIdentity | null>(null);
   const [person, setPerson] = useState<PersonAnalysis | null>(null);
+  const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -242,6 +255,30 @@ export default function AgenteBanner() {
     setPerson(null);
     setCurrentStep(1);
     setBannerImages([]);
+    // Keep selectedBrandProfile - don't reset it when switching modes
+  };
+
+  // Handle brand profile selection and load its identity if available
+  const handleSelectBrandProfile = (profile: BrandProfile | null) => {
+    setSelectedBrandProfile(profile);
+    if (profile && profile.colors && profile.colors.length > 0) {
+      // Load identity from saved brand profile
+      setIdentity({
+        colors: profile.colors || [],
+        typography: { 
+          style: "Personalizado", 
+          weight: "Médio", 
+          description: "Tipografia do perfil salvo" 
+        },
+        visualStyle: profile.visual_style || "",
+        mood: profile.mood || "",
+        recurringElements: [],
+        overallDescription: profile.overall_description || "",
+      });
+    } else {
+      // Reset identity if profile has no colors (needs Instagram analysis)
+      setIdentity(null);
+    }
   };
 
   return (
@@ -633,6 +670,14 @@ export default function AgenteBanner() {
             {/* Personalized Mode */}
             <TabsContent value="personalized">
               <div className="space-y-6">
+                {/* Brand Profile Selector */}
+                <div className="max-w-md">
+                  <BrandProfileSelector
+                    selectedProfileId={selectedBrandProfile?.id || null}
+                    onSelectProfile={handleSelectBrandProfile}
+                  />
+                </div>
+
                 {/* Stepper */}
                 <PersonalizedModeStepper
                   currentStep={currentStep}
@@ -647,6 +692,7 @@ export default function AgenteBanner() {
                       <InstagramAnalyzer
                         onIdentityExtracted={handleIdentityExtracted}
                         onIdentityChange={setIdentity}
+                        selectedBrandProfileId={selectedBrandProfile?.id}
                       />
                     )}
 
