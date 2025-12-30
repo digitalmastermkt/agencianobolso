@@ -23,14 +23,49 @@ export interface PersonAnalysis {
 interface PersonPhotoUploadProps {
   onPersonAnalyzed: (person: PersonAnalysis) => void;
   onPersonChange?: (person: PersonAnalysis) => void;
+  projectId?: string | null;
 }
 
-export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange }: PersonPhotoUploadProps) {
+export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange, projectId }: PersonPhotoUploadProps) {
   const [image, setImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [person, setPerson] = useState<PersonAnalysis | null>(null);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
+
+  // Save person analysis to project
+  const saveToProject = async (personData: PersonAnalysis, imageData: string) => {
+    if (!projectId) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('brand_projects')
+        .update({
+          person_photo_url: imageData,
+          person_analysis: personData as unknown as Record<string, never>,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Salvo no projeto! 💾",
+        description: "Foto e análise salvos automaticamente",
+      });
+    } catch (error: any) {
+      console.error('Error saving to project:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar no projeto",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,9 +106,14 @@ export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange }: PersonPh
       setPerson(data.person);
       onPersonAnalyzed(data.person);
 
+      // Auto-save to project if projectId is provided
+      if (projectId && imageData) {
+        await saveToProject(data.person, imageData);
+      }
+
       toast({
         title: "Foto analisada! 👤",
-        description: "Dados da pessoa extraídos com sucesso",
+        description: projectId ? "Dados salvos no projeto" : "Dados da pessoa extraídos com sucesso",
       });
 
     } catch (error: any) {
@@ -150,11 +190,11 @@ export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange }: PersonPh
               </div>
 
               {/* Progress Bar */}
-              {isAnalyzing && (
+              {(isAnalyzing || isSaving) && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Analisando foto...</span>
+                    <span>{isSaving ? "Salvando no projeto..." : "Analisando foto..."}</span>
                   </div>
                   <Progress value={progress} className="h-2" />
                 </div>
