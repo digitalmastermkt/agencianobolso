@@ -744,6 +744,7 @@ export default function AgenteBanner() {
                       <PersonPhotoUpload
                         onPersonAnalyzed={handlePersonAnalyzed}
                         onPersonChange={setPerson}
+                        projectId={selectedProjectId}
                       />
                     )}
 
