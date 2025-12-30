@@ -35,6 +35,9 @@ interface DesignGeneratorFormProps {
   onImagesGenerated: (images: BannerImage[]) => void;
   projectConfig?: ProjectConfig | null;
   projectId?: string | null;
+  initialBannerText?: string;
+  initialCta?: string;
+  initialFormats?: string[];
 }
 
 const FORMAT_OPTIONS = [
@@ -49,7 +52,10 @@ export function DesignGeneratorForm({
   person, 
   onImagesGenerated, 
   projectConfig,
-  projectId 
+  projectId,
+  initialBannerText,
+  initialCta,
+  initialFormats
 }: DesignGeneratorFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -91,6 +97,29 @@ export function DesignGeneratorForm({
       }
     }
   }, [projectConfig]);
+
+  // Update form when initial values change (from history reuse)
+  useEffect(() => {
+    if (initialBannerText !== undefined || initialCta !== undefined) {
+      setFormData(prev => ({
+        ...prev,
+        bannerText: initialBannerText || prev.bannerText,
+        cta: initialCta || prev.cta,
+      }));
+    }
+    if (initialFormats?.length) {
+      const mappedFormats = initialFormats
+        .map(f => formatMap[f] || f)
+        .filter(Boolean);
+      if (mappedFormats.length > 0) {
+        setSelectedFormats(mappedFormats);
+        setFormData(prev => ({ ...prev, formato: mappedFormats[0] }));
+        if (mappedFormats.length > 1) {
+          setMultiFormatMode(true);
+        }
+      }
+    }
+  }, [initialBannerText, initialCta, initialFormats]);
 
   const toggleFormat = (format: string) => {
     if (selectedFormats.includes(format)) {
