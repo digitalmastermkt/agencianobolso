@@ -137,7 +137,7 @@ export function ProjectConfigForm({
         .insert({
           user_id: user.id,
           name: newProjectName.trim(),
-          brand_profile_id: selectedBrandProfileId || null,
+          brand_profile_id: selectedBrandProfileId && selectedBrandProfileId !== "none" ? selectedBrandProfileId : null,
           default_formats: ["feed"],
           variations_count: 3,
         })
@@ -181,7 +181,7 @@ export function ProjectConfigForm({
         .from("brand_projects")
         .update({
           name: editName.trim(),
-          brand_profile_id: editBrandProfileId || null,
+          brand_profile_id: editBrandProfileId && editBrandProfileId !== "none" ? editBrandProfileId : null,
           default_formats: editFormats,
           variations_count: editVariationsCount,
         })
@@ -310,7 +310,7 @@ export function ProjectConfigForm({
                       <SelectValue placeholder="Selecione um perfil" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {brandProfiles.map((profile) => (
                         <SelectItem key={profile.id} value={profile.id}>
                           {profile.name}
@@ -442,7 +442,7 @@ export function ProjectConfigForm({
                     <SelectValue placeholder="Selecione um perfil" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {brandProfiles.map((profile) => (
                       <SelectItem key={profile.id} value={profile.id}>
                         <div className="flex items-center gap-2">

@@ -283,7 +283,7 @@ export default function AgenteBanner() {
           .from('brand_profiles')
           .select('*')
           .eq('id', project.brand_profile_id)
-          .single();
+          .maybeSingle();
         
         if (!error && profile) {
           handleSelectBrandProfile(profile as BrandProfile);
