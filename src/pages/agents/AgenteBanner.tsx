@@ -272,7 +272,7 @@ export default function AgenteBanner() {
     // Keep selectedBrandProfile and selectedProject - don't reset them when switching modes
   };
 
-  // Handle project change and sync with brand profile
+  // Handle project change and sync with brand profile + person data
   const handleProjectChange = async (project: BrandProject | null) => {
     setSelectedProject(project);
     
@@ -294,6 +294,27 @@ export default function AgenteBanner() {
     } else if (!project?.brand_profile_id) {
       // Clear profile selection if project has no linked profile
       handleSelectBrandProfile(null);
+    }
+
+    // Auto-load person data from project if available
+    if (project?.person_analysis && project.person_photo_url) {
+      const savedPerson = project.person_analysis as unknown as PersonAnalysis;
+      if (savedPerson.description) {
+        setPerson(savedPerson);
+        // Advance to step 3 if identity is also available
+        if (identity || (project.brand_profile_id && selectedBrandProfile)) {
+          setCurrentStep(3);
+        } else {
+          setCurrentStep(2);
+        }
+        toast({
+          title: "Dados carregados! 📷",
+          description: "Foto e análise da pessoa recuperados do projeto",
+        });
+      }
+    } else if (!project?.person_analysis) {
+      // Clear person data if project has no saved person
+      setPerson(null);
     }
   };
 
@@ -753,6 +774,10 @@ export default function AgenteBanner() {
                         identity={identity}
                         person={person}
                         onImagesGenerated={handlePersonalizedImagesGenerated}
+                        projectConfig={selectedProject ? {
+                          defaultFormats: selectedProject.default_formats || ['feed'],
+                          variationsCount: selectedProject.variations_count || 3
+                        } : null}
                       />
                     )}
 

@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, FolderOpen, Trash2, Settings2, Loader2, Image, Palette, Save } from "lucide-react";
+import { Plus, FolderOpen, Trash2, Settings2, Loader2, Image, Palette, Save, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -352,7 +352,15 @@ export function ProjectConfigForm({
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex flex-col">
-                        <span className="font-medium text-sm">{project.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{project.name}</span>
+                          {project.person_photo_url && (
+                            <Badge variant="outline" className="text-xs gap-1 bg-blue-500/10 text-blue-600 border-blue-500/30">
+                              <User className="w-3 h-3" />
+                              Foto
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 mt-1">
                           {profile && (
                             <Badge variant="secondary" className="text-xs gap-1">
