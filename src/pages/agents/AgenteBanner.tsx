@@ -33,6 +33,7 @@ import { DesignGeneratorForm } from "@/components/banner/DesignGeneratorForm";
 import { PersonalizedModeStepper } from "@/components/banner/PersonalizedModeStepper";
 import { VisualIdentity } from "@/components/banner/IdentityVisualCard";
 import { BrandProfileSelector } from "@/components/banner/BrandProfileSelector";
+import { ProjectConfigForm } from "@/components/banner/ProjectConfigForm";
 
 interface BrandProfile {
   id: string;
@@ -42,6 +43,17 @@ interface BrandProfile {
   visual_style: string | null;
   mood: string | null;
   overall_description: string | null;
+  created_at: string;
+}
+
+interface BrandProject {
+  id: string;
+  name: string;
+  brand_profile_id: string | null;
+  person_photo_url: string | null;
+  person_analysis: Record<string, unknown> | null;
+  default_formats: string[];
+  variations_count: number;
   created_at: string;
 }
 
@@ -72,6 +84,8 @@ export default function AgenteBanner() {
   const [identity, setIdentity] = useState<VisualIdentity | null>(null);
   const [person, setPerson] = useState<PersonAnalysis | null>(null);
   const [selectedBrandProfile, setSelectedBrandProfile] = useState<BrandProfile | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<BrandProject | null>(null);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -255,7 +269,14 @@ export default function AgenteBanner() {
     setPerson(null);
     setCurrentStep(1);
     setBannerImages([]);
-    // Keep selectedBrandProfile - don't reset it when switching modes
+    // Keep selectedBrandProfile and selectedProject - don't reset them when switching modes
+  };
+
+  // Handle project change and sync with brand profile
+  const handleProjectChange = (project: BrandProject | null) => {
+    setSelectedProject(project);
+    // If project has a brand_profile_id, we could auto-select that profile
+    // For now, we let the user manage profile selection separately
   };
 
   // Handle brand profile selection and load its identity if available
@@ -670,11 +691,16 @@ export default function AgenteBanner() {
             {/* Personalized Mode */}
             <TabsContent value="personalized">
               <div className="space-y-6">
-                {/* Brand Profile Selector */}
-                <div className="max-w-md">
+                {/* Brand Profile & Project Selectors */}
+                <div className={isMobile ? "space-y-4" : "grid grid-cols-1 md:grid-cols-2 gap-4"}>
                   <BrandProfileSelector
                     selectedProfileId={selectedBrandProfile?.id || null}
                     onSelectProfile={handleSelectBrandProfile}
+                  />
+                  <ProjectConfigForm
+                    selectedProjectId={selectedProjectId}
+                    onSelectProject={setSelectedProjectId}
+                    onProjectChange={handleProjectChange}
                   />
                 </div>
 
