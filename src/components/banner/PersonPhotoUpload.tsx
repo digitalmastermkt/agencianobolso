@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { User, Upload, X, Loader2, CheckCircle2 } from "lucide-react";
+import { User, Upload, X, Loader2, CheckCircle2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,15 +24,33 @@ interface PersonPhotoUploadProps {
   onPersonAnalyzed: (person: PersonAnalysis) => void;
   onPersonChange?: (person: PersonAnalysis) => void;
   projectId?: string | null;
+  initialPhotoUrl?: string | null;
+  initialAnalysis?: PersonAnalysis | null;
 }
 
-export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange, projectId }: PersonPhotoUploadProps) {
-  const [image, setImage] = useState<string | null>(null);
+export function PersonPhotoUpload({ 
+  onPersonAnalyzed, 
+  onPersonChange, 
+  projectId,
+  initialPhotoUrl,
+  initialAnalysis 
+}: PersonPhotoUploadProps) {
+  const [image, setImage] = useState<string | null>(initialPhotoUrl || null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [person, setPerson] = useState<PersonAnalysis | null>(null);
+  const [person, setPerson] = useState<PersonAnalysis | null>(initialAnalysis || null);
   const [progress, setProgress] = useState(0);
+  const [isFromProject, setIsFromProject] = useState(!!initialPhotoUrl);
   const { toast } = useToast();
+
+  // Update state when initial values change (project selection)
+  useEffect(() => {
+    if (initialPhotoUrl && initialAnalysis) {
+      setImage(initialPhotoUrl);
+      setPerson(initialAnalysis);
+      setIsFromProject(true);
+    }
+  }, [initialPhotoUrl, initialAnalysis]);
 
   // Save person analysis to project
   const saveToProject = async (personData: PersonAnalysis, imageData: string) => {
@@ -75,11 +93,18 @@ export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange, projectId 
     reader.onloadend = () => {
       setImage(reader.result as string);
       setPerson(null);
+      setIsFromProject(false);
       // Auto-analyze when image is uploaded
       analyzeImage(reader.result as string);
     };
     reader.readAsDataURL(file);
   }, []);
+
+  const handleReplacePhoto = () => {
+    setImage(null);
+    setPerson(null);
+    setIsFromProject(false);
+  };
 
   const analyzeImage = async (imageData: string) => {
     setIsAnalyzing(true);
@@ -132,7 +157,11 @@ export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange, projectId 
   const removeImage = () => {
     setImage(null);
     setPerson(null);
+    setIsFromProject(false);
   };
+
+  // Helper to check if current photo is base64 (new upload) vs URL (stored)
+  const isBase64Image = image?.startsWith('data:');
 
   return (
     <div className="space-y-4">
@@ -141,6 +170,11 @@ export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange, projectId 
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5 text-blue-500" />
             Foto da Pessoa
+            {isFromProject && (
+              <Badge variant="outline" className="ml-2 text-xs bg-green-500/10 text-green-600 border-green-500/30">
+                Salva no projeto
+              </Badge>
+            )}
           </CardTitle>
           <CardDescription>
             Faça upload de uma foto da pessoa para incluir no design
@@ -200,16 +234,28 @@ export function PersonPhotoUpload({ onPersonAnalyzed, onPersonChange, projectId 
                 </div>
               )}
 
-              {/* Re-analyze Button */}
-              {!isAnalyzing && person && (
-                <Button
-                  onClick={() => analyzeImage(image)}
-                  variant="outline"
-                  size="sm"
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Analisar Novamente
-                </Button>
+              {/* Re-analyze / Replace Buttons */}
+              {!isAnalyzing && !isSaving && (
+                <div className="flex gap-2">
+                  {person && isBase64Image && (
+                    <Button
+                      onClick={() => analyzeImage(image!)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Analisar Novamente
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleReplacePhoto}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Trocar Foto
+                  </Button>
+                </div>
               )}
             </div>
           )}

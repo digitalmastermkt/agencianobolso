@@ -766,6 +766,8 @@ export default function AgenteBanner() {
                         onPersonAnalyzed={handlePersonAnalyzed}
                         onPersonChange={setPerson}
                         projectId={selectedProjectId}
+                        initialPhotoUrl={selectedProject?.person_photo_url || null}
+                        initialAnalysis={selectedProject?.person_analysis as unknown as PersonAnalysis | null}
                       />
                     )}
 
@@ -774,6 +776,7 @@ export default function AgenteBanner() {
                         identity={identity}
                         person={person}
                         onImagesGenerated={handlePersonalizedImagesGenerated}
+                        projectId={selectedProjectId}
                         projectConfig={selectedProject ? {
                           defaultFormats: selectedProject.default_formats || ['feed'],
                           variationsCount: selectedProject.variations_count || 3
