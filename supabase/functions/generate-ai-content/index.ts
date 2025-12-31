@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
-const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -81,7 +81,6 @@ const validationSchemas = {
   banner: bannerSchema,
 };
 
-// Secure logging utility - removes PII
 function secureLog(level: 'info' | 'warn' | 'error', message: string, metadata?: Record<string, unknown>) {
   const sanitizedMetadata = metadata ? {
     ...metadata,
@@ -90,19 +89,10 @@ function secureLog(level: 'info' | 'warn' | 'error', message: string, metadata?:
     formData: metadata.formData ? '[REDACTED]' : undefined,
   } : {};
   
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    level,
-    message,
-    ...sanitizedMetadata
-  };
-  
-  console.log(JSON.stringify(logEntry));
+  console.log(JSON.stringify({ timestamp: new Date().toISOString(), level, message, ...sanitizedMetadata }));
 }
 
-// Sanitize input to prevent prompt injection
 function sanitizeInput(input: string): string {
-  // Remove suspicious patterns that could be prompt injection attempts
   return input
     .replace(/\bignore\s+(previous|above|all)\s+(instructions?|prompts?|rules?)\b/gi, '')
     .replace(/\byou\s+are\s+(now|a)\s+/gi, '')
@@ -114,11 +104,8 @@ function sanitizeInput(input: string): string {
     .trim();
 }
 
-// Agent prompts for different content types
 const agentPrompts = {
-  vendas: `Você é um especialista em vídeos de vendas curtos, inspirado no estilo do Bruno Ladeira ("Ladeirinha").
-
-Baseado nas informações:
+  vendas: `Você é um especialista em vídeos de vendas curtos. Baseado nas informações:
 - Nome do negócio: {{nome_negocio}}
 - Produto/serviço: {{produto}}
 - Localização: {{localizacao}}
@@ -128,33 +115,9 @@ Baseado nas informações:
 - Oferta: {{oferta}}
 - Tom: {{tom}}
 
-Crie um roteiro de vídeo CURTO (máximo 130 palavras) seguindo essa estrutura:
-1. HOOK forte (gancho emocional)
-2. DOR (problema do público)
-3. TRANSFORMAÇÃO (como o produto resolve)
-4. OFERTA irresistível
-5. CTA direto
+Crie um roteiro CURTO (máximo 130 palavras) com: HOOK forte, DOR, TRANSFORMAÇÃO, OFERTA irresistível, CTA direto.`,
 
-Use:
-- Frases curtas e impactantes
-- Emojis estratégicos
-- Tom persuasivo e urgente
-- Linguagem simples
-- Foco na transformação emocional
-
-Formato de entrega:
-**ROTEIRO:**
-[Texto do roteiro]
-
-**TÍTULO SUGERIDO:**
-[Título atrativo de até 60 caracteres]
-
-**CTA PRINCIPAL:**
-[Call-to-action específico]`,
-
-  storytelling: `Você é um especialista em storytelling para vídeos, inspirado no Leandro Aguiari.
-
-Baseado nas informações:
+  storytelling: `Você é um especialista em storytelling para vídeos. Baseado nas informações:
 - Nome do negócio: {{nome_negocio}}
 - Produto/serviço: {{produto}}
 - Localização: {{localizacao}}
@@ -162,31 +125,9 @@ Baseado nas informações:
 - Valores da marca: {{valores_marca}}
 - Tom: {{tom}}
 
-Crie um mini-roteiro com storytelling (máximo 130 palavras) que:
-1. Abra com conexão emocional
-2. Conte uma microhistória (problema → transformação)
-3. Conecte com os valores da marca
-4. Termine com CTA sutil mas direto
+Crie um mini-roteiro com storytelling (máximo 130 palavras) que abra com conexão emocional, conte uma microhistória e termine com CTA.`,
 
-Use:
-- Narrativa pessoal ou de cliente
-- Linguagem empática
-- Elementos visuais sugeridos
-- Foco na jornada emocional
-
-Formato de entrega:
-**ROTEIRO:**
-[Texto do roteiro storytelling]
-
-**LEGENDA OPCIONAL:**
-[Texto para acompanhar o vídeo]
-
-**SUGESTÕES VISUAIS:**
-[3-4 ideias de cenas/imagens]`,
-
-  viral: `Você é um especialista em conteúdo viral para Reels, inspirado no Camilo Coutinho.
-
-Baseado nas informações:
+  viral: `Você é um especialista em conteúdo viral para Reels. Baseado nas informações:
 - Nome do negócio: {{nome_negocio}}
 - Produto/serviço: {{produto}}
 - Localização: {{localizacao}}
@@ -195,64 +136,16 @@ Baseado nas informações:
 - Oferta: {{oferta}}
 - Tom: {{tom}}
 
-Crie um roteiro viral (máximo 130 palavras) com:
-1. HOOK que para o scroll
-2. PROBLEMA relatable
-3. BENEFÍCIO surpreendente
-4. CTA que engaja
+Crie um roteiro viral (máximo 130 palavras) com HOOK que para o scroll, problema relatable, benefício surpreendente e CTA.`,
 
-Use:
-- Linguagem jovem e dinâmica
-- Trends atuais
-- Elementos de curiosidade
-- Ritmo acelerado
-
-Formato de entrega:
-**TÍTULO:**
-[Título viral de até 50 caracteres]
-
-**ROTEIRO:**
-[Texto com timing de cortes]
-
-**SUGESTÕES DE CORTE:**
-[Indicações de timing: 0-3s, 3-7s, etc.]
-
-**HASHTAGS:**
-[5-8 hashtags relevantes]`,
-
-  interacao: `Você é um especialista em stories interativos, inspirado no Rafael Bem.
-
-Baseado nas informações:
+  interacao: `Você é um especialista em stories interativos. Baseado nas informações:
 - Público-alvo: {{publico_alvo}}
 - Produto/serviço: {{produto}}
 - Ação desejada: {{acao_desejada}}
 
-Crie uma sequência de 3-5 stories provocativos que:
-1. Despertem curiosidade
-2. Gerem engajamento (enquetes, perguntas)
-3. Direcionem para a ação desejada
+Crie uma sequência de 3-5 stories provocativos com enquetes e perguntas.`,
 
-Use:
-- Perguntas diretas
-- Emojis estratégicos
-- CTAs para caixinha, botões, swipe
-- Tom provocativo mas amigável
-
-Formato de entrega:
-**STORY 1:**
-[Texto + tipo de interação]
-
-**STORY 2:**
-[Texto + tipo de interação]
-
-[Continue até 5 stories]
-
-**RESUMO DE INTERAÇÕES:**
-[Lista das interações usadas]`,
-
-  conexao: `Você é um especialista em stories que criam vínculo emocional.
-
-Baseado nas informações:
+  conexao: `Você é um especialista em stories que criam vínculo emocional. Baseado nas informações:
 - Nome do negócio: {{nome_negocio}}
 - Produto/serviço: {{produto}}
 - Objetivo do story: {{objetivo_story}}
@@ -260,68 +153,18 @@ Baseado nas informações:
 - Tom: {{tom}}
 - Link/ação: {{link_ou_acao}}
 
-Crie até 5 cenas de stories que:
-1. Mostrem bastidores autênticos
-2. Criem conexão pessoal
-3. Humanizem a marca
-4. Direcionem sutilmente para a ação
+Crie até 5 cenas de stories que mostrem bastidores autênticos e criem conexão pessoal.`,
 
-Use:
-- Linguagem pessoal
-- Elementos de transparência
-- CTAs suaves
-- Foco na experiência
-
-Formato de entrega:
-**CENA 1:** [Tipo: foto/vídeo]
-[Descrição da cena + legenda]
-
-**CENA 2:** [Tipo: foto/vídeo]
-[Descrição da cena + legenda]
-
-[Continue até 5 cenas]
-
-**EXTRAS/BASTIDORES:**
-[Sugestões adicionais]`,
-
-  banner: `Você é um especialista em design de banners publicitários para redes sociais e anúncios.
-
-Baseado nos dados abaixo:
+  banner: `Você é um especialista em design de banners publicitários. Baseado nos dados:
 - Produto/Serviço: {{produto}}
 - Benefício principal: {{beneficio}}
 - Público-alvo: {{publico_alvo}}
 - Objetivo do post: {{objetivo_post}}
-- Identidade visual (se houver): {{identidade_visual}}
-- Informações obrigatórias (se houver): {{informacoes_obrigatorias}}
+- Identidade visual: {{identidade_visual}}
+- Informações obrigatórias: {{informacoes_obrigatorias}}
 - Formato: {{formato_imagem}}
 
-Crie um conceito completo de banner.
-
-⚠️ REGRAS CRÍTICAS:
-1. SEMPRE gere HEADLINE e CTA
-2. HEADLINE deve ser curta, clara e chamativa (máximo 8 palavras)
-3. CTA deve ser direto e orientado à ação
-4. Nunca deixe HEADLINE ou CTA vazios
-
-### FORMATO DE RESPOSTA (OBRIGATÓRIO):
-
-HEADLINE:
-[Título principal em até 8 palavras]
-
-CTA:
-[Call to action direto e curto]
-
-COPY PUBLICITÁRIA:
-[Texto persuasivo curto]
-
-DESCRIÇÃO VISUAL DO BANNER:
-[Layout, cores, hierarquia visual, elementos gráficos]
-
-PALETA SUGERIDA:
-[#HEX1, #HEX2, #HEX3]
-
-PROMPT BASE PARA GERAÇÃO DE IMAGEM:
-[Prompt detalhado descrevendo o visual do banner, sem texto embutido]`
+Crie: HEADLINE (até 8 palavras), CTA direto, COPY PUBLICITÁRIA, DESCRIÇÃO VISUAL, PALETA SUGERIDA e PROMPT BASE PARA GERAÇÃO DE IMAGEM.`
 };
 
 serve(async (req) => {
@@ -330,116 +173,74 @@ serve(async (req) => {
   }
 
   const requestId = crypto.randomUUID();
-  secureLog('info', 'Request received', { requestId, method: req.method });
+  secureLog('info', 'Request received', { requestId });
 
   try {
     const { agentType, formData, userId } = await req.json();
     
-    secureLog('info', 'Processing request', { 
-      requestId, 
-      agentType, 
-      hasUserId: !!userId,
-      fieldCount: Object.keys(formData || {}).length 
-    });
-
-    if (!lovableApiKey) {
-      secureLog('error', 'LOVABLE_API_KEY not configured', { requestId });
+    if (!openAIApiKey) {
+      secureLog('error', 'OPENAI_API_KEY not configured', { requestId });
       return new Response(
-        JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }),
+        JSON.stringify({ error: 'OPENAI_API_KEY not configured' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
-    // Validate agent type
     const promptTemplate = agentPrompts[agentType as keyof typeof agentPrompts];
     if (!promptTemplate) {
-      secureLog('warn', 'Invalid agent type', { requestId, agentType });
       return new Response(
         JSON.stringify({ error: 'Invalid agent type' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // Validate input data based on agent type
     const validationSchema = validationSchemas[agentType as keyof typeof validationSchemas];
-    if (!validationSchema) {
-      secureLog('error', 'No validation schema for agent type', { requestId, agentType });
-      return new Response(
-        JSON.stringify({ error: 'Agent type not supported' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
     let validatedData;
     try {
       validatedData = validationSchema.parse(formData);
-      secureLog('info', 'Input validation passed', { requestId, agentType });
     } catch (validationError) {
-      secureLog('warn', 'Input validation failed', { 
-        requestId, 
-        agentType,
-        errors: validationError instanceof z.ZodError ? validationError.errors.length : 'unknown'
-      });
-      
       if (validationError instanceof z.ZodError) {
         return new Response(
-          JSON.stringify({ 
-            error: 'Dados inválidos', 
-            details: validationError.errors.map(e => `${e.path.join('.')}: ${e.message}`)
-          }),
+          JSON.stringify({ error: 'Dados inválidos', details: validationError.errors.map(e => `${e.path.join('.')}: ${e.message}`) }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         );
       }
       throw validationError;
     }
 
-    // Sanitize all input fields to prevent prompt injection
     const sanitizedData: Record<string, string> = {};
     for (const [key, value] of Object.entries(validatedData)) {
       if (typeof value === 'string') {
         sanitizedData[key] = sanitizeInput(value);
       }
     }
-    
-    secureLog('info', 'Input sanitization completed', { requestId });
 
-    // Replace variables in prompt with sanitized data
     let prompt = promptTemplate;
     Object.entries(sanitizedData).forEach(([key, value]) => {
       prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
     });
-    
-    secureLog('info', 'Prompt prepared', { requestId, promptLength: prompt.length });
 
-    // Call Lovable AI Gateway
-    secureLog('info', 'Calling Lovable AI Gateway', { requestId, model: 'google/gemini-2.5-flash' });
-    const startTime = Date.now();
+    secureLog('info', 'Calling OpenAI GPT-5 Mini', { requestId });
     
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-5-mini-2025-08-07',
         messages: [
-          { 
-            role: 'system', 
-            content: 'Você é um especialista em marketing digital e criação de conteúdo para redes sociais. Sempre responda em português brasileiro e siga exatamente o formato solicitado.' 
-          },
+          { role: 'system', content: 'Você é um especialista em marketing digital e criação de conteúdo para redes sociais. Sempre responda em português brasileiro.' },
           { role: 'user', content: prompt }
         ],
+        max_completion_tokens: 4000,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      secureLog('error', 'Lovable AI Gateway error', { 
-        requestId, 
-        status: response.status,
-        hasErrorText: !!errorText
-      });
+      secureLog('error', 'OpenAI API error', { requestId, status: response.status });
       
       if (response.status === 429) {
         return new Response(
@@ -447,237 +248,50 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Adicione créditos na sua conta Lovable.' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
-        );
-      }
       
-      throw new Error(`AI API error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
     const generatedContent = data.choices[0].message.content;
-    const duration = Date.now() - startTime;
-    
-    secureLog('info', 'Lovable AI response received', { 
-      requestId, 
-      durationMs: duration,
-      contentLength: generatedContent?.length || 0
-    });
 
-    // Save to database and track credits if userId is provided
     if (userId) {
-      secureLog('info', 'Processing credit check', { requestId, hasUserId: true });
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      // Reutiliza o token de autorização do request original para checar assinatura
-      const authHeader = req.headers.get('Authorization') || undefined;
+      const { data: userRoles } = await supabase.from('user_roles').select('role').eq('user_id', userId);
+      const isAdmin = userRoles?.some(r => r.role === 'admin');
 
-      const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-        global: {
-          headers: authHeader
-            ? { Authorization: authHeader }
-            : {},
-        },
-      });
-
-      // Check if user is admin - admins bypass all restrictions
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      
-      const isAdmin = !rolesError && userRoles?.some(r => r.role === 'admin');
-      
-      secureLog('info', 'Admin status checked', { requestId, isAdmin });
-
-      if (isAdmin) {
-        secureLog('info', 'Admin user - bypassing all restrictions', { requestId });
-        // Admin users bypass all trial/subscription/credit checks
-        // Just save the generation and return
-        await supabase.from('ai_generations').insert({
-          user_id: userId,
-          agent_type: agentType,
-          input_data: formData,
-          output_content: generatedContent,
-          credits_used: 0 // Admins don't use credits
-        });
-
-        return new Response(
-          JSON.stringify({ content: generatedContent }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      // Buscar informações do usuário incluindo dados do trial
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('display_name, trial_start_date, trial_end_date, daily_credits_limit, is_trial_active')
-        .eq('user_id', userId)
-        .single();
-      
-      if (profileError) {
-        secureLog('error', 'Profile fetch error', { requestId });
-        throw new Error('Erro ao verificar dados do usuário');
-      }
-
-      // Verificar se está em trial ativo
-      const isTrialActive = profile?.is_trial_active && 
-        profile?.trial_end_date && 
-        new Date(profile.trial_end_date) > new Date();
-
-      secureLog('info', 'Trial status checked', { 
-        requestId,
-        isTrialActive, 
-        hasTrialEndDate: !!profile?.trial_end_date
-      });
-
-      if (isTrialActive) {
-        // Verificar limite diário de créditos para usuários em trial
-        const { data: dailyUsage, error: dailyUsageError } = await supabase
-          .rpc('get_user_daily_credits_usage', { p_user_id: userId });
-
-        if (dailyUsageError) {
-          secureLog('error', 'Daily usage fetch error', { requestId });
-          throw new Error('Erro ao verificar uso diário de créditos');
-        }
-
-        const dailyLimit = profile?.daily_credits_limit || 10;
-        const dailyUsed = dailyUsage || 0;
-
-        secureLog('info', 'Daily credits checked', { requestId, dailyUsed, dailyLimit });
-
-        if (dailyUsed >= dailyLimit) {
-          secureLog('warn', 'Daily limit exceeded', { requestId, dailyUsed, dailyLimit });
-          return new Response(
-            JSON.stringify({ error: `Limite diário de créditos excedido (${dailyUsed}/${dailyLimit}). Volte amanhã ou faça upgrade para acesso ilimitado.` }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-          );
-        }
-      } else {
-        // Verificar status da assinatura para usuários fora do trial
-        const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('check-subscription');
+      if (!isAdmin) {
+        const { data: profile } = await supabase.from('profiles').select('is_trial_active, trial_end_date, daily_credits_limit').eq('user_id', userId).single();
         
-        if (subscriptionError) {
-          secureLog('error', 'Subscription check error', { requestId });
-          throw new Error('Erro ao verificar assinatura');
-        }
-
-        secureLog('info', 'Subscription checked', { 
-          requestId, 
-          subscribed: subscriptionData.subscribed,
-          hasTier: !!subscriptionData.subscription_tier
-        });
-
-        // Verificar acesso ao agente para usuários não-trial
-        if (!subscriptionData.subscribed && agentType !== 'vendas') {
-          secureLog('warn', 'User blocked - no subscription for premium agent', { requestId, agentType });
-          return new Response(
-            JSON.stringify({ error: 'Este agente requer um plano pago. Usuários gratuitos podem usar apenas o agente de vendas.' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-          );
-        }
-
-        // Obter configurações do plano e uso mensal de créditos
-        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-        
-        const [planSettingsRes, monthlyUsageRes] = await Promise.all([
-          supabase
-            .from('plan_settings')
-            .select('monthly_credits')
-            .eq('plan', subscriptionData.subscription_tier || 'Gratuito')
-            .single(),
-          supabase.rpc('get_user_monthly_credits_usage', { 
-            p_user_id: userId, 
-            p_month_year: currentMonth 
-          })
-        ]);
-
-        const planSettings = planSettingsRes.data;
-        const monthlyUsage = monthlyUsageRes.data || 0;
-        
-        secureLog('info', 'Monthly credits checked', { 
-          requestId,
-          monthlyUsage,
-          monthlyLimit: planSettings?.monthly_credits || 0
-        });
-
-        // Verificar se excedeu o limite mensal
-        if (planSettings && monthlyUsage >= planSettings.monthly_credits) {
-          secureLog('warn', 'Monthly limit exceeded', { 
-            requestId,
-            monthlyUsage,
-            monthlyLimit: planSettings.monthly_credits
-          });
-          throw new Error(`Limite mensal de créditos excedido (${monthlyUsage}/${planSettings.monthly_credits}). Seu plano ${subscriptionData.subscription_tier} permite ${planSettings.monthly_credits} créditos por mês.`);
+        if (profile?.is_trial_active && profile?.trial_end_date) {
+          const trialEnd = new Date(profile.trial_end_date);
+          if (new Date() > trialEnd) {
+            const { data: subscriber } = await supabase.from('subscribers').select('subscribed').eq('user_id', userId).single();
+            if (!subscriber?.subscribed) {
+              return new Response(JSON.stringify({ error: 'Período de teste expirado. Assine um plano para continuar.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+          } else {
+            const today = new Date().toISOString().split('T')[0];
+            const { data: todayUsage } = await supabase.rpc('get_user_daily_credits_usage', { p_user_id: userId, p_date: today });
+            if ((todayUsage || 0) >= (profile.daily_credits_limit || 10)) {
+              return new Response(JSON.stringify({ error: `Limite diário atingido. Tente novamente amanhã.` }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+          }
         }
       }
 
-      // Salvar geração no banco
-      const { error: insertError } = await supabase
-        .from('ai_generations')
-        .insert({
-          user_id: userId,
-          agent_type: agentType,
-          input_data: formData,
-          generated_content: generatedContent
-        });
-
-      if (insertError) {
-        secureLog('error', 'Failed to save generation', { requestId });
-        // Não bloquear a resposta por erro de salvamento
-      }
-
-      // Registrar uso de créditos
-      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-      const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      await supabase.from('ai_generations').insert({ user_id: userId, agent_type: agentType, input_data: sanitizedData, generated_content: generatedContent });
       
-      const { error: creditsError } = await supabase
-        .from('user_credits_usage')
-        .insert({
-          user_id: userId,
-          agent_type: agentType,
-          credits_used: 1,
-          month_year: currentMonth,
-          date_used: currentDate
-        });
-
-      if (creditsError) {
-        secureLog('error', 'Failed to register credits', { requestId });
-        // Não bloquear a resposta por erro de registro
-      }
-
-      secureLog('info', 'Generation saved and credits registered', { requestId });
+      const today = new Date().toISOString().split('T')[0];
+      const monthYear = new Date().toISOString().slice(0, 7);
+      await supabase.from('user_credits_usage').insert({ user_id: userId, agent_type: agentType, credits_used: 1, date_used: today, month_year: monthYear });
     }
 
-    secureLog('info', 'Request completed successfully', { requestId });
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        content: generatedContent,
-        agentType 
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ content: generatedContent }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error) {
-    secureLog('error', 'Request failed', { 
-      requestId,
-      errorMessage: error.message,
-      errorType: error.constructor.name
-    });
-    
-    return new Response(
-      JSON.stringify({ 
-        error: 'An unexpected error occurred', 
-        details: error.message 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-        status: 500 
-      }
-    );
+    secureLog('error', 'Request failed', { requestId, error: error.message });
+    return new Response(JSON.stringify({ error: 'Erro ao gerar conteúdo', details: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
