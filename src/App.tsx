@@ -25,6 +25,7 @@ const AgenteViral = lazy(() => import("./pages/agents/AgenteViral"));
 const AgenteInteracao = lazy(() => import("./pages/agents/AgenteInteracao"));
 const AgenteConexao = lazy(() => import("./pages/agents/AgenteConexao"));
 const AgenteBanner = lazy(() => import("./pages/agents/AgenteBanner"));
+const AgenteDiretorArte = lazy(() => import("./pages/agents/AgenteDiretorArte"));
 const Favoritos = lazy(() => import("./pages/Favoritos"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Treinamentos = lazy(() => import("./pages/Treinamentos"));
@@ -118,6 +119,13 @@ const App = () => (
             <ProtectedRoute>
               <PlanGuard agentKey="banner">
                 <AgenteBanner />
+              </PlanGuard>
+            </ProtectedRoute>
+          } />
+          <Route path="/agentes/diretor-arte" element={
+            <ProtectedRoute>
+              <PlanGuard agentKey="diretor-arte">
+                <AgenteDiretorArte />
               </PlanGuard>
             </ProtectedRoute>
           } />
