@@ -33,7 +33,6 @@ const Prompts = lazy(() => import("./pages/Prompts"));
 const Comunidade = lazy(() => import("./pages/Comunidade"));
 const AdminTrainings = lazy(() => import("./pages/admin/AdminTrainings"));
 const AdminPrompts = lazy(() => import("./pages/admin/AdminPrompts"));
-const AdminAgentPrompts = lazy(() => import("./pages/admin/AdminAgentPrompts"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminPlans = lazy(() => import("./pages/admin/AdminPlans"));
 const AdminEvents = lazy(() => import("./pages/admin/AdminEvents"));
@@ -168,13 +167,6 @@ const App = () => (
             <ProtectedRoute>
               <AdminRoute>
                 <AdminPrompts />
-              </AdminRoute>
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/agent-prompts" element={
-            <ProtectedRoute>
-              <AdminRoute>
-                <AdminAgentPrompts />
               </AdminRoute>
             </ProtectedRoute>
           } />
