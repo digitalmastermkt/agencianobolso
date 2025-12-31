@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
@@ -23,6 +23,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
+import { renderBannerFromDecision, type BannerDecision } from "@/components/renderBannerFromDecision";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -33,10 +35,26 @@ interface ArtDirectorDecision {
   style: "clean" | "minimal" | "premium";
 }
 
+interface ProjectBanner extends BannerDecision {
+  id: string;
+  photoUrl: string;
+  createdAt: string;
+}
+
+interface ProjectItem {
+  id: string;
+  name: string;
+  banners: ProjectBanner[];
+}
+
+const PROJECTS_STORAGE_KEY = "art-director-projects";
+const MAX_BANNERS_BETA = 10;
+
 export default function AgenteDiretorArte() {
   const { toast } = useToast();
   const { isMobile, buttonMinHeight, inputHeight } = useMobileOptimization();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
@@ -44,6 +62,40 @@ export default function AgenteDiretorArte() {
   const [ctaText, setCtaText] = useState("");
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
   const [copied, setCopied] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState("");
+  const currentProjectRef = useRef<string | null>(null);
+  const storageKey = useMemo(
+    () => `${PROJECTS_STORAGE_KEY}:${user?.id ?? "anonymous"}`,
+    [user?.id]
+  );
+  const totalBanners = useMemo(
+    () => projects.reduce((sum, project) => sum + project.banners.length, 0),
+    [projects]
+  );
+  const limitReached = totalBanners >= MAX_BANNERS_BETA;
+
+  useEffect(() => {
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as ProjectItem[];
+        setProjects(parsed);
+        if (parsed.length > 0) {
+          setCurrentProjectId(parsed[0].id);
+          currentProjectRef.current = parsed[0].id;
+        }
+      } catch {
+        setProjects([]);
+      }
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(projects));
+  }, [projects, storageKey]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -84,6 +136,15 @@ export default function AgenteDiretorArte() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (limitReached) {
+      toast({
+        title: "Limite do beta atingido",
+        description: "Você atingiu o limite de 10 artes do beta. Obrigado por testar!",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (images.length === 0) {
       toast({
@@ -153,6 +214,165 @@ export default function AgenteDiretorArte() {
     return labels[style] || style;
   };
 
+  const handleCreateProject = () => {
+    const trimmedName = projectName.trim();
+    if (!trimmedName) {
+      toast({
+        title: "Informe um nome",
+        description: "Digite o nome do projeto para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newProject: ProjectItem = {
+      id: crypto.randomUUID(),
+      name: trimmedName,
+      banners: [],
+    };
+
+    setProjects((prev) => [newProject, ...prev]);
+    setCurrentProjectId(newProject.id);
+    currentProjectRef.current = newProject.id;
+    setProjectName("");
+  };
+
+  const handleSelectProject = (projectId: string) => {
+    setCurrentProjectId(projectId);
+    currentProjectRef.current = projectId;
+  };
+
+  const createDefaultProject = () => {
+    const defaultProject: ProjectItem = {
+      id: crypto.randomUUID(),
+      name: "Projeto Geral",
+      banners: [],
+    };
+    setProjects((prev) => [defaultProject, ...prev]);
+    setCurrentProjectId(defaultProject.id);
+    currentProjectRef.current = defaultProject.id;
+    return defaultProject.id;
+  };
+
+  const inlineStyles = (source: HTMLElement, target: HTMLElement) => {
+    const computed = window.getComputedStyle(source);
+    target.setAttribute(
+      "style",
+      Array.from(computed)
+        .map((key) => `${key}:${computed.getPropertyValue(key)};`)
+        .join("")
+    );
+
+    Array.from(source.children).forEach((child, index) => {
+      if (!(child instanceof HTMLElement)) return;
+      const targetChild = target.children.item(index);
+      if (targetChild instanceof HTMLElement) {
+        inlineStyles(child, targetChild);
+      }
+    });
+  };
+
+  const handleExportBanner = async () => {
+    if (!decision || !bannerRef.current) return;
+
+    const node = bannerRef.current;
+    const rect = node.getBoundingClientRect();
+    const cloned = node.cloneNode(true) as HTMLElement;
+    cloned.style.width = `${rect.width}px`;
+    cloned.style.height = `${rect.height}px`;
+    inlineStyles(node, cloned);
+
+    const serialized = new XMLSerializer().serializeToString(cloned);
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
+        <foreignObject width="100%" height="100%">
+          <div xmlns="http://www.w3.org/1999/xhtml">${serialized}</div>
+        </foreignObject>
+      </svg>
+    `;
+
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => {
+      const scale = window.devicePixelRatio || 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = rect.width * scale;
+      canvas.height = rect.height * scale;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+      ctx.scale(scale, scale);
+      ctx.drawImage(image, 0, 0);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob((pngBlob) => {
+        if (!pngBlob) return;
+        const downloadUrl = URL.createObjectURL(pngBlob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = `banner-${decision.template}.png`;
+        link.click();
+        URL.revokeObjectURL(downloadUrl);
+      }, "image/png");
+    };
+    image.src = url;
+  };
+
+  const bannerDecision = useMemo(
+    () =>
+      decision
+        ? {
+            template: decision.template,
+            headline: decision.headline,
+            subheadline: decision.subheadline ?? "",
+            cta: decision.cta ? { label: decision.cta } : undefined,
+            colors: {
+              background: decision.colors[0] ?? "#0f172a",
+              headline: decision.colors[1] ?? "#f8fafc",
+              subheadline: decision.colors[2] ?? "#e2e8f0",
+              ctaBackground: decision.colors[3] ?? decision.colors[1] ?? "#f8fafc",
+              ctaText: decision.colors[4] ?? decision.colors[0] ?? "#0f172a",
+            },
+            style: undefined,
+          }
+        : null,
+    [decision]
+  );
+
+  useEffect(() => {
+    if (!decision || !images[0]) return;
+    if (limitReached) {
+      toast({
+        title: "Limite do beta atingido",
+        description: "Você atingiu o limite de 10 artes do beta. Obrigado por testar!",
+        variant: "destructive",
+      });
+      return;
+    }
+    const targetProjectId = currentProjectRef.current ?? createDefaultProject();
+    if (!bannerDecision) return;
+
+    const newBanner: ProjectBanner = {
+      id: crypto.randomUUID(),
+      photoUrl: images[0],
+      createdAt: new Date().toISOString(),
+      ...bannerDecision,
+    };
+
+    setProjects((prev) =>
+      prev.map((project) =>
+        project.id === targetProjectId
+          ? { ...project, banners: [newBanner, ...project.banners] }
+          : project
+      )
+    );
+  }, [decision, images, bannerDecision, limitReached, toast]);
+
+  const currentProject = projects.find((project) => project.id === currentProjectId) ?? null;
+
   return (
     <DashboardLayout>
       <div className="min-h-screen py-12">
@@ -171,6 +391,17 @@ export default function AgenteDiretorArte() {
                 Não gera imagens — apenas define template, cores e textos.
               </span>
             </p>
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <Badge variant="secondary">Beta</Badge>
+              <p className="text-sm text-muted-foreground">
+                {totalBanners}/{MAX_BANNERS_BETA} artes do beta
+              </p>
+            </div>
+            {limitReached && (
+              <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                Você atingiu o limite de 10 artes do beta. Obrigado por testar!
+              </div>
+            )}
           </div>
 
           <div className="mb-8 max-w-md mx-auto">
@@ -178,9 +409,104 @@ export default function AgenteDiretorArte() {
             <SubscriptionStatusCard />
           </div>
 
+          <div className="mb-8 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Projetos</CardTitle>
+                <CardDescription>
+                  Crie projetos e organize os banners gerados por cliente ou campanha.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Input
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="Nome do projeto"
+                  />
+                  <Button type="button" onClick={handleCreateProject}>
+                    Criar projeto
+                  </Button>
+                </div>
+
+                {projects.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {projects.map((project) => (
+                      <Button
+                        key={project.id}
+                        type="button"
+                        variant={project.id === currentProjectId ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSelectProject(project.id)}
+                      >
+                        {project.name}
+                      </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/30 p-6 text-center sm:p-8">
+                    <h3 className="text-lg font-semibold">Crie seu primeiro projeto</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Em 3 passos: 1) crie um projeto, 2) envie os prints,
+                      3) gere o banner e baixe a imagem.
+                    </p>
+                    <Button
+                      type="button"
+                      onClick={handleCreateProject}
+                      className="mt-4"
+                    >
+                      Criar projeto
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Banners do projeto</CardTitle>
+                <CardDescription>
+                  Selecione um projeto para visualizar os banners associados.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {currentProject ? (
+                  currentProject.banners.length > 0 ? (
+                    <div className="space-y-6">
+                      {currentProject.banners.map((banner) => (
+                        <div key={banner.id} className="space-y-3">
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(banner.createdAt).toLocaleString()}
+                          </div>
+                          {renderBannerFromDecision(banner, banner.photoUrl)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/30 p-6 text-center sm:p-8">
+                      <p className="text-sm font-medium">
+                        Nenhum banner neste projeto ainda
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Envie suas referências e gere o primeiro banner.
+                      </p>
+                      <Button type="button" className="mt-4" asChild>
+                        <a href="#gerar-banner">Gerar primeiro banner</a>
+                      </Button>
+                    </div>
+                  )
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Crie ou selecione um projeto para começar.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 gap-8">
             {/* Form */}
-            <Card>
+            <Card id="gerar-banner">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ImageIcon className="w-5 h-5" />
@@ -273,7 +599,7 @@ export default function AgenteDiretorArte() {
                     type="submit" 
                     className={`w-full ${buttonMinHeight}`} 
                     variant="gradient" 
-                    disabled={loading || images.length === 0}
+                    disabled={loading || images.length === 0 || limitReached}
                   >
                     {loading ? (
                       <>
@@ -376,6 +702,21 @@ export default function AgenteDiretorArte() {
                         </div>
                       </div>
                     </div>
+
+                    {bannerDecision && images[0] && (
+                      <div className="space-y-4">
+                        <div ref={bannerRef} className="w-full">
+                          {renderBannerFromDecision(bannerDecision, images[0])}
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleExportBanner}
+                          className="w-full"
+                        >
+                          Baixar imagem
+                        </Button>
+                      </div>
+                    )}
 
                     {/* Raw JSON */}
                     <div>
