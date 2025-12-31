@@ -719,11 +719,23 @@ export default function AgenteDiretorArte() {
                     )}
 
                     {/* Raw JSON */}
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">JSON Completo</p>
-                      <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
-                        {JSON.stringify(decision, null, 2)}
-                      </pre>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">JSON (debug)</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowJsonDebug((prev) => !prev)}
+                        >
+                          {showJsonDebug ? "Ocultar JSON" : "Mostrar JSON"}
+                        </Button>
+                      </div>
+                      {showJsonDebug && (
+                        <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
+                          {JSON.stringify(decision, null, 2)}
+                        </pre>
+                      )}
                     </div>
                   </div>
                 ) : (
