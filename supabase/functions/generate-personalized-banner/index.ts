@@ -210,7 +210,9 @@ IMPORTANTE: Cada prompt DEVE ter 150-200 palavras e incluir TODOS estes elemento
 5. Atmosfera e mood específicos
 6. Qualidade técnica: "8K, commercial photography, professional retouching"
 7. Referência de estilo: ${selectedStyleConfig.focus}
-8. DO NOT include any text in the generated image`
+8. TEXTO OBRIGATÓRIO NO BANNER: O headline "${bannerText}" deve aparecer em destaque com tipografia profissional, legível e integrada ao design
+9. BOTÃO CTA OBRIGATÓRIO: Incluir botão com o texto "${cta}" em posição estratégica para conversão
+10. O texto deve ser nítido, bem espaçado, com contraste adequado para legibilidade perfeita`
           }
         ],
         max_tokens: 4000,
@@ -274,15 +276,15 @@ IMPORTANTE: Cada prompt DEVE ter 150-200 palavras e incluir TODOS estes elemento
       generatedPrompts = [
         {
           style: `${selectedStyleConfig.name} - Variação A`,
-          prompt: basePrompt + ` Emphasizing dramatic lighting with subject at left third, clean space for headline "${bannerText}".`
+          prompt: basePrompt + ` Bold headline text "${bannerText}" prominently displayed with professional typography at top, CTA button "${cta}" at bottom right. Sharp, legible text with excellent contrast.`
         },
         {
           style: `${selectedStyleConfig.name} - Variação B`,
-          prompt: basePrompt + ` Centered subject with symmetrical composition, atmospheric gradients blending ${primaryColor} to ${secondaryColor}.`
+          prompt: basePrompt + ` Professional advertising layout with bold headline "${bannerText}" in center-left, call-to-action button "${cta}" positioned for maximum conversion. Clean typography, perfect readability.`
         },
         {
           style: `${selectedStyleConfig.name} - Variação C`,
-          prompt: basePrompt + ` Dynamic diagonal composition with subject at golden ratio point, energetic atmosphere for CTA "${cta}".`
+          prompt: basePrompt + ` Dynamic composition with impactful headline "${bannerText}" and prominent CTA button "${cta}". Magazine-quality typography, professional text hierarchy.`
         }
       ];
     }
@@ -301,10 +303,14 @@ TECHNICAL SPECIFICATIONS:
 - Aspect ratio: ${dimensions.aspectRatio}
 - Ultra high resolution, 8K quality, razor sharp focus
 - Professional advertising photography standard
-- Clean composition optimized for marketing materials
-- Clear space reserved for text overlay and call-to-action buttons
-- NO TEXT, NO WORDS, NO LETTERS in the generated image
-- Pure visual composition only`;
+
+MANDATORY TEXT REQUIREMENTS:
+- Include the headline "${bannerText}" as bold, prominent text in the banner
+- Include a CTA button with text "${cta}" 
+- Typography must be clean, sharp, perfectly legible, professional advertising quality
+- Text should have excellent contrast against background for maximum readability
+- Use modern, professional font styling (bold sans-serif for headlines)
+- Text placement should follow professional advertising layout principles`;
 
         const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
