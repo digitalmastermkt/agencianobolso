@@ -67,7 +67,6 @@ export default function AgenteDiretorArte() {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
   const currentProjectRef = useRef<string | null>(null);
-  const [showJsonDebug, setShowJsonDebug] = useState(false);
   const storageKey = useMemo(
     () => `${PROJECTS_STORAGE_KEY}:${user?.id ?? "anonymous"}`,
     [user?.id]
