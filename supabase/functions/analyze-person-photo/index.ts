@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -33,21 +34,23 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log('Analyzing person photo...');
+    console.log('Analyzing person photo with OpenAI Vision...');
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const imageUrl = image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${openAIApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4.1-mini-2025-04-14",
         messages: [
           {
             role: "user",
@@ -83,7 +86,7 @@ Formato de resposta JSON EXATO:
               {
                 type: "image_url",
                 image_url: {
-                  url: image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`
+                  url: imageUrl
                 }
               }
             ]
@@ -95,7 +98,7 @@ Formato de resposta JSON EXATO:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
+      console.error('OpenAI API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -103,24 +106,18 @@ Formato de resposta JSON EXATO:
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Adicione mais créditos na sua conta.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
       
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
-      throw new Error('No content returned from AI');
+      throw new Error('No content returned from OpenAI');
     }
 
-    console.log('Raw AI response:', content);
+    console.log('Raw OpenAI response:', content);
 
     // Parse the JSON response
     let personAnalysis: PersonAnalysis;
@@ -139,7 +136,7 @@ Formato de resposta JSON EXATO:
       
       personAnalysis = JSON.parse(cleanContent);
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
+      console.error('Failed to parse OpenAI response as JSON:', parseError);
       // Return a default structure if parsing fails
       personAnalysis = {
         description: 'Pessoa analisada da foto fornecida',

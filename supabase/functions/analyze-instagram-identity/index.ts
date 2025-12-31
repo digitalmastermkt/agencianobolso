@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -7,11 +8,7 @@ const corsHeaders = {
 
 interface VisualIdentity {
   colors: string[];
-  typography: {
-    style: string;
-    weight: string;
-    description: string;
-  };
+  typography: { style: string; weight: string; description: string };
   visualStyle: string;
   mood: string;
   recurringElements: string[];
@@ -27,164 +24,78 @@ serve(async (req) => {
     const { images } = await req.json();
     
     if (!images || !Array.isArray(images) || images.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'Pelo menos uma imagem é necessária' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Pelo menos uma imagem é necessária' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (images.length > 5) {
-      return new Response(
-        JSON.stringify({ error: 'Máximo de 5 imagens permitidas' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Máximo de 5 imagens permitidas' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) throw new Error('OPENAI_API_KEY is not configured');
 
-    console.log(`Analyzing ${images.length} Instagram images for visual identity...`);
+    console.log(`Analyzing ${images.length} Instagram images with OpenAI Vision...`);
 
-    // Build content array with all images for analysis
-    const contentParts: any[] = [
+    const content: any[] = [
       {
         type: "text",
-        text: `Você é um especialista em design gráfico e identidade visual. Analise as seguintes ${images.length} imagens de um perfil do Instagram e extraia a identidade visual consolidada.
-
-IMPORTANTE: Retorne APENAS um JSON válido, sem markdown, sem explicações, apenas o JSON puro.
-
-Extraia e consolide:
-1. **Paleta de cores**: Os 5-7 códigos HEX mais usados (ex: #FF5733, #3498DB)
-2. **Tipografia**: Estilo das fontes (serif, sans-serif, display, script), peso (light, regular, bold), e descrição geral
-3. **Estilo visual**: Classificação (moderno, minimalista, vibrante, elegante, rústico, corporativo, etc.)
-4. **Mood/Atmosfera**: Sensação transmitida (profissional, descontraído, luxuoso, jovem, sério, divertido)
-5. **Elementos recorrentes**: Ícones, formas, padrões, texturas que aparecem frequentemente
-6. **Descrição geral**: Uma descrição completa da identidade visual em 2-3 frases
-
-Formato de resposta JSON EXATO:
+        text: `Analise estas ${images.length} imagens do Instagram e extraia a identidade visual. Retorne APENAS JSON válido:
 {
-  "colors": ["#HEX1", "#HEX2", "#HEX3", "#HEX4", "#HEX5"],
-  "typography": {
-    "style": "sans-serif",
-    "weight": "bold",
-    "description": "Tipografia moderna e impactante"
-  },
+  "colors": ["#HEX1", "#HEX2", "#HEX3"],
+  "typography": { "style": "sans-serif", "weight": "bold", "description": "..." },
   "visualStyle": "moderno minimalista",
-  "mood": "profissional e sofisticado",
-  "recurringElements": ["ícones geométricos", "linhas clean"],
-  "overallDescription": "Identidade visual moderna com foco em..."
+  "mood": "profissional",
+  "recurringElements": ["elemento1"],
+  "overallDescription": "Descrição da identidade visual..."
 }`
       }
     ];
 
-    // Add each image to the content
-    for (let i = 0; i < images.length; i++) {
-      contentParts.push({
+    for (const image of images) {
+      content.push({
         type: "image_url",
-        image_url: {
-          url: images[i].startsWith('data:') ? images[i] : `data:image/jpeg;base64,${images[i]}`
-        }
+        image_url: { url: image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}` }
       });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${openAIApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "user",
-            content: contentParts
-          }
-        ],
+        model: "gpt-4.1-mini-2025-04-14",
+        messages: [{ role: "user", content }],
         max_tokens: 2000,
       }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Tente novamente em alguns segundos.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Adicione mais créditos na sua conta.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      throw new Error(`AI gateway error: ${response.status}`);
+      console.error('OpenAI API error:', response.status);
+      if (response.status === 429) return new Response(JSON.stringify({ error: 'Rate limit exceeded.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const responseContent = data.choices?.[0]?.message?.content;
 
-    if (!content) {
-      throw new Error('No content returned from AI');
-    }
-
-    console.log('Raw AI response:', content);
-
-    // Parse the JSON response
     let identity: VisualIdentity;
     try {
-      // Clean up the response - remove markdown code blocks if present
-      let cleanContent = content.trim();
-      if (cleanContent.startsWith('```json')) {
-        cleanContent = cleanContent.slice(7);
-      } else if (cleanContent.startsWith('```')) {
-        cleanContent = cleanContent.slice(3);
-      }
-      if (cleanContent.endsWith('```')) {
-        cleanContent = cleanContent.slice(0, -3);
-      }
-      cleanContent = cleanContent.trim();
-      
+      let cleanContent = responseContent.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
       identity = JSON.parse(cleanContent);
-    } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
-      // Return a default structure if parsing fails
+    } catch {
       identity = {
-        colors: ['#3498DB', '#2ECC71', '#E74C3C', '#9B59B6', '#F39C12'],
-        typography: {
-          style: 'sans-serif',
-          weight: 'regular',
-          description: 'Tipografia padrão detectada'
-        },
+        colors: ['#3498DB', '#2ECC71', '#E74C3C'],
+        typography: { style: 'sans-serif', weight: 'regular', description: 'Tipografia padrão' },
         visualStyle: 'moderno',
         mood: 'profissional',
         recurringElements: ['elementos gráficos'],
-        overallDescription: 'Identidade visual analisada com base nas imagens fornecidas'
+        overallDescription: 'Identidade visual analisada'
       };
     }
 
-    console.log('Parsed identity:', identity);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        identity,
-        imagesAnalyzed: images.length
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ success: true, identity, imagesAnalyzed: images.length }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error) {
-    console.error('Error in analyze-instagram-identity:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Erro ao analisar identidade visual' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error('Error:', error);
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
