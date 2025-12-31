@@ -812,6 +812,7 @@ export default function AgenteBanner() {
                         <DesignGeneratorForm
                           identity={identity}
                           person={person}
+                          personPhotoUrl={selectedProject?.person_photo_url || null}
                           onImagesGenerated={handlePersonalizedImagesGenerated}
                           projectId={selectedProjectId}
                           projectConfig={selectedProject ? {

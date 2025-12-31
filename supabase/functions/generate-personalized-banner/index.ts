@@ -34,6 +34,7 @@ interface PersonAnalysis {
 interface BannerRequest {
   identity: VisualIdentity;
   person: PersonAnalysis;
+  personPhotoUrl?: string;  // URL da foto original para preservar identidade
   bannerText: string;
   cta: string;
   formato: string;
@@ -59,6 +60,25 @@ const STYLE_CONFIGS: Record<string, { name: string; focus: string; lighting: str
     focus: 'high-energy visual impact, bold colors, dynamic movement',
     lighting: 'dramatic colored rim lights, strong contrast, energetic light effects',
     composition: 'dynamic diagonal lines, motion blur elements, action-oriented framing'
+  },
+  // NOVOS ESTILOS
+  'minimalista': {
+    name: 'Minimalista',
+    focus: 'ultra clean design, maximum white space, single focal point, zen aesthetic, scandinavian simplicity',
+    lighting: 'soft even lighting, no harsh shadows, ethereal glow, natural light feeling',
+    composition: 'centered subject with extreme negative space, geometric simplicity, breathing room'
+  },
+  'luxo': {
+    name: 'Luxo Premium',
+    focus: 'luxury brand aesthetic, gold accents, rich textures, opulent feel, Chanel/Dior quality',
+    lighting: 'warm golden hour lighting, subtle sparkles, reflective surfaces, jewel-like highlights',
+    composition: 'elegant framing, sophisticated restraint, high-end magazine quality, premium materials'
+  },
+  'jovem_vibrante': {
+    name: 'Jovem e Vibrante',
+    focus: 'Gen-Z aesthetic, bold neon colors, playful energy, trendy vibes, TikTok native design',
+    lighting: 'colorful neon rim lights, vibrant gradients, energetic atmosphere, RGB glow effects',
+    composition: 'dynamic angles, overlapping elements, social media native design, Y2K influences'
   }
 };
 
@@ -68,7 +88,7 @@ serve(async (req) => {
   }
 
   try {
-    const { identity, person, bannerText, cta, formato, additionalInfo, generationStyle }: BannerRequest = await req.json();
+    const { identity, person, personPhotoUrl, bannerText, cta, formato, additionalInfo, generationStyle }: BannerRequest = await req.json();
     
     const selectedStyleConfig = STYLE_CONFIGS[generationStyle || 'editorial_premium'] || STYLE_CONFIGS['editorial_premium'];
     
@@ -85,6 +105,7 @@ serve(async (req) => {
     }
 
     console.log('Generating professional agency-quality banners...');
+    console.log('Person photo URL provided:', !!personPhotoUrl);
 
     // PROFESSIONAL SYSTEM PROMPT FOR AGENCY-QUALITY PROMPTS
     const systemPrompt = `Você é o Diretor Criativo de uma agência de publicidade premiada internacionalmente (CANNES LIONS, D&AD, ONE SHOW).
@@ -93,47 +114,45 @@ Sua especialidade é criar prompts que geram imagens de campanhas publicitárias
 
 ## REGRAS DE OURO PARA PROMPTS PROFISSIONAIS:
 
-### 1. COMPOSIÇÃO CINEMATOGRÁFICA
+### 1. PRESERVAÇÃO DE IDENTIDADE (CRÍTICO!)
+- A pessoa na foto de referência DEVE ser preservada EXATAMENTE como é
+- Traços faciais: manter formato do rosto, olhos, nariz, boca IDÊNTICOS
+- Proporções corporais: manter altura, estrutura, silhueta EXATA
+- Tom de pele: preservar exatamente o tom original, sem clarear ou escurecer
+- Cabelo: manter cor, textura e estilo originais
+- Características únicas: sardas, marcas, expressão natural
+
+### 2. COMPOSIÇÃO CINEMATOGRÁFICA
 - Regra dos terços com ponto focal estratégico
 - Hierarquia visual clara (pessoa > mensagem > elementos secundários)
 - Espaço negativo intencional para texto overlay
 - Linhas de fuga e geometria que guiam o olhar
 
-### 2. ILUMINAÇÃO DE ESTÚDIO PROFISSIONAL
+### 3. ILUMINAÇÃO DE ESTÚDIO PROFISSIONAL
 - Sempre especificar tipo de iluminação: rim light, key light, fill light, soft diffused
 - Efeitos de luz premium: lens flares sutis, bokeh, gradientes atmosféricos
 - Iluminação que esculpe o rosto e cria profundidade
 - Contraluz para criar separação do fundo
 
-### 3. QUALIDADE TÉCNICA OBRIGATÓRIA
+### 4. QUALIDADE TÉCNICA OBRIGATÓRIA
 - Sempre incluir: "8K resolution, ultra sharp focus, professional retouching"
 - "Commercial photography, advertising campaign quality"
 - "Magazine editorial quality, billboard-ready"
 - "Professional color grading, cinematic color palette"
 
-### 4. INTEGRAÇÃO PESSOA + MARCA
+### 5. INTEGRAÇÃO PESSOA + MARCA
 - A pessoa deve parecer parte orgânica do design, não colada
 - Cores da roupa/ambiente devem complementar a paleta da marca
 - Expressão e pose devem transmitir o mood da marca
 - Iluminação consistente entre pessoa e ambiente
 
-### 5. ELEMENTOS PREMIUM
-- Texturas refinadas: gradientes suaves, materiais premium
-- Efeitos sutis: sombras longas, reflexos, profundidade de campo
-- Atmosfera: partículas de luz, névoa sutil, halos de luz
-
 ### O QUE NUNCA FAZER:
+- ALTERAR traços faciais, tom de pele ou características físicas da pessoa
 - Composições centralizadas sem dinamismo
 - Fundos chapados ou genéricos
 - Iluminação plana sem drama
 - Texto sobreposto em áreas de detalhe
-- Cores discordantes da identidade da marca
-- Elementos "floating" sem integração
-
-### REFERÊNCIAS VISUAIS:
-- Campanhas Apple: minimalismo premium, iluminação perfeita
-- Campanhas Nike: dinamismo, energia, movimento congelado
-- Campanhas luxury brands: sofisticação, espaço, elegância`;
+- Cores discordantes da identidade da marca`;
 
     // Step 1: Generate optimized professional prompts
     const promptGenerationResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -178,6 +197,13 @@ IMPORTANTE: Todos os 3 prompts devem seguir o estilo "${selectedStyleConfig.name
 - Cor do cabelo: ${person.colorHarmony.hairColor}
 - Cores da roupa: ${person.colorHarmony.clothingColors.join(', ')}
 
+## PRESERVAÇÃO DE IDENTIDADE (OBRIGATÓRIO):
+${personPhotoUrl ? `FOTO DE REFERÊNCIA DISPONÍVEL - A identidade da pessoa DEVE ser preservada EXATAMENTE:
+- Manter traços faciais idênticos à foto original
+- Preservar tom de pele original sem alterações
+- Manter proporções corporais exatas
+- Preservar estilo de cabelo e cor originais` : 'Sem foto de referência - criar com base na descrição'}
+
 ## BRIEFING DO BANNER:
 - Headline principal: "${bannerText || 'Mensagem promocional impactante'}"
 - Call-to-action: "${cta || 'Saiba mais'}"
@@ -203,7 +229,7 @@ IMPORTANTE: Todos os 3 prompts devem seguir o estilo "${selectedStyleConfig.name
 }
 
 IMPORTANTE: Cada prompt DEVE ter 150-200 palavras e incluir TODOS estes elementos:
-1. Descrição detalhada da pessoa integrada naturalmente no design
+1. Descrição detalhada da pessoa COM ÊNFASE NA PRESERVAÇÃO DE IDENTIDADE
 2. Tipo específico de iluminação conforme o estilo: ${selectedStyleConfig.lighting}
 3. Composição: ${selectedStyleConfig.composition}
 4. Cores exatas da paleta aplicadas (gradientes, fundos, elementos)
@@ -212,7 +238,7 @@ IMPORTANTE: Cada prompt DEVE ter 150-200 palavras e incluir TODOS estes elemento
 7. Referência de estilo: ${selectedStyleConfig.focus}
 8. TEXTO OBRIGATÓRIO NO BANNER: O headline "${bannerText}" deve aparecer em destaque com tipografia profissional, legível e integrada ao design
 9. BOTÃO CTA OBRIGATÓRIO: Incluir botão com o texto "${cta}" em posição estratégica para conversão
-10. O texto deve ser nítido, bem espaçado, com contraste adequado para legibilidade perfeita`
+10. PRESERVAÇÃO DE IDENTIDADE: "Preserve exactly the facial features, skin tone, and body proportions from the reference photo"`
           }
         ],
         max_tokens: 4000,
@@ -271,7 +297,7 @@ IMPORTANTE: Cada prompt DEVE ter 150-200 palavras e incluir TODOS estes elemento
       const secondaryColor = identity.colors[1] || '#ffffff';
       const accentColor = identity.colors[2] || '#ff6b35';
       
-      const basePrompt = `Ultra professional advertising campaign photograph. ${person.description} in ${person.pose} pose with ${person.expression} expression, perfectly integrated into a ${identity.visualStyle} environment. ${selectedStyleConfig.lighting}. Color palette: dominant ${primaryColor} with ${secondaryColor} highlights and ${accentColor} accents. ${identity.mood} atmosphere. ${selectedStyleConfig.composition}. Premium textures, professional depth of field. 8K resolution, commercial photography quality, ${selectedStyleConfig.focus}. DO NOT include any text in the image.`;
+      const basePrompt = `Ultra professional advertising campaign photograph. ${person.description} in ${person.pose} pose with ${person.expression} expression, perfectly integrated into a ${identity.visualStyle} environment. CRITICAL: Preserve exactly the facial features, skin tone (${person.colorHarmony.skinTone}), and body proportions from the reference. ${selectedStyleConfig.lighting}. Color palette: dominant ${primaryColor} with ${secondaryColor} highlights and ${accentColor} accents. ${identity.mood} atmosphere. ${selectedStyleConfig.composition}. Premium textures, professional depth of field. 8K resolution, commercial photography quality, ${selectedStyleConfig.focus}.`;
 
       generatedPrompts = [
         {
@@ -289,15 +315,60 @@ IMPORTANTE: Cada prompt DEVE ter 150-200 palavras e incluir TODOS estes elemento
       ];
     }
 
-    // Step 2: Generate images using Nano Banana with professional prompts
+    // Step 2: Generate images using multimodal approach with photo reference
     const dimensions = getDimensions(formato);
     
     const imagePromises = generatedPrompts.map(async (promptObj) => {
       try {
         console.log(`Generating professional image for style: ${promptObj.style}`);
         
-        // Enhanced prompt with format-specific instructions
-        const enhancedPrompt = `${promptObj.prompt}
+        // Build message content - use multimodal if photo URL is available
+        let messageContent: any;
+        
+        if (personPhotoUrl) {
+          // MULTIMODAL: Use the photo as reference for identity preservation
+          const enhancedPrompt = `Create a professional advertising banner using this person as the protagonist.
+
+CRITICAL IDENTITY PRESERVATION RULES:
+- Keep EXACTLY the same facial features as in the reference photo
+- Preserve the EXACT skin tone - do not lighten or darken
+- Maintain the exact body proportions and silhouette
+- Keep the same hair color, texture, and style
+- Preserve any unique features (freckles, marks, expression)
+
+ONLY MODIFY:
+- Background/environment: ${selectedStyleConfig.focus}
+- Lighting style: ${selectedStyleConfig.lighting}
+- Composition: ${selectedStyleConfig.composition}
+- Outfit can be updated to match brand colors: ${identity.colors.join(', ')}
+
+BANNER CONTENT:
+- Headline text (MUST BE VISIBLE AND LEGIBLE): "${bannerText}"
+- CTA button text: "${cta}"
+- Typography: Clean, bold, professional advertising quality
+- Text contrast: High contrast for perfect readability
+
+VISUAL STYLE: ${promptObj.prompt}
+
+TECHNICAL SPECS:
+- Aspect ratio: ${dimensions.aspectRatio}
+- Quality: 8K, ultra sharp, professional retouching, commercial photography standard`;
+
+          messageContent = [
+            {
+              type: "text",
+              text: enhancedPrompt
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: personPhotoUrl
+              }
+            }
+          ];
+        } else {
+          // Text-only generation without photo reference
+          const enhancedPrompt = `${promptObj.prompt}
 
 TECHNICAL SPECIFICATIONS:
 - Aspect ratio: ${dimensions.aspectRatio}
@@ -312,6 +383,9 @@ MANDATORY TEXT REQUIREMENTS:
 - Use modern, professional font styling (bold sans-serif for headlines)
 - Text placement should follow professional advertising layout principles`;
 
+          messageContent = enhancedPrompt;
+        }
+
         const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -323,7 +397,7 @@ MANDATORY TEXT REQUIREMENTS:
             messages: [
               {
                 role: "user",
-                content: enhancedPrompt
+                content: messageContent
               }
             ],
             modalities: ["image", "text"]
