@@ -53,6 +53,45 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_master_prompts: {
+        Row: {
+          agent_key: string
+          agent_name: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          prompt_content: string
+          system_prompt: string | null
+          updated_at: string | null
+          variables: string[] | null
+        }
+        Insert: {
+          agent_key: string
+          agent_name: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt_content: string
+          system_prompt?: string | null
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Update: {
+          agent_key?: string
+          agent_name?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt_content?: string
+          system_prompt?: string | null
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       ai_generations: {
         Row: {
           agent_type: string
