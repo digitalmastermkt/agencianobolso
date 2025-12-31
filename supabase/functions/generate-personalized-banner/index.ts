@@ -37,12 +37,13 @@ serve(async (req) => {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${openAIApiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-08-07',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: `Você é um diretor criativo de agência premiada. Crie prompts profissionais para banners publicitários. Estilo: ${styleConfig.name}` },
           { role: 'user', content: `Crie 3 prompts para banner. Cores: ${identity.colors?.join(', ')}. Mood: ${identity.mood}. Pessoa: ${person.description}. Headline: "${bannerText}". CTA: "${cta}". Formato: ${formato}. Retorne JSON: {"prompts": [{"style": "nome", "prompt": "texto"}]}` }
         ],
-        max_completion_tokens: 2000,
+        max_tokens: 2000,
+        temperature: 0.7,
       }),
     });
 
@@ -64,9 +65,9 @@ serve(async (req) => {
     }
 
     // Step 2: Generate images with GPT Image 1
-    let size = '1024x1024';
-    if (formato === 'story') size = '1024x1536';
-    else if (formato === 'retangular') size = '1536x1024';
+    let size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024';
+    if (formato === 'story') size = '1024x1792';
+    else if (formato === 'retangular') size = '1792x1024';
 
     const imagePromises = prompts.slice(0, 3).map(async (promptObj) => {
       try {
@@ -75,13 +76,13 @@ serve(async (req) => {
         const response = await fetch('https://api.openai.com/v1/images/generations', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${openAIApiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'gpt-image-1', prompt: enhancedPrompt, n: 1, size, quality: 'high' }),
+          body: JSON.stringify({ model: 'dall-e-3', prompt: enhancedPrompt, n: 1, size, quality: 'hd' }),
         });
 
         if (!response.ok) return { style: promptObj.style, success: false };
 
         const data = await response.json();
-        const imageUrl = data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : data.data?.[0]?.url;
+        const imageUrl = data.data?.[0]?.url;
 
         return { style: promptObj.style, imageUrl, prompt: promptObj.prompt, success: !!imageUrl };
       } catch {

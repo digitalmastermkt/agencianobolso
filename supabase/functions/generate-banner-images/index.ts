@@ -11,7 +11,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('[BANNER-IMAGES] Request received - Using OpenAI GPT Image 1');
+  console.log('[BANNER-IMAGES] Request received - Using OpenAI DALL-E 3');
 
   try {
     const { basePrompt, headline, cta, formato, identidadeVisual } = await req.json();
@@ -28,8 +28,8 @@ serve(async (req) => {
     ];
 
     let size = '1024x1024';
-    if (formato?.toLowerCase().includes('story') || formato?.toLowerCase().includes('vertical')) size = '1024x1536';
-    else if (formato?.toLowerCase().includes('horizontal') || formato?.toLowerCase().includes('landscape')) size = '1536x1024';
+    if (formato?.toLowerCase().includes('story') || formato?.toLowerCase().includes('vertical')) size = '1024x1792';
+    else if (formato?.toLowerCase().includes('horizontal') || formato?.toLowerCase().includes('landscape')) size = '1792x1024';
 
     console.log(`[BANNER-IMAGES] Generating 3 variations with size ${size}`);
 
@@ -40,7 +40,7 @@ serve(async (req) => {
         const response = await fetch('https://api.openai.com/v1/images/generations', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${openAIApiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'gpt-image-1', prompt: enhancedPrompt, n: 1, size, quality: 'high' })
+          body: JSON.stringify({ model: 'dall-e-3', prompt: enhancedPrompt, n: 1, size, quality: 'hd' })
         });
 
         if (!response.ok) {
@@ -49,7 +49,7 @@ serve(async (req) => {
         }
 
         const data = await response.json();
-        const imageUrl = data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : data.data?.[0]?.url;
+        const imageUrl = data.data?.[0]?.url;
 
         console.log(`[BANNER-IMAGES] Variation ${index + 1} generated successfully`);
         return { style: style.name, imageUrl, success: !!imageUrl };
