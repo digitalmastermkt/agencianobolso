@@ -220,7 +220,7 @@ serve(async (req) => {
       prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
     });
 
-    secureLog('info', 'Calling OpenAI GPT-5 Mini', { requestId });
+    secureLog('info', 'Calling OpenAI GPT-4o Mini', { requestId });
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -229,12 +229,13 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-08-07',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'Você é um especialista em marketing digital e criação de conteúdo para redes sociais. Sempre responda em português brasileiro.' },
           { role: 'user', content: prompt }
         ],
-        max_completion_tokens: 4000,
+        max_tokens: 4000,
+        temperature: 0.7,
       }),
     });
 
