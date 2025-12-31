@@ -9,7 +9,8 @@ import {
   MessageCircle, 
   Link as LinkIcon, 
   Image,
-  ArrowRight
+  ArrowRight,
+  Palette
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -73,6 +74,16 @@ const agents = [
     features: ["Copy Publicitária", "Prompt para IA", "Paleta de Cores"],
     color: "from-red-500 to-pink-600",
     path: "/agentes/banner"
+  },
+  {
+    id: "diretor-arte",
+    name: "DIRETOR DE ARTE",
+    description: "Analisa prints e retorna decisões de design em JSON",
+    icon: Palette,
+    style: "Decisor de Template",
+    features: ["Template", "Headline", "Paleta de Cores", "Estilo"],
+    color: "from-violet-500 to-purple-600",
+    path: "/agentes/diretor-arte"
   }
 ];
 
