@@ -236,11 +236,15 @@ export function DesignGeneratorForm({
         if (error) throw error;
         if (data.error) throw new Error(data.error);
 
-        // Add format info to images
-        const imagesWithFormat = (data.images || []).map((img: BannerImage) => ({
-          ...img,
-          format: formato
-        }));
+        // Add format info to images + normalize success flag (some backends return only imageUrl)
+        const imagesWithFormat = (data.images || []).map((img: BannerImage) => {
+          const normalizedSuccess = typeof img.success === "boolean" ? img.success : !!img.imageUrl;
+          return {
+            ...img,
+            success: normalizedSuccess,
+            format: formato,
+          };
+        });
         
         allImages.push(...imagesWithFormat);
       }

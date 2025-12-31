@@ -41,18 +41,27 @@ export function BannerCarousel({
 
   const handleDownload = async (imageUrl: string, style: string) => {
     try {
-      // Convert base64 to blob
-      const base64Data = imageUrl.split(',')[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      let blob: Blob;
+
+      if (imageUrl.startsWith('data:')) {
+        // Convert base64 to blob
+        const base64Data = imageUrl.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        blob = new Blob([byteArray], { type: 'image/png' });
+      } else {
+        // Remote URL (ex: DALL·E 3) -> fetch and download
+        const resp = await fetch(imageUrl);
+        if (!resp.ok) throw new Error(`Falha ao baixar imagem: ${resp.status}`);
+        blob = await resp.blob();
       }
-      
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/png' });
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -62,7 +71,7 @@ export function BannerCarousel({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast({
         title: 'Download iniciado! 📥',
         description: `Banner ${style} baixado com sucesso`,
