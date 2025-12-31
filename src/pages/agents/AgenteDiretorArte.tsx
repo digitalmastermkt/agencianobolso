@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
+import { renderBannerFromDecision } from "@/components/renderBannerFromDecision";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -44,6 +45,7 @@ export default function AgenteDiretorArte() {
   const [ctaText, setCtaText] = useState("");
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
   const [copied, setCopied] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -152,6 +154,90 @@ export default function AgenteDiretorArte() {
     };
     return labels[style] || style;
   };
+
+  const inlineStyles = (source: HTMLElement, target: HTMLElement) => {
+    const computed = window.getComputedStyle(source);
+    target.setAttribute(
+      "style",
+      Array.from(computed)
+        .map((key) => `${key}:${computed.getPropertyValue(key)};`)
+        .join("")
+    );
+
+    Array.from(source.children).forEach((child, index) => {
+      if (!(child instanceof HTMLElement)) return;
+      const targetChild = target.children.item(index);
+      if (targetChild instanceof HTMLElement) {
+        inlineStyles(child, targetChild);
+      }
+    });
+  };
+
+  const handleExportBanner = async () => {
+    if (!decision || !bannerRef.current) return;
+
+    const node = bannerRef.current;
+    const rect = node.getBoundingClientRect();
+    const cloned = node.cloneNode(true) as HTMLElement;
+    cloned.style.width = `${rect.width}px`;
+    cloned.style.height = `${rect.height}px`;
+    inlineStyles(node, cloned);
+
+    const serialized = new XMLSerializer().serializeToString(cloned);
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
+        <foreignObject width="100%" height="100%">
+          <div xmlns="http://www.w3.org/1999/xhtml">${serialized}</div>
+        </foreignObject>
+      </svg>
+    `;
+
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => {
+      const scale = window.devicePixelRatio || 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = rect.width * scale;
+      canvas.height = rect.height * scale;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+      ctx.scale(scale, scale);
+      ctx.drawImage(image, 0, 0);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob((pngBlob) => {
+        if (!pngBlob) return;
+        const downloadUrl = URL.createObjectURL(pngBlob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = `banner-${decision.template}.png`;
+        link.click();
+        URL.revokeObjectURL(downloadUrl);
+      }, "image/png");
+    };
+    image.src = url;
+  };
+
+  const bannerDecision = decision
+    ? {
+        template: decision.template,
+        headline: decision.headline,
+        subheadline: decision.subheadline ?? "",
+        cta: decision.cta ? { label: decision.cta } : undefined,
+        colors: {
+          background: decision.colors[0] ?? "#0f172a",
+          headline: decision.colors[1] ?? "#f8fafc",
+          subheadline: decision.colors[2] ?? "#e2e8f0",
+          ctaBackground: decision.colors[3] ?? decision.colors[1] ?? "#f8fafc",
+          ctaText: decision.colors[4] ?? decision.colors[0] ?? "#0f172a",
+        },
+        style: undefined,
+      }
+    : null;
 
   return (
     <DashboardLayout>
@@ -376,6 +462,21 @@ export default function AgenteDiretorArte() {
                         </div>
                       </div>
                     </div>
+
+                    {bannerDecision && images[0] && (
+                      <div className="space-y-4">
+                        <div ref={bannerRef} className="w-full">
+                          {renderBannerFromDecision(bannerDecision, images[0])}
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleExportBanner}
+                          className="w-full"
+                        >
+                          Baixar imagem
+                        </Button>
+                      </div>
+                    )}
 
                     {/* Raw JSON */}
                     <div>
