@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { renderBannerFromDecision, type BannerDecision } from "@/components/renderBannerFromDecision";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -47,11 +48,13 @@ interface ProjectItem {
 }
 
 const PROJECTS_STORAGE_KEY = "art-director-projects";
+const MAX_BANNERS_BETA = 10;
 
 export default function AgenteDiretorArte() {
   const { toast } = useToast();
   const { isMobile, buttonMinHeight, inputHeight } = useMobileOptimization();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
@@ -64,9 +67,18 @@ export default function AgenteDiretorArte() {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
   const currentProjectRef = useRef<string | null>(null);
+  const storageKey = useMemo(
+    () => `${PROJECTS_STORAGE_KEY}:${user?.id ?? "anonymous"}`,
+    [user?.id]
+  );
+  const totalBanners = useMemo(
+    () => projects.reduce((sum, project) => sum + project.banners.length, 0),
+    [projects]
+  );
+  const limitReached = totalBanners >= MAX_BANNERS_BETA;
 
   useEffect(() => {
-    const stored = localStorage.getItem(PROJECTS_STORAGE_KEY);
+    const stored = localStorage.getItem(storageKey);
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as ProjectItem[];
@@ -79,11 +91,11 @@ export default function AgenteDiretorArte() {
         setProjects([]);
       }
     }
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
-    localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
-  }, [projects]);
+    localStorage.setItem(storageKey, JSON.stringify(projects));
+  }, [projects, storageKey]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -124,6 +136,15 @@ export default function AgenteDiretorArte() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (limitReached) {
+      toast({
+        title: "Limite do beta atingido",
+        description: "Você atingiu o limite de 10 artes do beta. Obrigado por testar!",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (images.length === 0) {
       toast({
@@ -323,6 +344,14 @@ export default function AgenteDiretorArte() {
 
   useEffect(() => {
     if (!decision || !images[0]) return;
+    if (limitReached) {
+      toast({
+        title: "Limite do beta atingido",
+        description: "Você atingiu o limite de 10 artes do beta. Obrigado por testar!",
+        variant: "destructive",
+      });
+      return;
+    }
     const targetProjectId = currentProjectRef.current ?? createDefaultProject();
     if (!bannerDecision) return;
 
@@ -340,7 +369,7 @@ export default function AgenteDiretorArte() {
           : project
       )
     );
-  }, [decision, images, bannerDecision]);
+  }, [decision, images, bannerDecision, limitReached, toast]);
 
   const currentProject = projects.find((project) => project.id === currentProjectId) ?? null;
 
@@ -362,6 +391,17 @@ export default function AgenteDiretorArte() {
                 Não gera imagens — apenas define template, cores e textos.
               </span>
             </p>
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <Badge variant="secondary">Beta</Badge>
+              <p className="text-sm text-muted-foreground">
+                {totalBanners}/{MAX_BANNERS_BETA} artes do beta
+              </p>
+            </div>
+            {limitReached && (
+              <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                Você atingiu o limite de 10 artes do beta. Obrigado por testar!
+              </div>
+            )}
           </div>
 
           <div className="mb-8 max-w-md mx-auto">
@@ -559,7 +599,7 @@ export default function AgenteDiretorArte() {
                     type="submit" 
                     className={`w-full ${buttonMinHeight}`} 
                     variant="gradient" 
-                    disabled={loading || images.length === 0}
+                    disabled={loading || images.length === 0 || limitReached}
                   >
                     {loading ? (
                       <>
