@@ -51,19 +51,19 @@ export function TemplatePessoaCentro({
 
   return (
     <section
-      className="w-full rounded-3xl px-6 py-10 sm:px-10 sm:py-12 font-sans"
+      className="w-full rounded-3xl px-6 py-12 sm:px-12 sm:py-14 font-sans"
       style={containerStyle}
     >
-      <div className="mx-auto flex max-w-xl flex-col items-center gap-6 text-center">
-        <div className="space-y-3">
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-8 text-center">
+        <div className="space-y-4">
           <h2
-            className="text-3xl font-semibold leading-tight sm:text-4xl"
+            className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl"
             style={headlineStyle}
           >
             {headline}
           </h2>
           <p
-            className="text-base leading-relaxed sm:text-lg"
+            className="text-sm leading-relaxed sm:text-base"
             style={subheadlineStyle}
           >
             {subheadline}
@@ -71,7 +71,7 @@ export function TemplatePessoaCentro({
         </div>
 
         <div className="flex w-full justify-center">
-          <div className="rounded-[32px] bg-white/10 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+          <div className="rounded-[32px] bg-white/10 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
             <img
               src={photoUrl}
               alt="Pessoa central"
@@ -82,7 +82,7 @@ export function TemplatePessoaCentro({
 
         {cta?.href ? (
           <a
-            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-wide transition-opacity hover:opacity-90"
+            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] transition-opacity hover:opacity-90 sm:text-sm"
             style={ctaStyle}
             href={cta.href}
           >
@@ -90,7 +90,7 @@ export function TemplatePessoaCentro({
           </a>
         ) : cta ? (
           <button
-            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-wide transition-opacity hover:opacity-90"
+            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] transition-opacity hover:opacity-90 sm:text-sm"
             style={ctaStyle}
             onClick={cta.onClick}
             type="button"
