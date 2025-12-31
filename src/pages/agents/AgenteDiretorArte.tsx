@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
@@ -23,7 +23,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
-import { renderBannerFromDecision } from "@/components/renderBannerFromDecision";
+import { renderBannerFromDecision, type BannerDecision } from "@/components/renderBannerFromDecision";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -33,6 +33,20 @@ interface ArtDirectorDecision {
   colors: string[];
   style: "clean" | "minimal" | "premium";
 }
+
+interface ProjectBanner extends BannerDecision {
+  id: string;
+  photoUrl: string;
+  createdAt: string;
+}
+
+interface ProjectItem {
+  id: string;
+  name: string;
+  banners: ProjectBanner[];
+}
+
+const PROJECTS_STORAGE_KEY = "art-director-projects";
 
 export default function AgenteDiretorArte() {
   const { toast } = useToast();
@@ -46,6 +60,30 @@ export default function AgenteDiretorArte() {
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
   const [copied, setCopied] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState("");
+  const currentProjectRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(PROJECTS_STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as ProjectItem[];
+        setProjects(parsed);
+        if (parsed.length > 0) {
+          setCurrentProjectId(parsed[0].id);
+          currentProjectRef.current = parsed[0].id;
+        }
+      } catch {
+        setProjects([]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+  }, [projects]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -155,6 +193,46 @@ export default function AgenteDiretorArte() {
     return labels[style] || style;
   };
 
+  const handleCreateProject = () => {
+    const trimmedName = projectName.trim();
+    if (!trimmedName) {
+      toast({
+        title: "Informe um nome",
+        description: "Digite o nome do projeto para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newProject: ProjectItem = {
+      id: crypto.randomUUID(),
+      name: trimmedName,
+      banners: [],
+    };
+
+    setProjects((prev) => [newProject, ...prev]);
+    setCurrentProjectId(newProject.id);
+    currentProjectRef.current = newProject.id;
+    setProjectName("");
+  };
+
+  const handleSelectProject = (projectId: string) => {
+    setCurrentProjectId(projectId);
+    currentProjectRef.current = projectId;
+  };
+
+  const createDefaultProject = () => {
+    const defaultProject: ProjectItem = {
+      id: crypto.randomUUID(),
+      name: "Projeto Geral",
+      banners: [],
+    };
+    setProjects((prev) => [defaultProject, ...prev]);
+    setCurrentProjectId(defaultProject.id);
+    currentProjectRef.current = defaultProject.id;
+    return defaultProject.id;
+  };
+
   const inlineStyles = (source: HTMLElement, target: HTMLElement) => {
     const computed = window.getComputedStyle(source);
     target.setAttribute(
@@ -222,22 +300,49 @@ export default function AgenteDiretorArte() {
     image.src = url;
   };
 
-  const bannerDecision = decision
-    ? {
-        template: decision.template,
-        headline: decision.headline,
-        subheadline: decision.subheadline ?? "",
-        cta: decision.cta ? { label: decision.cta } : undefined,
-        colors: {
-          background: decision.colors[0] ?? "#0f172a",
-          headline: decision.colors[1] ?? "#f8fafc",
-          subheadline: decision.colors[2] ?? "#e2e8f0",
-          ctaBackground: decision.colors[3] ?? decision.colors[1] ?? "#f8fafc",
-          ctaText: decision.colors[4] ?? decision.colors[0] ?? "#0f172a",
-        },
-        style: undefined,
-      }
-    : null;
+  const bannerDecision = useMemo(
+    () =>
+      decision
+        ? {
+            template: decision.template,
+            headline: decision.headline,
+            subheadline: decision.subheadline ?? "",
+            cta: decision.cta ? { label: decision.cta } : undefined,
+            colors: {
+              background: decision.colors[0] ?? "#0f172a",
+              headline: decision.colors[1] ?? "#f8fafc",
+              subheadline: decision.colors[2] ?? "#e2e8f0",
+              ctaBackground: decision.colors[3] ?? decision.colors[1] ?? "#f8fafc",
+              ctaText: decision.colors[4] ?? decision.colors[0] ?? "#0f172a",
+            },
+            style: undefined,
+          }
+        : null,
+    [decision]
+  );
+
+  useEffect(() => {
+    if (!decision || !images[0]) return;
+    const targetProjectId = currentProjectRef.current ?? createDefaultProject();
+    if (!bannerDecision) return;
+
+    const newBanner: ProjectBanner = {
+      id: crypto.randomUUID(),
+      photoUrl: images[0],
+      createdAt: new Date().toISOString(),
+      ...bannerDecision,
+    };
+
+    setProjects((prev) =>
+      prev.map((project) =>
+        project.id === targetProjectId
+          ? { ...project, banners: [newBanner, ...project.banners] }
+          : project
+      )
+    );
+  }, [decision, images, bannerDecision]);
+
+  const currentProject = projects.find((project) => project.id === currentProjectId) ?? null;
 
   return (
     <DashboardLayout>
@@ -262,6 +367,82 @@ export default function AgenteDiretorArte() {
           <div className="mb-8 max-w-md mx-auto">
             <TrialStatusCard />
             <SubscriptionStatusCard />
+          </div>
+
+          <div className="mb-8 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Projetos</CardTitle>
+                <CardDescription>
+                  Crie projetos e organize os banners gerados por cliente ou campanha.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Input
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="Nome do projeto"
+                  />
+                  <Button type="button" onClick={handleCreateProject}>
+                    Criar projeto
+                  </Button>
+                </div>
+
+                {projects.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {projects.map((project) => (
+                      <Button
+                        key={project.id}
+                        type="button"
+                        variant={project.id === currentProjectId ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSelectProject(project.id)}
+                      >
+                        {project.name}
+                      </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum projeto criado ainda.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Banners do projeto</CardTitle>
+                <CardDescription>
+                  Selecione um projeto para visualizar os banners associados.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {currentProject ? (
+                  currentProject.banners.length > 0 ? (
+                    <div className="space-y-6">
+                      {currentProject.banners.map((banner) => (
+                        <div key={banner.id} className="space-y-3">
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(banner.createdAt).toLocaleString()}
+                          </div>
+                          {renderBannerFromDecision(banner, banner.photoUrl)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Ainda não há banners neste projeto.
+                    </p>
+                  )
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Crie ou selecione um projeto para começar.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 gap-8">
