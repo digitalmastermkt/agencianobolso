@@ -404,9 +404,20 @@ export default function AgenteDiretorArte() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum projeto criado ainda.
-                  </p>
+                  <div className="rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/30 p-6 text-center sm:p-8">
+                    <h3 className="text-lg font-semibold">Crie seu primeiro projeto</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Em 3 passos: 1) crie um projeto, 2) envie os prints,
+                      3) gere o banner e baixe a imagem.
+                    </p>
+                    <Button
+                      type="button"
+                      onClick={handleCreateProject}
+                      className="mt-4"
+                    >
+                      Criar projeto
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -432,9 +443,17 @@ export default function AgenteDiretorArte() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Ainda não há banners neste projeto.
-                    </p>
+                    <div className="rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/30 p-6 text-center sm:p-8">
+                      <p className="text-sm font-medium">
+                        Nenhum banner neste projeto ainda
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Envie suas referências e gere o primeiro banner.
+                      </p>
+                      <Button type="button" className="mt-4" asChild>
+                        <a href="#gerar-banner">Gerar primeiro banner</a>
+                      </Button>
+                    </div>
                   )
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -447,7 +466,7 @@ export default function AgenteDiretorArte() {
 
           <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 gap-8">
             {/* Form */}
-            <Card>
+            <Card id="gerar-banner">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ImageIcon className="w-5 h-5" />
