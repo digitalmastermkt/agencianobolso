@@ -125,6 +125,12 @@ const adminItems = [
     color: "text-green-600"
   },
   {
+    title: "Prompts Agentes",
+    url: "/admin/agent-prompts",
+    icon: Sparkles,
+    color: "text-amber-600"
+  },
+  {
     title: "Usuários",
     url: "/admin/users",
     icon: Users,

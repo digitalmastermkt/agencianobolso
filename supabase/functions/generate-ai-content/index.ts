@@ -350,14 +350,36 @@ serve(async (req) => {
       );
     }
 
-    // Validate agent type
-    const promptTemplate = agentPrompts[agentType as keyof typeof agentPrompts];
-    if (!promptTemplate) {
+    // Validate agent type - check hardcoded prompts first
+    const fallbackPrompt = agentPrompts[agentType as keyof typeof agentPrompts];
+    if (!fallbackPrompt) {
       secureLog('warn', 'Invalid agent type', { requestId, agentType });
       return new Response(
         JSON.stringify({ error: 'Invalid agent type' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
+    }
+
+    // Try to fetch prompt from database (admin-editable)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    let promptTemplate = fallbackPrompt;
+    
+    try {
+      const { data: dbPrompt, error: dbError } = await supabaseAdmin
+        .from('agent_master_prompts')
+        .select('prompt_content')
+        .eq('agent_key', agentType)
+        .eq('is_active', true)
+        .single();
+      
+      if (!dbError && dbPrompt?.prompt_content) {
+        promptTemplate = dbPrompt.prompt_content;
+        secureLog('info', 'Using database prompt', { requestId, agentType });
+      } else {
+        secureLog('info', 'Using fallback prompt', { requestId, agentType });
+      }
+    } catch (dbFetchError) {
+      secureLog('warn', 'Failed to fetch prompt from DB, using fallback', { requestId, agentType });
     }
 
     // Validate input data based on agent type
