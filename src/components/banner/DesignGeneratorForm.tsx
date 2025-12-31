@@ -32,6 +32,7 @@ interface ProjectConfig {
 interface DesignGeneratorFormProps {
   identity: VisualIdentity;
   person: PersonAnalysis;
+  personPhotoUrl?: string | null;  // URL da foto para preservar identidade
   onImagesGenerated: (images: BannerImage[]) => void;
   projectConfig?: ProjectConfig | null;
   projectId?: string | null;
@@ -66,11 +67,30 @@ const STYLE_OPTIONS = [
     description: "Cores vibrantes, composição assimétrica, energia visual alta",
     icon: "⚡"
   },
+  { 
+    value: "minimalista", 
+    label: "Minimalista", 
+    description: "Ultra clean, muito espaço em branco, zen e sofisticado",
+    icon: "🤍"
+  },
+  { 
+    value: "luxo", 
+    label: "Luxo Premium", 
+    description: "Estética de marca de luxo, texturas ricas, acabamento premium",
+    icon: "👑"
+  },
+  { 
+    value: "jovem_vibrante", 
+    label: "Jovem e Vibrante", 
+    description: "Estética Gen-Z, cores neon, energia e tendências",
+    icon: "🌈"
+  },
 ];
 
 export function DesignGeneratorForm({ 
   identity, 
-  person, 
+  person,
+  personPhotoUrl,
   onImagesGenerated, 
   projectConfig,
   projectId,
@@ -204,6 +224,7 @@ export function DesignGeneratorForm({
           body: {
             identity,
             person,
+            personPhotoUrl: personPhotoUrl || null,  // Enviar foto para preservar identidade
             bannerText: formData.bannerText,
             cta: formData.cta,
             formato: formato,
