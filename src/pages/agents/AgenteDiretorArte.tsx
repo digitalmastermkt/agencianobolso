@@ -58,7 +58,7 @@ import { useBackgroundRemoval, loadImageFromUrl, blobToDataUrl } from "@/hooks/u
 import { BannerComposite, BANNER_FORMATS, type BannerFormat } from "@/components/banner/BannerComposite";
 import { BrandProfileSelector } from "@/components/banner/BrandProfileSelector";
 import { InstagramAnalyzer } from "@/components/banner/InstagramAnalyzer";
-import { BrandPersonPhotosManager } from "@/components/banner/BrandPersonPhotosManager";
+import { BrandPersonPhotosManager, PersonPhoto } from "@/components/banner/BrandPersonPhotosManager";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -109,12 +109,7 @@ interface BrandProfile {
   person_photos?: PersonPhoto[] | null;
 }
 
-interface PersonPhoto {
-  id: string;
-  url: string;
-  name?: string;
-  analysis?: unknown;
-}
+// PersonPhoto imported from BrandPersonPhotosManager
 
 interface VisualIdentity {
   colors: string[];
@@ -355,7 +350,7 @@ export default function AgenteDiretorArte() {
 
   const handleSelectGalleryPhoto = async (photo: PersonPhoto) => {
     setSelectedGalleryPhoto(photo);
-    setImages([photo.url]);
+    setImages([photo.photo_url]);
     setPersonCutoutUrl(null);
     
     if (preserveIdentity) {
@@ -365,7 +360,7 @@ export default function AgenteDiretorArte() {
           description: "Removendo fundo da foto selecionada.",
         });
         
-        const img = await loadImageFromUrl(photo.url);
+        const img = await loadImageFromUrl(photo.photo_url);
         const cutoutBlob = await removeBackground(img);
         const cutoutDataUrl = await blobToDataUrl(cutoutBlob);
         setPersonCutoutUrl(cutoutDataUrl);
@@ -864,7 +859,7 @@ export default function AgenteDiretorArte() {
           <div className="space-y-6">
             <BrandProfileSelector
               selectedProfileId={selectedBrandProfileId}
-              onSelectProfile={setSelectedBrandProfileId}
+              onSelectProfile={(profile) => setSelectedBrandProfileId(profile?.id || '')}
             />
             
             {selectedBrandProfileId && (
@@ -947,9 +942,9 @@ export default function AgenteDiretorArte() {
                 {/* Person photos gallery */}
                 <BrandPersonPhotosManager
                   brandProfileId={selectedBrandProfileId}
-                  existingPhotos={personPhotos}
+                  photos={personPhotos}
                   onPhotosChange={handlePersonPhotosChange}
-                  onSelectPhoto={handleSelectGalleryPhoto}
+                  onSelectPhoto={(photo) => handleSelectGalleryPhoto(photo)}
                   maxPhotos={10}
                 />
               </>
@@ -1191,7 +1186,7 @@ export default function AgenteDiretorArte() {
                           onClick={() => handleSelectGalleryPhoto(photo)}
                         >
                           <img 
-                            src={photo.url} 
+                            src={photo.photo_url} 
                             alt={photo.name || 'Foto'} 
                             className="w-full h-full object-cover"
                           />
