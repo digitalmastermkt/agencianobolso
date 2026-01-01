@@ -15,9 +15,6 @@ interface ArtDirectorDecision {
   colors: string[];
   style: "clean" | "minimal" | "premium";
 }
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const STORAGE_BUCKET = 'generated-creatives';
@@ -93,17 +90,6 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const artDirectorSystemPrompt = `Você é o agente Diretor de Arte. Responda APENAS com JSON válido no formato:
-{
-  "template": "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda",
-  "headline": "texto curto",
-  "subheadline": "texto de apoio opcional",
-  "cta": "chamada curta opcional",
-  "colors": ["#HEX1", "#HEX2", "#HEX3"],
-  "style": "clean" | "minimal" | "premium"
-}
-Não inclua texto fora do JSON.`;
 
     const artDirectorUserPrompt = `Briefing: ${description}
 Perfil da marca (JSON): ${JSON.stringify(brandProfile)}
@@ -241,11 +227,7 @@ ${personImageUrl ? `Há uma pessoa de referência para preservar identidade faci
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: unknown) {
-    console.error('[generate_creatives] Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro inesperado ao gerar creative.';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
+
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

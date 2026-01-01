@@ -62,7 +62,6 @@ export default function AgenteDiretorArte() {
   const [ctaText, setCtaText] = useState("");
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showJsonDebug, setShowJsonDebug] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);

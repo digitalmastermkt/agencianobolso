@@ -129,6 +129,7 @@ const App = () => (
               </PlanGuard>
             </ProtectedRoute>
           } />
+          <Route path="/agents/diretor-arte" element={<AgenteDiretorArte />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
