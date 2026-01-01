@@ -26,7 +26,11 @@ import {
   RectangleVertical,
   Smartphone,
   Scissors,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Hexagon,
+  Zap,
+  Minus
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +66,7 @@ interface ProjectBanner {
     brandPrimary?: string;
   };
   brandColors?: string[];
+  decorationStyle?: 'geometric' | 'neon' | 'lines' | 'corners';
   style: 'clean' | 'minimal' | 'premium';
   createdAt: string;
 }
@@ -108,6 +113,7 @@ export default function AgenteDiretorArte() {
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [preserveIdentity, setPreserveIdentity] = useState(true);
+  const [decorationStyle, setDecorationStyle] = useState<'geometric' | 'neon' | 'lines' | 'corners'>('geometric');
   
   // Brand profile
   const [brandProfile, setBrandProfile] = useState<Record<string, unknown> | null>(null);
@@ -662,6 +668,7 @@ export default function AgenteDiretorArte() {
         brandPrimary: brandColors[0],
       },
       brandColors: brandColors,
+      decorationStyle: decorationStyle,
       style: decision.style,
       createdAt: new Date().toISOString(),
     };
@@ -800,11 +807,16 @@ export default function AgenteDiretorArte() {
                             format={banner.format}
                             backgroundImageUrl={banner.backgroundImageUrl}
                             personPhotoUrl={banner.personPhotoUrl}
+                            personCutoutUrl={banner.personCutoutUrl}
                             personPosition={banner.personPosition}
                             headline={banner.headline}
                             subheadline={banner.subheadline}
                             cta={banner.cta}
                             colors={banner.colors}
+                            brandColors={banner.brandColors}
+                            showDecorations={(banner.brandColors?.length ?? 0) > 0}
+                            decorationStyle={banner.decorationStyle}
+                            highlightKeyword={(banner.brandColors?.length ?? 0) > 0}
                             style={banner.style}
                             previewScale={0.15}
                           />
@@ -872,7 +884,49 @@ export default function AgenteDiretorArte() {
                     />
                   </div>
 
-                  {/* Image Upload */}
+                  {/* Decoration Style Selector */}
+                  <div>
+                    <Label className="font-medium mb-3 block">Estilo de Decoração</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      <Button
+                        type="button"
+                        variant={decorationStyle === 'geometric' ? "default" : "outline"}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                        onClick={() => setDecorationStyle('geometric')}
+                      >
+                        <Hexagon className="w-4 h-4" />
+                        <span className="text-[10px]">Geométrico</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={decorationStyle === 'neon' ? "default" : "outline"}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                        onClick={() => setDecorationStyle('neon')}
+                      >
+                        <Zap className="w-4 h-4" />
+                        <span className="text-[10px]">Neon</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={decorationStyle === 'lines' ? "default" : "outline"}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                        onClick={() => setDecorationStyle('lines')}
+                      >
+                        <Minus className="w-4 h-4" />
+                        <span className="text-[10px]">Linhas</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={decorationStyle === 'corners' ? "default" : "outline"}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                        onClick={() => setDecorationStyle('corners')}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span className="text-[10px]">Cantos</span>
+                      </Button>
+                    </div>
+                  </div>
+
                   <div>
                     <Label className="font-medium mb-2 block">
                       {preserveIdentity ? "Sua Foto (será sobreposta)" : "Referência Visual"}
@@ -1073,6 +1127,8 @@ export default function AgenteDiretorArte() {
                           cta={decision.cta}
                           colors={{ ...DEFAULT_COLORS, brandPrimary: brandColors[0] }}
                           brandColors={brandColors}
+                          showDecorations={brandColors.length > 0}
+                          decorationStyle={decorationStyle}
                           highlightKeyword={brandColors.length > 0}
                           style={decision.style}
                           previewScale={getPreviewScale()}

@@ -31,7 +31,9 @@ export interface BannerCompositeProps {
   logoUrl?: string;
   logoPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   showDecorations?: boolean;
+  decorationStyle?: 'geometric' | 'neon' | 'lines' | 'corners';
   highlightKeyword?: boolean; // Highlight part of headline with brand color
+  highlightPosition?: 'first' | 'last' | 'auto'; // Which part to highlight
   style?: 'clean' | 'minimal' | 'premium';
   previewScale?: number; // Para preview responsivo (ex: 0.3 = 30% do tamanho real)
 }
@@ -51,8 +53,10 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
       brandColors = [],
       logoUrl,
       logoPosition = 'bottom-right',
-      showDecorations = false,
-      highlightKeyword = false,
+      showDecorations = true,
+      decorationStyle = 'geometric',
+      highlightKeyword = true,
+      highlightPosition = 'auto',
       style = 'clean',
       previewScale,
     },
@@ -232,22 +236,25 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
             logoUrl={logoUrl}
             logoPosition={logoPosition}
             showDecorations={showDecorations}
+            decorationStyle={decorationStyle}
             scale={scale}
           />
         )}
 
         {/* Text Container */}
         <div style={getTextContainerStyle()}>
-          {/* Headline - with optional keyword highlighting */}
+          {/* Headline - with professional keyword highlighting */}
           <h2
             style={{
               color: colors.headline,
               fontSize: fonts.headline * scale,
-              fontWeight: 700,
-              lineHeight: 1.2,
+              fontWeight: 800,
+              lineHeight: 1.15,
               margin: 0,
               textShadow,
               maxWidth: '90%',
+              letterSpacing: '-0.02em',
+              textTransform: 'uppercase',
             }}
           >
             {highlightKeyword && colors.brandPrimary ? (
@@ -255,6 +262,7 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
                 text={headline} 
                 highlightColor={colors.brandPrimary}
                 baseColor={colors.headline}
+                position={highlightPosition}
               />
             ) : (
               headline
@@ -290,34 +298,84 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
   }
 );
 
-// Helper component for headline highlighting
+// Helper component for headline highlighting with professional typography
 function HeadlineWithHighlight({ 
   text, 
   highlightColor, 
-  baseColor 
+  baseColor,
+  position = 'auto'
 }: { 
   text: string; 
   highlightColor: string; 
   baseColor: string;
+  position?: 'first' | 'last' | 'auto';
 }) {
-  // Split by comma, period, or line break and highlight the last part
-  const parts = text.split(/([,.\n])/);
+  // Try to find natural break points (comma, period, newline, colon)
+  const breakPattern = /([,.:!\n])/;
+  const parts = text.split(breakPattern);
+  
   if (parts.length <= 1) {
-    return <>{text}</>;
+    // No break points, try to highlight last word or key phrase
+    const words = text.split(' ');
+    if (words.length >= 2) {
+      // Highlight last 1-3 words based on position setting
+      const highlightWordCount = position === 'first' ? Math.min(2, Math.ceil(words.length / 3)) : 
+                                  Math.min(3, Math.ceil(words.length / 2));
+      
+      if (position === 'first') {
+        return (
+          <>
+            <span style={{ color: highlightColor }}>{words.slice(0, highlightWordCount).join(' ')}</span>
+            <span style={{ color: baseColor }}>{' ' + words.slice(highlightWordCount).join(' ')}</span>
+          </>
+        );
+      } else {
+        return (
+          <>
+            <span style={{ color: baseColor }}>{words.slice(0, -highlightWordCount).join(' ') + ' '}</span>
+            <span style={{ color: highlightColor }}>{words.slice(-highlightWordCount).join(' ')}</span>
+          </>
+        );
+      }
+    }
+    return <span style={{ color: baseColor }}>{text}</span>;
   }
   
-  // Highlight the last meaningful part
-  const lastIndex = parts.length - 1;
-  const lastPart = parts[lastIndex];
-  
-  return (
-    <>
-      {parts.slice(0, lastIndex).map((part, i) => (
-        <span key={i} style={{ color: baseColor }}>{part}</span>
-      ))}
-      <span style={{ color: highlightColor }}>{lastPart}</span>
-    </>
-  );
+  // Has break points - highlight based on position
+  if (position === 'first') {
+    // Highlight first segment
+    const firstPart = parts[0];
+    const rest = parts.slice(1).join('');
+    return (
+      <>
+        <span style={{ color: highlightColor }}>{firstPart}</span>
+        <span style={{ color: baseColor }}>{rest}</span>
+      </>
+    );
+  } else {
+    // Highlight last segment (default 'auto' and 'last')
+    const lastIndex = parts.length - 1;
+    let lastPart = parts[lastIndex];
+    
+    // Skip empty parts and find the last meaningful text
+    let actualLastIndex = lastIndex;
+    while (actualLastIndex > 0 && !parts[actualLastIndex].trim()) {
+      actualLastIndex--;
+    }
+    lastPart = parts[actualLastIndex];
+    
+    return (
+      <>
+        {parts.slice(0, actualLastIndex).map((part, i) => (
+          <span key={i} style={{ color: baseColor }}>{part}</span>
+        ))}
+        <span style={{ color: highlightColor }}>{lastPart}</span>
+        {actualLastIndex < lastIndex && (
+          <span style={{ color: baseColor }}>{parts.slice(actualLastIndex + 1).join('')}</span>
+        )}
+      </>
+    );
+  }
 }
 
 BannerComposite.displayName = 'BannerComposite';
