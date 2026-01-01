@@ -16,8 +16,8 @@ interface ArtDirectorDecision {
   style: "clean" | "minimal" | "premium";
 }
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const STORAGE_BUCKET = 'generated-creatives';
@@ -241,10 +241,11 @@ ${personImageUrl ? `Há uma pessoa de referência para preservar identidade faci
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[generate_creatives] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro inesperado ao gerar creative.';
     return new Response(
-      JSON.stringify({ error: error.message || 'Erro inesperado ao gerar creative.' }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

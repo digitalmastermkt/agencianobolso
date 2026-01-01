@@ -94,8 +94,9 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ success: true, identity, imagesAnalyzed: images.length }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

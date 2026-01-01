@@ -291,8 +291,9 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ content: generatedContent }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-  } catch (error) {
-    secureLog('error', 'Request failed', { requestId, error: error.message });
-    return new Response(JSON.stringify({ error: 'Erro ao gerar conteúdo', details: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    secureLog('error', 'Request failed', { requestId, error: errorMessage });
+    return new Response(JSON.stringify({ error: 'Erro ao gerar conteúdo', details: errorMessage }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
