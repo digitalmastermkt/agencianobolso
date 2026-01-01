@@ -129,7 +129,13 @@ const App = () => (
               </PlanGuard>
             </ProtectedRoute>
           } />
-          <Route path="/agents/diretor-arte" element={<AgenteDiretorArte />} />
+          <Route path="/agents/diretor-arte" element={
+            <ProtectedRoute>
+              <PlanGuard agentKey="diretor-arte">
+                <AgenteDiretorArte />
+              </PlanGuard>
+            </ProtectedRoute>
+          } />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
