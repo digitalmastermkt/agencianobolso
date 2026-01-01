@@ -190,10 +190,11 @@ Retorne APENAS o JSON com suas decisões. Nenhum texto adicional.`;
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[ArtDirector] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return new Response(
-      JSON.stringify({ error: error.message }), 
+      JSON.stringify({ error: errorMessage }), 
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
