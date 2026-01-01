@@ -61,6 +61,7 @@ export default function AgenteDiretorArte() {
   const [bannerText, setBannerText] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showJsonDebug, setShowJsonDebug] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
@@ -159,6 +160,7 @@ export default function AgenteDiretorArte() {
 
     setLoading(true);
     setDecision(null);
+    setGeneratedImageUrl(null);
 
     try {
       // Busca um brandProfile automaticamente (mais recente). Se não houver, envia um objeto vazio.
@@ -187,8 +189,16 @@ export default function AgenteDiretorArte() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Mantém compatibilidade com o renderer existente
-      setDecision(data.artDirectorJson);
+      // Mapeia resposta direta do backend
+      setDecision({
+        template: data.template,
+        headline: data.headline,
+        subheadline: data.subheadline,
+        cta: data.cta,
+        colors: data.colors || [],
+        style: data.style,
+      });
+      setGeneratedImageUrl(data.imageUrl);
 
       toast({
         title: "Decisão gerada!",
@@ -724,10 +734,10 @@ export default function AgenteDiretorArte() {
                       </div>
                     </div>
 
-                    {bannerDecision && images[0] && (
+                    {bannerDecision && (generatedImageUrl || images[0]) && (
                       <div className="space-y-4">
                         <div ref={bannerRef} className="w-full">
-                          {renderBannerFromDecision(bannerDecision, images[0])}
+                          {renderBannerFromDecision(bannerDecision, generatedImageUrl || images[0])}
                         </div>
                         <Button
                           type="button"
