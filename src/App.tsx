@@ -65,7 +65,7 @@ const App = () => (
       <Sonner />
       <PWAUpdatePrompt />
       <PWAInstallPrompt />
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Suspense fallback={<PageLoader />}>
           <Routes>
           <Route path="/" element={<Index />} />
