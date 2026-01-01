@@ -148,6 +148,7 @@ export default function AgenteDiretorArte() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const bannerRef = useRef<HTMLDivElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   
   // Stepper state
   const [currentStep, setCurrentStep] = useState(1);
@@ -191,6 +192,7 @@ export default function AgenteDiretorArte() {
   const [copied, setCopied] = useState(false);
   const [showJsonDebug, setShowJsonDebug] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   
   // Projects
   const [projects, setProjects] = useState<ProjectItem[]>([]);
@@ -343,6 +345,77 @@ export default function AgenteDiretorArte() {
       toast({
         title: "Erro",
         description: "Não foi possível remover o fundo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedBrandProfileId) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const logoData = reader.result as string;
+        
+        const { error } = await supabase
+          .from('brand_profiles')
+          .update({
+            logo_url: logoData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', selectedBrandProfileId);
+
+        if (error) throw error;
+
+        setBrandProfile(prev => prev ? { ...prev, logo_url: logoData } : null);
+        toast({
+          title: "Logo atualizado! 🎨",
+          description: "O logo foi salvo no perfil de marca.",
+        });
+      };
+      reader.readAsDataURL(file);
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: "Erro ao enviar logo",
+        description: error.message || "Falha ao processar o logo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingLogo(false);
+      if (logoInputRef.current) {
+        logoInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!selectedBrandProfileId) return;
+
+    try {
+      const { error } = await supabase
+        .from('brand_profiles')
+        .update({
+          logo_url: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedBrandProfileId);
+
+      if (error) throw error;
+
+      setBrandProfile(prev => prev ? { ...prev, logo_url: null } : null);
+      toast({
+        title: "Logo removido",
+        description: "O logo foi removido do perfil de marca.",
+      });
+    } catch (error: any) {
+      console.error('Error removing logo:', error);
+      toast({
+        title: "Erro ao remover logo",
+        description: error.message || "Falha ao remover o logo",
         variant: "destructive",
       });
     }
@@ -916,9 +989,12 @@ export default function AgenteDiretorArte() {
                 {/* Logo upload section */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Logo da Marca</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5 text-primary" />
+                      Logo da Marca
+                    </CardTitle>
                     <CardDescription>
-                      O logo pode ser adicionado através do perfil de marca
+                      Faça upload do logo para usar nos seus banners
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -929,12 +1005,55 @@ export default function AgenteDiretorArte() {
                           alt="Logo" 
                           className="w-20 h-20 object-contain rounded-lg border bg-white p-2"
                         />
-                        <p className="text-sm text-muted-foreground">Logo carregado</p>
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground mb-2">Logo carregado</p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => logoInputRef.current?.click()}
+                            >
+                              <Upload className="w-4 h-4 mr-1" />
+                              Trocar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleRemoveLogo}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Remover
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Nenhum logo configurado. Adicione através do seletor de perfil no passo anterior.
-                      </p>
+                      <div 
+                        className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                        onClick={() => logoInputRef.current?.click()}
+                      >
+                        <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
+                        <p className="text-sm text-muted-foreground">
+                          <span className="text-primary font-medium">Clique para enviar</span> o logo da marca
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PNG, JPG ou SVG (fundo transparente recomendado)
+                        </p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      ref={logoInputRef}
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    {isUploadingLogo && (
+                      <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Enviando logo...
+                      </div>
                     )}
                   </CardContent>
                 </Card>
