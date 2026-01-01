@@ -129,10 +129,11 @@ serve(async (req) => {
       });
     }
 
+    // NEVER include base64/dataURL in text prompt - causes token overflow
     const userPrompt = `Briefing: ${description}
 Perfil da marca (JSON): ${JSON.stringify(brandProfile)}
 Formato: ${format}
-${personImageUrl ? `Há uma pessoa de referência (imagem em dataURL/URL): ${personImageUrl}` : ""}`;
+${personImageUrl ? "Há uma foto de pessoa de referência disponível (considere isso na escolha do template)." : "Não há foto de pessoa."}`;
 
     const artDirectorResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
