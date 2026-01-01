@@ -62,6 +62,7 @@ export default function AgenteDiretorArte() {
   const [ctaText, setCtaText] = useState("");
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showJsonDebug, setShowJsonDebug] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -145,12 +146,13 @@ export default function AgenteDiretorArte() {
       });
       return;
     }
-    
-    if (images.length === 0) {
+
+    const description = bannerText.trim();
+    if (!description) {
       toast({
-        title: "Imagens necessárias",
-        description: "Envie pelo menos 1 print do Instagram para análise.",
-        variant: "destructive"
+        title: "Descrição necessária",
+        description: "Digite uma descrição (texto principal) para gerar o criativo.",
+        variant: "destructive",
       });
       return;
     }
@@ -159,26 +161,45 @@ export default function AgenteDiretorArte() {
     setDecision(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('art-director-decision', {
-        body: { images, bannerText, ctaText }
+      // Busca um brandProfile automaticamente (mais recente). Se não houver, envia um objeto vazio.
+      let brandProfile: Record<string, unknown> = {};
+      if (user?.id) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("brand_profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!profileError && profileData) {
+          brandProfile = profileData as unknown as Record<string, unknown>;
+        }
+      }
+
+      const format = "square";
+      const personImageUrl = images[0] ?? null;
+
+      const { data, error } = await supabase.functions.invoke("generate_creatives", {
+        body: { description, brandProfile, format, personImageUrl },
       });
 
       if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
 
-      setDecision(data.decision);
-      
+      // Mantém compatibilidade com o renderer existente
+      setDecision(data.artDirectorJson);
+
       toast({
         title: "Decisão gerada!",
-        description: "O Diretor de Arte analisou sua identidade visual."
+        description: "O Diretor de Arte gerou decisões visuais com base no briefing.",
       });
-
     } catch (error: any) {
-      console.error('Erro na análise:', error);
+      console.error("Erro na geração:", error);
       toast({
-        title: "Erro na análise",
-        description: error.message || "Ocorreu um erro ao processar sua solicitação.",
-        variant: "destructive"
+        title: "Erro",
+        description: error?.message || "Ocorreu um erro ao processar sua solicitação.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
