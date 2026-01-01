@@ -95,7 +95,7 @@ serve(async (req) => {
       return respond({ success: false, error: "OPENAI_API_KEY is not configured" });
     }
 
-    const { description, brandProfile, personImageUrl, format } = await req.json();
+    const { description, brandProfile, personImageUrl, format, preserve_identity = false } = await req.json();
 
     if (!description || typeof description !== "string") {
       return respond({ success: false, error: "O campo description é obrigatório." });
@@ -123,10 +123,14 @@ serve(async (req) => {
         : [],
     };
 
+    console.log("[generate_creatives] preserve_identity:", preserve_identity);
+
     const userPrompt = `Briefing: ${description.slice(0, 1000)}
 Perfil da marca: ${JSON.stringify(sanitizedBrandProfile)}
 Formato: ${format}
-${personImageUrl ? "Há uma foto de pessoa de referência disponível (preserve a identidade facial na direção visual)." : "Não há foto de pessoa."}`;
+${preserve_identity 
+  ? "ATENÇÃO: O usuário irá sobrepor a pessoa original na imagem. Gere APENAS o cenário/fundo, SEM pessoas." 
+  : (personImageUrl ? "Há uma foto de pessoa de referência disponível (preserve a identidade facial na direção visual)." : "Não há foto de pessoa.")}`;
 
     console.log("[generate_creatives] Calling Art Director...");
 
@@ -178,13 +182,29 @@ ${personImageUrl ? "Há uma foto de pessoa de referência disponível (preserve 
     console.log("[generate_creatives] Art Director decision:", decision);
 
     // Step 2: Generate image using gpt-image-1 with scene_prompt
-    const imagePrompt = `${decision.scene_prompt}
+    let imagePrompt: string;
+    
+    if (preserve_identity) {
+      // Generate ONLY background/scene without people
+      imagePrompt = `${decision.scene_prompt}
+
+Background scene only. No people, no faces, no humans, no figures.
+Empty professional environment ready for compositing.
+Fotografia realista, alta qualidade, estética profissional,
+iluminação cinematográfica, profundidade de campo,
+estilo ${decision.style}.
+Não incluir texto, logotipos ou marcas d'água na imagem.
+IMPORTANTE: Gere apenas o cenário vazio, sem nenhuma pessoa.`;
+    } else {
+      // Generate complete image with person + scene
+      imagePrompt = `${decision.scene_prompt}
 
 Fotografia realista, alta qualidade, estética profissional,
 sem distorções faciais, mantendo identidade da pessoa,
 iluminação cinematográfica, profundidade de campo,
 estilo ${decision.style}.
 Não incluir texto, logotipos ou marcas d'água na imagem.`;
+    }
 
     console.log("[generate_creatives] Generating image with gpt-image-1...");
 
@@ -235,16 +255,24 @@ Não incluir texto, logotipos ou marcas d'água na imagem.`;
 
     console.log("[generate_creatives] Image generated successfully");
 
-    return respond({
+    // Return different field name based on preserve_identity mode
+    const responseData: Record<string, unknown> = {
       success: true,
-      imageUrl,
       headline: decision.headline,
       subheadline: decision.subheadline,
       cta: decision.cta,
       template: decision.template,
       style: decision.style,
       scene_prompt: decision.scene_prompt,
-    });
+    };
+
+    if (preserve_identity) {
+      responseData.backgroundImageUrl = imageUrl;
+    } else {
+      responseData.imageUrl = imageUrl;
+    }
+
+    return respond(responseData);
 
   } catch (error: unknown) {
     console.error("[generate_creatives] Unexpected error:", error);
