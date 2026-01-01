@@ -456,31 +456,16 @@ export default function AgenteDiretorArte() {
     }
   };
 
+  // Simplified: No background removal needed - AI will recreate the person
   const handleSelectGalleryPhoto = async (photo: PersonPhoto) => {
     setSelectedGalleryPhoto(photo);
     setImages([photo.photo_url]);
-    setPersonCutoutUrl(null);
+    setPersonCutoutUrl(null); // No longer used
     
-    if (preserveIdentity) {
-      try {
-        toast({
-          title: "Processando...",
-          description: "Removendo fundo da foto selecionada.",
-        });
-        
-        const img = await loadImageFromUrl(photo.photo_url);
-        const cutoutBlob = await removeBackground(img);
-        const cutoutDataUrl = await blobToDataUrl(cutoutBlob);
-        setPersonCutoutUrl(cutoutDataUrl);
-        
-        toast({
-          title: "Fundo removido!",
-          description: "Foto da galeria processada.",
-        });
-      } catch (err) {
-        console.error("Error removing background:", err);
-      }
-    }
+    toast({
+      title: "Foto selecionada! 📸",
+      description: "A IA vai recriar sua pessoa no cenário.",
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
