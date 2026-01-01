@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import { 
   Palette, 
   Loader2, 
@@ -23,12 +24,15 @@ import {
   Download,
   Square,
   RectangleVertical,
-  Smartphone
+  Smartphone,
+  Scissors,
+  AlertCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { useAuth } from "@/hooks/useAuth";
+import { useBackgroundRemoval, loadImageFromUrl, blobToDataUrl } from "@/hooks/useBackgroundRemoval";
 import { BannerComposite, BANNER_FORMATS, type BannerFormat } from "@/components/banner/BannerComposite";
 
 interface ArtDirectorDecision {
@@ -45,6 +49,7 @@ interface ProjectBanner {
   format: BannerFormat;
   backgroundImageUrl: string;
   personPhotoUrl?: string;
+  personCutoutUrl?: string; // Person with background removed
   personPosition: 'esquerda' | 'centro' | 'direita';
   headline: string;
   subheadline?: string;
@@ -54,7 +59,9 @@ interface ProjectBanner {
     subheadline: string;
     ctaBackground: string;
     ctaText: string;
+    brandPrimary?: string;
   };
+  brandColors?: string[];
   style: 'clean' | 'minimal' | 'premium';
   createdAt: string;
 }
@@ -83,15 +90,28 @@ export default function AgenteDiretorArte() {
   const { user } = useAuth();
   const bannerRef = useRef<HTMLDivElement>(null);
   
+  // Background removal hook
+  const { 
+    removeBackground, 
+    isProcessing: isRemovingBg, 
+    progress: bgRemovalProgress,
+    error: bgRemovalError 
+  } = useBackgroundRemoval();
+  
   // Form state
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [personCutoutUrl, setPersonCutoutUrl] = useState<string | null>(null); // Background removed
   const [bannerText, setBannerText] = useState("");
   const [ctaText, setCtaText] = useState("");
   
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [preserveIdentity, setPreserveIdentity] = useState(true);
+  
+  // Brand profile
+  const [brandProfile, setBrandProfile] = useState<Record<string, unknown> | null>(null);
+  const [brandColors, setBrandColors] = useState<string[]>([]);
   
   // Generated content
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
@@ -143,41 +163,109 @@ export default function AgenteDiretorArte() {
     localStorage.setItem(storageKey, JSON.stringify(projects));
   }, [projects, storageKey]);
 
+  // Load brand profile
+  useEffect(() => {
+    const loadBrandProfile = async () => {
+      if (!user?.id) return;
+      
+      const { data: profileData, error } = await supabase
+        .from("brand_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && profileData) {
+        setBrandProfile(profileData as unknown as Record<string, unknown>);
+        if (Array.isArray(profileData.colors)) {
+          setBrandColors(profileData.colors);
+        }
+      }
+    };
+    
+    loadBrandProfile();
+  }, [user?.id]);
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
-    const newImages: string[] = [];
-    const maxImages = 5 - images.length;
-
-    for (let i = 0; i < Math.min(files.length, maxImages); i++) {
-      const file = files[i];
-      const reader = new FileReader();
-      
-      await new Promise<void>((resolve) => {
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            newImages.push(e.target.result as string);
-          }
-          resolve();
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    setImages(prev => [...prev, ...newImages]);
+    const file = files[0];
+    const reader = new FileReader();
     
-    if (files.length > maxImages) {
-      toast({
-        title: "Limite de imagens",
-        description: `Máximo de 5 imagens. ${files.length - maxImages} imagem(ns) ignorada(s).`,
-        variant: "destructive"
-      });
+    const imageDataUrl = await new Promise<string>((resolve) => {
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          resolve(e.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    setImages([imageDataUrl]);
+    setPersonCutoutUrl(null); // Reset cutout when new image uploaded
+
+    // Auto remove background if preserveIdentity is enabled
+    if (preserveIdentity) {
+      try {
+        toast({
+          title: "Processando imagem...",
+          description: "Removendo fundo automaticamente. Isso pode levar alguns segundos.",
+        });
+        
+        const img = await loadImageFromUrl(imageDataUrl);
+        const cutoutBlob = await removeBackground(img);
+        const cutoutDataUrl = await blobToDataUrl(cutoutBlob);
+        setPersonCutoutUrl(cutoutDataUrl);
+        
+        toast({
+          title: "Fundo removido!",
+          description: "Sua foto está pronta para composição.",
+        });
+      } catch (err) {
+        console.error("Error removing background:", err);
+        toast({
+          title: "Aviso",
+          description: "Não foi possível remover o fundo. A foto original será usada.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
+    setPersonCutoutUrl(null);
+  };
+
+  // Manual background removal trigger
+  const handleRemoveBackground = async () => {
+    if (!images[0]) return;
+    
+    try {
+      toast({
+        title: "Processando...",
+        description: "Removendo fundo da imagem.",
+      });
+      
+      const img = await loadImageFromUrl(images[0]);
+      const cutoutBlob = await removeBackground(img);
+      const cutoutDataUrl = await blobToDataUrl(cutoutBlob);
+      setPersonCutoutUrl(cutoutDataUrl);
+      
+      toast({
+        title: "Fundo removido!",
+        description: "Foto processada com sucesso.",
+      });
+    } catch (err) {
+      console.error("Error removing background:", err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o fundo.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -208,28 +296,12 @@ export default function AgenteDiretorArte() {
     setGeneratedImageUrl(null);
 
     try {
-      // Busca um brandProfile automaticamente (mais recente)
-      let brandProfile: Record<string, unknown> = {};
-      if (user?.id) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("brand_profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("updated_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (!profileError && profileData) {
-          brandProfile = profileData as unknown as Record<string, unknown>;
-        }
-      }
-
       const personImageUrl = images[0] ?? null;
 
       const { data, error } = await supabase.functions.invoke("generate_creatives", {
         body: { 
           description, 
-          brandProfile, 
+          brandProfile: brandProfile || {}, 
           format: selectedFormat, 
           personImageUrl,
           preserve_identity: preserveIdentity,
@@ -580,11 +652,16 @@ export default function AgenteDiretorArte() {
       format: selectedFormat,
       backgroundImageUrl: bgImage,
       personPhotoUrl: preserveIdentity ? images[0] : undefined,
+      personCutoutUrl: preserveIdentity ? personCutoutUrl ?? undefined : undefined,
       personPosition,
       headline: decision.headline,
       subheadline: decision.subheadline,
       cta: decision.cta,
-      colors: DEFAULT_COLORS,
+      colors: {
+        ...DEFAULT_COLORS,
+        brandPrimary: brandColors[0],
+      },
+      brandColors: brandColors,
       style: decision.style,
       createdAt: new Date().toISOString(),
     };
@@ -596,7 +673,7 @@ export default function AgenteDiretorArte() {
           : project
       )
     );
-  }, [decision, backgroundImageUrl, generatedImageUrl]);
+  }, [decision, backgroundImageUrl, generatedImageUrl, personCutoutUrl, brandColors]);
 
   const currentProject = projects.find((project) => project.id === currentProjectId) ?? null;
 
@@ -814,32 +891,78 @@ export default function AgenteDiretorArte() {
                       variant="outline"
                       className={`w-full border-dashed border-2 ${inputHeight}`}
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={images.length >= 5}
+                      disabled={images.length >= 1 || isRemovingBg}
                     >
                       <Upload className="w-5 h-5 mr-2" />
-                      {images.length >= 5 
-                        ? 'Limite de 5 imagens atingido' 
-                        : `Adicionar Foto (${images.length}/5)`}
+                      {isRemovingBg ? 'Processando...' : 'Adicionar Foto'}
                     </Button>
 
+                    {/* Background removal progress */}
+                    {isRemovingBg && (
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Scissors className="w-4 h-4 animate-pulse" />
+                          <span>Removendo fundo... {bgRemovalProgress}%</span>
+                        </div>
+                        <Progress value={bgRemovalProgress} className="h-2" />
+                      </div>
+                    )}
+
+                    {/* Image preview with cutout */}
                     {images.length > 0 && (
-                      <div className="grid grid-cols-5 gap-2 mt-4">
-                        {images.map((img, index) => (
-                          <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
+                      <div className="grid grid-cols-2 gap-3 mt-4">
+                        {/* Original */}
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Original</p>
+                          <div className="relative aspect-square rounded-lg overflow-hidden border">
                             <img 
-                              src={img} 
-                              alt={`Foto ${index + 1}`}
+                              src={images[0]} 
+                              alt="Foto original"
                               className="w-full h-full object-cover"
                             />
                             <button
                               type="button"
-                              onClick={() => removeImage(index)}
+                              onClick={() => removeImage(0)}
                               className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
                             >
                               <X className="w-3 h-3" />
                             </button>
                           </div>
-                        ))}
+                        </div>
+                        
+                        {/* Cutout */}
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Sem fundo</p>
+                          <div className="relative aspect-square rounded-lg overflow-hidden border bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Crect%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3C%2Fsvg%3E')]">
+                            {personCutoutUrl ? (
+                              <img 
+                                src={personCutoutUrl} 
+                                alt="Foto sem fundo"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-muted/50">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleRemoveBackground}
+                                  disabled={isRemovingBg}
+                                >
+                                  <Scissors className="w-4 h-4 mr-1" />
+                                  Remover
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {bgRemovalError && (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-destructive">
+                        <AlertCircle className="w-3 h-3" />
+                        {bgRemovalError}
                       </div>
                     )}
                   </div>
@@ -943,11 +1066,14 @@ export default function AgenteDiretorArte() {
                           format={selectedFormat}
                           backgroundImageUrl={preserveIdentity ? backgroundImageUrl! : (generatedImageUrl || backgroundImageUrl!)}
                           personPhotoUrl={preserveIdentity ? images[0] : undefined}
+                          personCutoutUrl={preserveIdentity ? personCutoutUrl ?? undefined : undefined}
                           personPosition={decision.template.replace('pessoa_', '') as 'esquerda' | 'centro' | 'direita'}
                           headline={decision.headline}
                           subheadline={decision.subheadline}
                           cta={decision.cta}
-                          colors={DEFAULT_COLORS}
+                          colors={{ ...DEFAULT_COLORS, brandPrimary: brandColors[0] }}
+                          brandColors={brandColors}
+                          highlightKeyword={brandColors.length > 0}
                           style={decision.style}
                           previewScale={getPreviewScale()}
                         />

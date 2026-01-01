@@ -1,4 +1,5 @@
 import { forwardRef, type CSSProperties } from 'react';
+import { BrandOverlay } from './BrandOverlay';
 
 // Formatos fixos com dimensões exatas
 export const BANNER_FORMATS = {
@@ -13,6 +14,7 @@ export interface BannerCompositeProps {
   format: BannerFormat;
   backgroundImageUrl: string;
   personPhotoUrl?: string;
+  personCutoutUrl?: string; // Person photo with background removed
   personPosition: 'esquerda' | 'centro' | 'direita';
   headline: string;
   subheadline?: string;
@@ -22,7 +24,14 @@ export interface BannerCompositeProps {
     subheadline: string;
     ctaBackground: string;
     ctaText: string;
+    brandPrimary?: string;
+    brandSecondary?: string;
   };
+  brandColors?: string[];
+  logoUrl?: string;
+  logoPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  showDecorations?: boolean;
+  highlightKeyword?: boolean; // Highlight part of headline with brand color
   style?: 'clean' | 'minimal' | 'premium';
   previewScale?: number; // Para preview responsivo (ex: 0.3 = 30% do tamanho real)
 }
@@ -33,11 +42,17 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
       format,
       backgroundImageUrl,
       personPhotoUrl,
+      personCutoutUrl,
       personPosition,
       headline,
       subheadline,
       cta,
       colors,
+      brandColors = [],
+      logoUrl,
+      logoPosition = 'bottom-right',
+      showDecorations = false,
+      highlightKeyword = false,
       style = 'clean',
       previewScale,
     },
@@ -45,6 +60,9 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
   ) => {
     const { width, height } = BANNER_FORMATS[format];
     const scale = previewScale ?? 1;
+    
+    // Use cutout if available, otherwise fallback to regular photo
+    const personImageUrl = personCutoutUrl || personPhotoUrl;
 
     // Calcular posição da pessoa baseado no template
     const getPersonStyle = (): CSSProperties => {
@@ -195,19 +213,32 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
           }}
         />
 
-        {/* Person Photo (if preserveIdentity mode) */}
-        {personPhotoUrl && (
+        {/* Person Photo (use cutout if available) */}
+        {personImageUrl && (
           <img
-            src={personPhotoUrl}
+            src={personImageUrl}
             alt="Pessoa"
             style={getPersonStyle()}
             crossOrigin="anonymous"
           />
         )}
 
+        {/* Brand Overlay - decorative elements and logo */}
+        {(brandColors.length > 0 || logoUrl) && (
+          <BrandOverlay
+            width={width}
+            height={height}
+            colors={brandColors}
+            logoUrl={logoUrl}
+            logoPosition={logoPosition}
+            showDecorations={showDecorations}
+            scale={scale}
+          />
+        )}
+
         {/* Text Container */}
         <div style={getTextContainerStyle()}>
-          {/* Headline */}
+          {/* Headline - with optional keyword highlighting */}
           <h2
             style={{
               color: colors.headline,
@@ -219,7 +250,15 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
               maxWidth: '90%',
             }}
           >
-            {headline}
+            {highlightKeyword && colors.brandPrimary ? (
+              <HeadlineWithHighlight 
+                text={headline} 
+                highlightColor={colors.brandPrimary}
+                baseColor={colors.headline}
+              />
+            ) : (
+              headline
+            )}
           </h2>
 
           {/* Subheadline */}
@@ -250,6 +289,36 @@ const BannerComposite = forwardRef<HTMLDivElement, BannerCompositeProps>(
     );
   }
 );
+
+// Helper component for headline highlighting
+function HeadlineWithHighlight({ 
+  text, 
+  highlightColor, 
+  baseColor 
+}: { 
+  text: string; 
+  highlightColor: string; 
+  baseColor: string;
+}) {
+  // Split by comma, period, or line break and highlight the last part
+  const parts = text.split(/([,.\n])/);
+  if (parts.length <= 1) {
+    return <>{text}</>;
+  }
+  
+  // Highlight the last meaningful part
+  const lastIndex = parts.length - 1;
+  const lastPart = parts[lastIndex];
+  
+  return (
+    <>
+      {parts.slice(0, lastIndex).map((part, i) => (
+        <span key={i} style={{ color: baseColor }}>{part}</span>
+      ))}
+      <span style={{ color: highlightColor }}>{lastPart}</span>
+    </>
+  );
+}
 
 BannerComposite.displayName = 'BannerComposite';
 
