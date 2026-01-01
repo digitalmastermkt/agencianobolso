@@ -162,10 +162,11 @@ Formato de resposta JSON EXATO:
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in analyze-person-photo:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro ao analisar foto da pessoa';
     return new Response(
-      JSON.stringify({ error: error.message || 'Erro ao analisar foto da pessoa' }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

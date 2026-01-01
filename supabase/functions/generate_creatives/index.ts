@@ -15,9 +15,6 @@ interface ArtDirectorDecision {
   colors: string[];
   style: "clean" | "minimal" | "premium";
 }
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const STORAGE_BUCKET = 'generated-creatives';
@@ -93,56 +90,6 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const artDirectorSystemPrompt = `
-Você é um Diretor de Arte sênior especializado em criativos publicitários de alto impacto
-para redes sociais (Instagram, Stories, Ads).
-
-Sua função é INTERPRETAR a intenção do texto e tomar decisões visuais completas,
-como um designer humano experiente faria.
-
-ANTES de responder, analise cuidadosamente:
-1. O CONTEXTO da mensagem (ex: festa, oferta, aviso, institucional, anúncio)
-2. O OBJETIVO do criativo (atenção, venda, informar, celebrar)
-3. O PERFIL da marca (luxo, acessível, moderno, clean, premium)
-4. A presença de uma pessoa e a necessidade de preservar identidade facial
-
-REGRAS OBRIGATÓRIAS:
-- Se o texto indicar FESTA ou CELEBRAÇÃO:
-  • Visual premium
-  • Tons dourados, luz quente, elementos festivos sutis (confete, brilho, fogos desfocados)
-  • Tipografia elegante
-- Se indicar OFERTA ou PROMOÇÃO:
-  • Visual de conversão
-  • Hierarquia clara: headline > valor > CTA
-  • Fundo limpo com contraste
-- Se indicar AVISO ou COMUNICADO:
-  • Visual clean
-  • Leitura fácil
-  • Poucos elementos
-- Se indicar INSTITUCIONAL:
-  • Visual sofisticado
-  • Composição equilibrada
-  • Branding discreto
-
-ESCOLHA O TEMPLATE:
-- pessoa_centro → mensagens institucionais ou emocionais
-- pessoa_direita / pessoa_esquerda → ofertas, anúncios, banners
-
-ESCOLHA CORES coerentes com o perfil da marca e contexto emocional.
-
-RESPONDA EXCLUSIVAMENTE com JSON válido no formato abaixo
-(sem explicações, sem markdown, sem texto fora do JSON):
-
-{
-  "template": "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda",
-  "headline": "texto curto e impactante",
-  "subheadline": "texto de apoio se necessário",
-  "cta": "chamada curta se fizer sentido",
-  "colors": ["#HEX1", "#HEX2", "#HEX3"],
-  "style": "clean" | "minimal" | "premium"
-}
-`;
 
     const artDirectorUserPrompt = `Briefing: ${description}
 Perfil da marca (JSON): ${JSON.stringify(brandProfile)}
@@ -280,10 +227,7 @@ ${personImageUrl ? `Há uma pessoa de referência para preservar identidade faci
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
-    console.error('[generate_creatives] Error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Erro inesperado ao gerar creative.' }),
+
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
