@@ -50,6 +50,8 @@ import {
   FolderOpen,
   Wand2,
   CheckCircle2,
+  RefreshCw,
+  ImagePlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +70,14 @@ interface ArtDirectorDecision {
   cta?: string;
   style: "clean" | "minimal" | "premium";
   scene_prompt?: string;
+  pose_suggestion?: string;
+}
+
+// Generated image variation from AI
+interface GeneratedVariation {
+  id: string;
+  imageUrl: string;
+  isRegenerating?: boolean;
 }
 
 interface ProjectBanner {
@@ -187,6 +197,8 @@ export default function AgenteDiretorArte() {
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedVariations, setGeneratedVariations] = useState<GeneratedVariation[]>([]);
+  const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null);
   
   // UI state
   const [copied, setCopied] = useState(false);
@@ -493,21 +505,33 @@ export default function AgenteDiretorArte() {
       return;
     }
 
+    if (!images[0]) {
+      toast({
+        title: "Foto necessária",
+        description: "Faça upload de uma foto para gerar o criativo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     setDecision(null);
     setBackgroundImageUrl(null);
     setGeneratedImageUrl(null);
+    setGeneratedVariations([]);
+    setSelectedVariationId(null);
 
     try {
-      const personImageUrl = images[0] ?? null;
+      const personImageBase64 = images[0];
 
-      const { data, error } = await supabase.functions.invoke("generate_creatives", {
+      // Use new V2 edge function for AI-powered creative generation
+      const { data, error } = await supabase.functions.invoke("generate-creative-v2", {
         body: { 
           description: descriptionText, 
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
-          personImageUrl,
-          preserve_identity: preserveIdentity,
+          personImageBase64,
+          variationsCount: 3, // Generate 3 variations
         },
       });
 
@@ -521,13 +545,29 @@ export default function AgenteDiretorArte() {
         cta: data.cta,
         style: data.style,
         scene_prompt: data.scene_prompt,
+        pose_suggestion: data.pose_suggestion,
       };
       
       setDecision(newDecision);
       
-      if (preserveIdentity && data.backgroundImageUrl) {
-        setBackgroundImageUrl(data.backgroundImageUrl);
+      // Handle multiple variations from V2 API
+      if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+        const variations: GeneratedVariation[] = data.images.map((imageUrl: string, index: number) => ({
+          id: crypto.randomUUID(),
+          imageUrl,
+        }));
+        setGeneratedVariations(variations);
+        setSelectedVariationId(variations[0].id);
+        // Also set first image as generatedImageUrl for compatibility
+        setGeneratedImageUrl(variations[0].imageUrl);
       } else if (data.imageUrl) {
+        // Fallback for single image
+        const variation: GeneratedVariation = {
+          id: crypto.randomUUID(),
+          imageUrl: data.imageUrl,
+        };
+        setGeneratedVariations([variation]);
+        setSelectedVariationId(variation.id);
         setGeneratedImageUrl(data.imageUrl);
       }
 
@@ -535,10 +575,10 @@ export default function AgenteDiretorArte() {
       setCurrentStep(5);
 
       toast({
-        title: "Banner gerado!",
-        description: preserveIdentity 
-          ? "Fundo gerado com sucesso. Sua foto será sobreposta." 
-          : "Criativo completo gerado com sucesso.",
+        title: "Criativo gerado! ✨",
+        description: data.usedFallback 
+          ? "Imagem gerada com sucesso (modo alternativo)." 
+          : "Pessoa recriada no cenário com preservação de identidade!",
       });
     } catch (error: unknown) {
       console.error("Erro na geração:", error);
@@ -550,6 +590,72 @@ export default function AgenteDiretorArte() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Regenerate a single variation
+  const handleRegenerateVariation = async (variationId: string) => {
+    if (!decision || !images[0]) return;
+
+    setGeneratedVariations(prev => 
+      prev.map(v => v.id === variationId ? { ...v, isRegenerating: true } : v)
+    );
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-creative-v2", {
+        body: { 
+          description: description.trim(), 
+          brandProfile: brandProfile || {}, 
+          format: selectedFormat, 
+          personImageBase64: images[0],
+          variationsCount: 1,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data.images && data.images.length > 0) {
+        setGeneratedVariations(prev => 
+          prev.map(v => v.id === variationId 
+            ? { ...v, imageUrl: data.images[0], isRegenerating: false } 
+            : v
+          )
+        );
+        
+        // Update selected if this was the selected one
+        if (selectedVariationId === variationId) {
+          setGeneratedImageUrl(data.images[0]);
+        }
+
+        toast({
+          title: "Variação regenerada! ✨",
+          description: "Nova versão gerada com sucesso.",
+        });
+      }
+    } catch (error: unknown) {
+      console.error("Erro ao regenerar:", error);
+      setGeneratedVariations(prev => 
+        prev.map(v => v.id === variationId ? { ...v, isRegenerating: false } : v)
+      );
+      toast({
+        title: "Erro ao regenerar",
+        description: error instanceof Error ? error.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Download selected variation
+  const handleDownloadVariation = (imageUrl: string, filename?: string) => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = filename || `criativo-${selectedFormat}-${Date.now()}.png`;
+    link.click();
+    
+    toast({
+      title: "Download iniciado!",
+      description: "Sua imagem está sendo baixada.",
+    });
   };
 
   const copyJson = () => {
@@ -1461,156 +1567,237 @@ export default function AgenteDiretorArte() {
         );
 
       case 5:
+        const selectedVariation = generatedVariations.find(v => v.id === selectedVariationId);
+        
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Resultado</span>
-                {decision && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={copyJson}
-                  >
-                    {copied ? (
-                      <Check className="w-4 h-4 mr-2" />
-                    ) : (
-                      <Copy className="w-4 h-4 mr-2" />
-                    )}
-                    {copied ? 'Copiado!' : 'Copiar JSON'}
-                  </Button>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                  <Skeleton className="h-4 w-4/6" />
-                  <div className="text-center text-muted-foreground text-sm mt-4">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                    {preserveIdentity 
-                      ? "Gerando cenário de fundo..." 
-                      : "Gerando criativo completo..."}
-                  </div>
-                </div>
-              ) : decision && (backgroundImageUrl || generatedImageUrl) ? (
-                <div className="space-y-6">
-                  {/* Banner Preview */}
-                  <div className="flex justify-center">
-                    <div 
-                      ref={bannerRef} 
-                      className="overflow-hidden rounded-lg border shadow-lg"
+          <div className="space-y-6">
+            {/* Header */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    Suas Variações
+                  </CardTitle>
+                  {decision && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={copyJson}
                     >
-                      <BannerComposite
-                        format={selectedFormat}
-                        backgroundImageUrl={preserveIdentity ? backgroundImageUrl! : (generatedImageUrl || backgroundImageUrl!)}
-                        personPhotoUrl={preserveIdentity ? images[0] : undefined}
-                        personCutoutUrl={preserveIdentity ? personCutoutUrl ?? undefined : undefined}
-                        personPosition={decision.template.replace('pessoa_', '') as 'esquerda' | 'centro' | 'direita'}
-                        headline={decision.headline}
-                        subheadline={decision.subheadline}
-                        cta={decision.cta}
-                        colors={{ ...DEFAULT_COLORS, brandPrimary: brandColors[0] }}
-                        brandColors={brandColors}
-                        showDecorations={brandColors.length > 0}
-                        decorationStyle={decorationStyle}
-                        highlightKeyword={brandColors.length > 0}
-                        style={decision.style}
-                        previewScale={getPreviewScale()}
-                      />
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  )}
+                </div>
+                <CardDescription>
+                  {generatedVariations.length > 0 
+                    ? `${generatedVariations.length} variação(ões) geradas com preservação de identidade`
+                    : "Gerando suas variações..."}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            {loading ? (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+                    <div>
+                      <p className="font-medium">Recriando você no cenário...</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        A IA está gerando 3 variações com preservação de identidade facial
+                      </p>
+                    </div>
+                    <div className="flex justify-center gap-1 mt-4">
+                      {[1, 2, 3].map((i) => (
+                        <div 
+                          key={i} 
+                          className="w-2 h-2 rounded-full bg-primary animate-pulse"
+                          style={{ animationDelay: `${i * 200}ms` }}
+                        />
+                      ))}
                     </div>
                   </div>
-
-                  {/* Export Button */}
-                  <Button
-                    type="button"
-                    onClick={handleExportBanner}
-                    className="w-full"
-                    disabled={exporting}
-                  >
-                    {exporting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Exportando...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Baixar {BANNER_FORMATS[selectedFormat].width}x{BANNER_FORMATS[selectedFormat].height}px
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Decision Details */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <LayoutTemplate className="w-5 h-5 text-primary" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Template</p>
-                        <p className="font-medium">{getTemplateLabel(decision.template)}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Paintbrush className="w-5 h-5 text-primary" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Estilo</p>
-                        <Badge variant="secondary">{getStyleLabel(decision.style)}</Badge>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Type className="w-5 h-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Headline</p>
-                        <p className="font-bold text-lg">{decision.headline}</p>
-                        {decision.subheadline && (
-                          <p className="text-sm text-muted-foreground mt-1">{decision.subheadline}</p>
+                </CardContent>
+              </Card>
+            ) : generatedVariations.length > 0 ? (
+              <>
+                {/* Variations Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {generatedVariations.map((variation, index) => (
+                    <Card 
+                      key={variation.id}
+                      className={`cursor-pointer transition-all overflow-hidden ${
+                        selectedVariationId === variation.id 
+                          ? 'ring-2 ring-primary shadow-lg' 
+                          : 'hover:shadow-md'
+                      }`}
+                      onClick={() => {
+                        setSelectedVariationId(variation.id);
+                        setGeneratedImageUrl(variation.imageUrl);
+                      }}
+                    >
+                      <div className="relative aspect-square bg-muted">
+                        {variation.isRegenerating ? (
+                          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          </div>
+                        ) : (
+                          <img 
+                            src={variation.imageUrl} 
+                            alt={`Variação ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
                         )}
-                        {decision.cta && (
-                          <Badge className="mt-2">{decision.cta}</Badge>
+                        
+                        {/* Selection indicator */}
+                        {selectedVariationId === variation.id && (
+                          <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                            <Check className="w-4 h-4" />
+                          </div>
                         )}
+                        
+                        {/* Variation number */}
+                        <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 text-white text-xs font-medium">
+                          #{index + 1}
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                      
+                      <CardContent className="p-3">
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRegenerateVariation(variation.id);
+                            }}
+                            disabled={variation.isRegenerating}
+                          >
+                            <RefreshCw className={`w-3 h-3 mr-1 ${variation.isRegenerating ? 'animate-spin' : ''}`} />
+                            Regenerar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadVariation(variation.imageUrl, `criativo-${index + 1}-${Date.now()}.png`);
+                            }}
+                            disabled={variation.isRegenerating}
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            Baixar
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
 
-                  {/* Raw JSON */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">JSON (debug)</p>
+                {/* Selected Variation Preview */}
+                {selectedVariation && decision && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Pré-visualização</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-center">
+                        <div className="overflow-hidden rounded-lg border shadow-lg max-w-md">
+                          <img 
+                            src={selectedVariation.imageUrl} 
+                            alt="Preview selecionado"
+                            className="w-full h-auto"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Download full res */}
                       <Button
                         type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowJsonDebug((prev) => !prev)}
+                        onClick={() => handleDownloadVariation(selectedVariation.imageUrl)}
+                        className="w-full"
+                        variant="gradient"
                       >
-                        {showJsonDebug ? "Ocultar JSON" : "Mostrar JSON"}
+                        <Download className="w-4 h-4 mr-2" />
+                        Baixar em Alta Resolução
                       </Button>
-                    </div>
-                    {showJsonDebug && (
-                      <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
-                        {JSON.stringify(decision, null, 2)}
-                      </pre>
-                    )}
-                  </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                  {/* Create New Banner */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setCurrentStep(4)}
-                  >
-                    Criar Novo Banner
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center text-muted-foreground py-12">
+                {/* Decision Details */}
+                {decision && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Direção Artística</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                          <LayoutTemplate className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Template</p>
+                            <p className="font-medium text-sm">{getTemplateLabel(decision.template)}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                          <Paintbrush className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Estilo</p>
+                            <Badge variant="secondary">{getStyleLabel(decision.style)}</Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <Type className="w-5 h-5 text-primary mt-0.5" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Textos</p>
+                          <p className="font-bold">{decision.headline}</p>
+                          {decision.subheadline && (
+                            <p className="text-sm text-muted-foreground mt-1">{decision.subheadline}</p>
+                          )}
+                          {decision.cta && (
+                            <Badge className="mt-2">{decision.cta}</Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {decision.scene_prompt && (
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                          <p className="text-xs text-muted-foreground mb-1">Cenário gerado</p>
+                          <p className="text-sm">{decision.scene_prompt}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Create New */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setCurrentStep(4)}
+                >
+                  <ImagePlus className="w-4 h-4 mr-2" />
+                  Criar Novo Criativo
+                </Button>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
                   <Palette className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p>Nenhum banner gerado ainda.</p>
-                  <p className="text-sm mt-2">Vá para o passo "Gerar" para criar seu banner.</p>
+                  <p>Nenhum criativo gerado ainda.</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Vá para o passo "Gerar" para criar seu criativo.
+                  </p>
                   <Button
                     type="button"
                     variant="outline"
@@ -1619,10 +1806,10 @@ export default function AgenteDiretorArte() {
                   >
                     Ir para Geração
                   </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         );
 
       default:
