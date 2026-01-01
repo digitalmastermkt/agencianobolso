@@ -129,9 +129,23 @@ serve(async (req) => {
       });
     }
 
-    // NEVER include base64/dataURL in text prompt - causes token overflow
-    const userPrompt = `Briefing: ${description}
-Perfil da marca (JSON): ${JSON.stringify(brandProfile)}
+    // Sanitize brandProfile - remove large data like base64 images to prevent token overflow
+    const sanitizedBrandProfile = {
+      name: brandProfile.name || "",
+      colors: Array.isArray(brandProfile.colors) ? brandProfile.colors.slice(0, 5) : [],
+      mood: brandProfile.mood || "",
+      visual_style: brandProfile.visual_style || "",
+      overall_description: typeof brandProfile.overall_description === "string" 
+        ? brandProfile.overall_description.slice(0, 500) 
+        : "",
+      recurring_elements: Array.isArray(brandProfile.recurring_elements) 
+        ? brandProfile.recurring_elements.slice(0, 5) 
+        : [],
+      // Explicitly exclude: instagram_images, logo_url, person_photos (all can contain large base64)
+    };
+
+    const userPrompt = `Briefing: ${description.slice(0, 1000)}
+Perfil da marca: ${JSON.stringify(sanitizedBrandProfile)}
 Formato: ${format}
 ${personImageUrl ? "Há uma foto de pessoa de referência disponível (considere isso na escolha do template)." : "Não há foto de pessoa."}`;
 
