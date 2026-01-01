@@ -232,9 +232,32 @@ export default function AgenteDiretorArte() {
     }
   }, [storageKey]);
 
-  // Save projects to localStorage
+  // Save projects to localStorage (with error handling for quota)
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(projects));
+    try {
+      // Don't save banner image data to localStorage - only save metadata
+      const projectsToSave = projects.map(project => ({
+        ...project,
+        banners: project.banners.map(banner => ({
+          ...banner,
+          backgroundImageUrl: '', // Don't save large base64 images
+          personPhotoUrl: undefined,
+          personCutoutUrl: undefined,
+        }))
+      }));
+      localStorage.setItem(storageKey, JSON.stringify(projectsToSave));
+    } catch (error) {
+      // Handle QuotaExceededError - clear old data
+      console.warn('localStorage quota exceeded, clearing old project data');
+      try {
+        localStorage.removeItem(storageKey);
+        // Save minimal project structure
+        const minimalProjects = projects.map(p => ({ id: p.id, name: p.name, banners: [] }));
+        localStorage.setItem(storageKey, JSON.stringify(minimalProjects));
+      } catch {
+        console.error('Failed to save projects to localStorage');
+      }
+    }
   }, [projects, storageKey]);
 
   // Load brand profile when selected
