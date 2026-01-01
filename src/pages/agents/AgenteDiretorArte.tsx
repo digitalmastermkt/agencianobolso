@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { 
   Palette, 
   Loader2, 
@@ -18,26 +19,43 @@ import {
   Check,
   LayoutTemplate,
   Type,
-  Paintbrush
+  Paintbrush,
+  Download,
+  Square,
+  RectangleVertical,
+  Smartphone
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
-import { renderBannerFromDecision, type BannerDecision } from "@/components/renderBannerFromDecision";
 import { useAuth } from "@/hooks/useAuth";
+import { BannerComposite, BANNER_FORMATS, type BannerFormat } from "@/components/banner/BannerComposite";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
   headline: string;
   subheadline?: string;
   cta?: string;
-  colors: string[];
   style: "clean" | "minimal" | "premium";
+  scene_prompt?: string;
 }
 
-interface ProjectBanner extends BannerDecision {
+interface ProjectBanner {
   id: string;
-  photoUrl: string;
+  format: BannerFormat;
+  backgroundImageUrl: string;
+  personPhotoUrl?: string;
+  personPosition: 'esquerda' | 'centro' | 'direita';
+  headline: string;
+  subheadline?: string;
+  cta?: string;
+  colors: {
+    headline: string;
+    subheadline: string;
+    ctaBackground: string;
+    ctaText: string;
+  };
+  style: 'clean' | 'minimal' | 'premium';
   createdAt: string;
 }
 
@@ -47,38 +65,63 @@ interface ProjectItem {
   banners: ProjectBanner[];
 }
 
-const PROJECTS_STORAGE_KEY = "art-director-projects";
+const PROJECTS_STORAGE_KEY = "art-director-projects-v2";
 const MAX_BANNERS_BETA = 10;
+
+// Cores padrão para textos
+const DEFAULT_COLORS = {
+  headline: '#ffffff',
+  subheadline: '#f1f5f9',
+  ctaBackground: '#ffffff',
+  ctaText: '#0f172a',
+};
 
 export default function AgenteDiretorArte() {
   const { toast } = useToast();
   const { isMobile, buttonMinHeight, inputHeight } = useMobileOptimization();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const bannerRef = useRef<HTMLDivElement>(null);
   
+  // Form state
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [bannerText, setBannerText] = useState("");
   const [ctaText, setCtaText] = useState("");
+  
+  // Format & mode
+  const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
+  const [preserveIdentity, setPreserveIdentity] = useState(true);
+  
+  // Generated content
   const [decision, setDecision] = useState<ArtDirectorDecision | null>(null);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  
+  // UI state
   const [copied, setCopied] = useState(false);
   const [showJsonDebug, setShowJsonDebug] = useState(false);
-  const bannerRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+  
+  // Projects
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
   const currentProjectRef = useRef<string | null>(null);
+  
   const storageKey = useMemo(
     () => `${PROJECTS_STORAGE_KEY}:${user?.id ?? "anonymous"}`,
     [user?.id]
   );
+  
   const totalBanners = useMemo(
     () => projects.reduce((sum, project) => sum + project.banners.length, 0),
     [projects]
   );
+  
   const limitReached = totalBanners >= MAX_BANNERS_BETA;
 
+  // Load projects from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(storageKey);
     if (stored) {
@@ -95,6 +138,7 @@ export default function AgenteDiretorArte() {
     }
   }, [storageKey]);
 
+  // Save projects to localStorage
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(projects));
   }, [projects, storageKey]);
@@ -160,10 +204,11 @@ export default function AgenteDiretorArte() {
 
     setLoading(true);
     setDecision(null);
+    setBackgroundImageUrl(null);
     setGeneratedImageUrl(null);
 
     try {
-      // Busca um brandProfile automaticamente (mais recente). Se não houver, envia um objeto vazio.
+      // Busca um brandProfile automaticamente (mais recente)
       let brandProfile: Record<string, unknown> = {};
       if (user?.id) {
         const { data: profileData, error: profileError } = await supabase
@@ -179,36 +224,51 @@ export default function AgenteDiretorArte() {
         }
       }
 
-      const format = "square";
       const personImageUrl = images[0] ?? null;
 
       const { data, error } = await supabase.functions.invoke("generate_creatives", {
-        body: { description, brandProfile, format, personImageUrl },
+        body: { 
+          description, 
+          brandProfile, 
+          format: selectedFormat, 
+          personImageUrl,
+          preserve_identity: preserveIdentity,
+        },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Mapeia resposta direta do backend
-      setDecision({
+      // Mapeia resposta do backend
+      const newDecision: ArtDirectorDecision = {
         template: data.template,
         headline: data.headline,
         subheadline: data.subheadline,
-        cta: data.cta,
-        colors: data.colors || [],
+        cta: data.cta || ctaText,
         style: data.style,
-      });
-      setGeneratedImageUrl(data.imageUrl);
+        scene_prompt: data.scene_prompt,
+      };
+      
+      setDecision(newDecision);
+      
+      // Definir imagem baseado no modo
+      if (preserveIdentity && data.backgroundImageUrl) {
+        setBackgroundImageUrl(data.backgroundImageUrl);
+      } else if (data.imageUrl) {
+        setGeneratedImageUrl(data.imageUrl);
+      }
 
       toast({
-        title: "Decisão gerada!",
-        description: "O Diretor de Arte gerou decisões visuais com base no briefing.",
+        title: "Banner gerado!",
+        description: preserveIdentity 
+          ? "Fundo gerado com sucesso. Sua foto será sobreposta." 
+          : "Criativo completo gerado com sucesso.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro na geração:", error);
       toast({
         title: "Erro",
-        description: error?.message || "Ocorreu um erro ao processar sua solicitação.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao processar sua solicitação.",
         variant: "destructive",
       });
     } finally {
@@ -285,112 +345,248 @@ export default function AgenteDiretorArte() {
     return defaultProject.id;
   };
 
-  const inlineStyles = (source: HTMLElement, target: HTMLElement) => {
-    const computed = window.getComputedStyle(source);
-    target.setAttribute(
-      "style",
-      Array.from(computed)
-        .map((key) => `${key}:${computed.getPropertyValue(key)};`)
-        .join("")
-    );
-
-    Array.from(source.children).forEach((child, index) => {
-      if (!(child instanceof HTMLElement)) return;
-      const targetChild = target.children.item(index);
-      if (targetChild instanceof HTMLElement) {
-        inlineStyles(child, targetChild);
+  // Export banner at exact dimensions
+  const handleExportBanner = async () => {
+    if (!bannerRef.current) return;
+    
+    setExporting(true);
+    
+    try {
+      const { width, height } = BANNER_FORMATS[selectedFormat];
+      
+      // Create offscreen canvas at exact dimensions
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Não foi possível criar o canvas');
       }
+
+      // Get the background image
+      const bgUrl = preserveIdentity ? backgroundImageUrl : (generatedImageUrl || backgroundImageUrl);
+      if (!bgUrl) {
+        throw new Error('Nenhuma imagem de fundo disponível');
+      }
+
+      // Load and draw background
+      const bgImage = await loadImage(bgUrl);
+      ctx.drawImage(bgImage, 0, 0, width, height);
+
+      // Draw gradient overlay
+      const gradient = ctx.createLinearGradient(0, 0, 0, height * 0.5);
+      gradient.addColorStop(0, 'rgba(0,0,0,0.5)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height * 0.5);
+
+      // Draw person if preserveIdentity mode
+      if (preserveIdentity && images[0]) {
+        const personImage = await loadImage(images[0]);
+        const personHeight = height * 0.7;
+        const personWidth = (personImage.width / personImage.height) * personHeight;
+        
+        let personX: number;
+        const personPosition = decision?.template?.replace('pessoa_', '') || 'centro';
+        
+        switch (personPosition) {
+          case 'esquerda':
+            personX = width * 0.05;
+            break;
+          case 'direita':
+            personX = width - personWidth - width * 0.05;
+            break;
+          default:
+            personX = (width - personWidth) / 2;
+        }
+        
+        const personY = height - personHeight;
+        ctx.drawImage(personImage, personX, personY, personWidth, personHeight);
+      }
+
+      // Draw text
+      if (decision) {
+        const safeMargin = width * 0.05;
+        const fontSize = width * 0.06;
+        
+        ctx.textBaseline = 'top';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+
+        // Headline
+        ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
+        ctx.fillStyle = DEFAULT_COLORS.headline;
+        
+        const personPosition = decision.template?.replace('pessoa_', '') || 'centro';
+        let textX: number;
+        let textAlign: CanvasTextAlign = 'left';
+        let maxTextWidth = width * 0.5;
+        
+        switch (personPosition) {
+          case 'esquerda':
+            textX = width - safeMargin;
+            textAlign = 'right';
+            break;
+          case 'direita':
+            textX = safeMargin;
+            textAlign = 'left';
+            break;
+          default:
+            textX = width / 2;
+            textAlign = 'center';
+            maxTextWidth = width * 0.9;
+        }
+        
+        ctx.textAlign = textAlign;
+        
+        // Wrap text
+        const headlineLines = wrapText(ctx, decision.headline, maxTextWidth);
+        let y = safeMargin;
+        headlineLines.forEach(line => {
+          ctx.fillText(line, textX, y);
+          y += fontSize * 1.2;
+        });
+
+        // Subheadline
+        if (decision.subheadline) {
+          ctx.font = `${fontSize * 0.6}px system-ui, -apple-system, sans-serif`;
+          ctx.fillStyle = DEFAULT_COLORS.subheadline;
+          y += fontSize * 0.3;
+          const subLines = wrapText(ctx, decision.subheadline, maxTextWidth);
+          subLines.forEach(line => {
+            ctx.fillText(line, textX, y);
+            y += fontSize * 0.8;
+          });
+        }
+
+        // CTA
+        if (decision.cta) {
+          ctx.font = `600 ${fontSize * 0.45}px system-ui, -apple-system, sans-serif`;
+          y += fontSize * 0.5;
+          
+          const ctaWidth = ctx.measureText(decision.cta.toUpperCase()).width + fontSize;
+          const ctaHeight = fontSize * 0.8;
+          
+          let ctaX: number;
+          switch (personPosition) {
+            case 'esquerda':
+              ctaX = textX - ctaWidth;
+              break;
+            case 'direita':
+              ctaX = textX;
+              break;
+            default:
+              ctaX = textX - ctaWidth / 2;
+          }
+          
+          // CTA background
+          ctx.shadowColor = 'transparent';
+          ctx.fillStyle = DEFAULT_COLORS.ctaBackground;
+          ctx.beginPath();
+          ctx.roundRect(ctaX, y, ctaWidth, ctaHeight, width * 0.02);
+          ctx.fill();
+          
+          // CTA text
+          ctx.fillStyle = DEFAULT_COLORS.ctaText;
+          ctx.textAlign = 'center';
+          ctx.fillText(decision.cta.toUpperCase(), ctaX + ctaWidth / 2, y + (ctaHeight - fontSize * 0.4) / 2);
+        }
+      }
+
+      // Export
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Falha ao gerar imagem');
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `banner-${selectedFormat}-${Date.now()}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Imagem exportada!",
+          description: `Banner ${BANNER_FORMATS[selectedFormat].width}x${BANNER_FORMATS[selectedFormat].height}px baixado.`,
+        });
+      }, 'image/png');
+      
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+      toast({
+        title: "Erro ao exportar",
+        description: error instanceof Error ? error.message : "Não foi possível gerar a imagem.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Helper functions
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
     });
   };
 
-  const handleExportBanner = async () => {
-    if (!decision || !bannerRef.current) return;
+  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
 
-    const node = bannerRef.current;
-    const rect = node.getBoundingClientRect();
-    const cloned = node.cloneNode(true) as HTMLElement;
-    cloned.style.width = `${rect.width}px`;
-    cloned.style.height = `${rect.height}px`;
-    inlineStyles(node, cloned);
-
-    const serialized = new XMLSerializer().serializeToString(cloned);
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
-        <foreignObject width="100%" height="100%">
-          <div xmlns="http://www.w3.org/1999/xhtml">${serialized}</div>
-        </foreignObject>
-      </svg>
-    `;
-
-    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const image = new Image();
-    image.onload = () => {
-      const scale = window.devicePixelRatio || 2;
-      const canvas = document.createElement("canvas");
-      canvas.width = rect.width * scale;
-      canvas.height = rect.height * scale;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        URL.revokeObjectURL(url);
-        return;
+    words.forEach(word => {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
       }
-      ctx.scale(scale, scale);
-      ctx.drawImage(image, 0, 0);
-      URL.revokeObjectURL(url);
-
-      canvas.toBlob((pngBlob) => {
-        if (!pngBlob) return;
-        const downloadUrl = URL.createObjectURL(pngBlob);
-        const link = document.createElement("a");
-        link.href = downloadUrl;
-        link.download = `banner-${decision.template}.png`;
-        link.click();
-        URL.revokeObjectURL(downloadUrl);
-      }, "image/png");
-    };
-    image.src = url;
+    });
+    
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    
+    return lines;
   };
 
-  const bannerDecision = useMemo(
-    () =>
-      decision
-        ? {
-            template: decision.template,
-            headline: decision.headline,
-            subheadline: decision.subheadline ?? "",
-            cta: decision.cta ? { label: decision.cta } : undefined,
-            colors: {
-              background: decision.colors[0] ?? "#0f172a",
-              headline: decision.colors[1] ?? "#f8fafc",
-              subheadline: decision.colors[2] ?? "#e2e8f0",
-              ctaBackground: decision.colors[3] ?? decision.colors[1] ?? "#f8fafc",
-              ctaText: decision.colors[4] ?? decision.colors[0] ?? "#0f172a",
-            },
-            style: undefined,
-          }
-        : null,
-    [decision]
-  );
-
+  // Save banner to project
   useEffect(() => {
-    if (!decision || !images[0]) return;
+    if (!decision) return;
+    
+    const bgImage = preserveIdentity ? backgroundImageUrl : generatedImageUrl;
+    if (!bgImage) return;
+    
     if (limitReached) {
-      toast({
-        title: "Limite do beta atingido",
-        description: "Você atingiu o limite de 10 artes do beta. Obrigado por testar!",
-        variant: "destructive",
-      });
       return;
     }
+    
     const targetProjectId = currentProjectRef.current ?? createDefaultProject();
-    if (!bannerDecision) return;
 
+    const personPosition = decision.template.replace('pessoa_', '') as 'esquerda' | 'centro' | 'direita';
+    
     const newBanner: ProjectBanner = {
       id: crypto.randomUUID(),
-      photoUrl: images[0],
+      format: selectedFormat,
+      backgroundImageUrl: bgImage,
+      personPhotoUrl: preserveIdentity ? images[0] : undefined,
+      personPosition,
+      headline: decision.headline,
+      subheadline: decision.subheadline,
+      cta: decision.cta,
+      colors: DEFAULT_COLORS,
+      style: decision.style,
       createdAt: new Date().toISOString(),
-      ...bannerDecision,
     };
 
     setProjects((prev) =>
@@ -400,9 +596,28 @@ export default function AgenteDiretorArte() {
           : project
       )
     );
-  }, [decision, images, bannerDecision, limitReached, toast]);
+  }, [decision, backgroundImageUrl, generatedImageUrl]);
 
   const currentProject = projects.find((project) => project.id === currentProjectId) ?? null;
+
+  // Calculate preview scale based on container width
+  const getPreviewScale = () => {
+    const containerWidth = 400; // Approximate container width
+    const { width } = BANNER_FORMATS[selectedFormat];
+    return Math.min(containerWidth / width, 0.4);
+  };
+
+  // Get format icon
+  const getFormatIcon = (format: BannerFormat) => {
+    switch (format) {
+      case 'stories':
+        return <Smartphone className="w-4 h-4" />;
+      case 'retrato':
+        return <RectangleVertical className="w-4 h-4" />;
+      case 'quadrado':
+        return <Square className="w-4 h-4" />;
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -417,9 +632,9 @@ export default function AgenteDiretorArte() {
               <h1 className="text-3xl font-bold">Diretor de Arte</h1>
             </div>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Analisa prints do Instagram e retorna decisões de design em JSON.
+              Gera criativos profissionais com IA, preservando sua identidade visual.
               <span className="block text-sm mt-1 text-muted-foreground/80">
-                Não gera imagens — apenas define template, cores e textos.
+                Escolha o formato, envie sua foto e deixe a IA criar o cenário perfeito.
               </span>
             </p>
             <div className="mt-4 flex flex-col items-center gap-2">
@@ -440,6 +655,7 @@ export default function AgenteDiretorArte() {
             <SubscriptionStatusCard />
           </div>
 
+          {/* Projects Section */}
           <div className="mb-8 space-y-6">
             <Card>
               <CardHeader>
@@ -478,61 +694,50 @@ export default function AgenteDiretorArte() {
                   <div className="rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/30 p-6 text-center sm:p-8">
                     <h3 className="text-lg font-semibold">Crie seu primeiro projeto</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Em 3 passos: 1) crie um projeto, 2) envie os prints,
+                      Em 3 passos: 1) crie um projeto, 2) envie sua foto,
                       3) gere o banner e baixe a imagem.
                     </p>
-                    <Button
-                      type="button"
-                      onClick={handleCreateProject}
-                      className="mt-4"
-                    >
-                      Criar projeto
-                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Banners do projeto</CardTitle>
-                <CardDescription>
-                  Selecione um projeto para visualizar os banners associados.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {currentProject ? (
-                  currentProject.banners.length > 0 ? (
-                    <div className="space-y-6">
-                      {currentProject.banners.map((banner) => (
-                        <div key={banner.id} className="space-y-3">
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(banner.createdAt).toLocaleString()}
-                          </div>
-                          {renderBannerFromDecision(banner, banner.photoUrl)}
+            {/* Project Banners */}
+            {currentProject && currentProject.banners.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Banners do projeto</CardTitle>
+                  <CardDescription>
+                    {currentProject.banners.length} banner(s) gerado(s)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {currentProject.banners.map((banner) => (
+                      <div key={banner.id} className="space-y-2">
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(banner.createdAt).toLocaleString()}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/30 p-6 text-center sm:p-8">
-                      <p className="text-sm font-medium">
-                        Nenhum banner neste projeto ainda
-                      </p>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Envie suas referências e gere o primeiro banner.
-                      </p>
-                      <Button type="button" className="mt-4" asChild>
-                        <a href="#gerar-banner">Gerar primeiro banner</a>
-                      </Button>
-                    </div>
-                  )
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Crie ou selecione um projeto para começar.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                        <div className="overflow-hidden rounded-lg border">
+                          <BannerComposite
+                            format={banner.format}
+                            backgroundImageUrl={banner.backgroundImageUrl}
+                            personPhotoUrl={banner.personPhotoUrl}
+                            personPosition={banner.personPosition}
+                            headline={banner.headline}
+                            subheadline={banner.subheadline}
+                            cta={banner.cta}
+                            colors={banner.colors}
+                            style={banner.style}
+                            previewScale={0.15}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 gap-8">
@@ -541,16 +746,60 @@ export default function AgenteDiretorArte() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ImageIcon className="w-5 h-5" />
-                  Referências Visuais
+                  Criar Banner
                 </CardTitle>
                 <CardDescription>
-                  Envie até 5 prints do Instagram para análise da identidade visual
+                  Configure o formato, modo e envie sua foto
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Format Selector */}
+                  <div>
+                    <Label className="font-medium mb-3 block">Formato</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(Object.keys(BANNER_FORMATS) as BannerFormat[]).map((format) => (
+                        <Button
+                          key={format}
+                          type="button"
+                          variant={selectedFormat === format ? "default" : "outline"}
+                          className="flex flex-col items-center gap-1 h-auto py-3"
+                          onClick={() => setSelectedFormat(format)}
+                        >
+                          {getFormatIcon(format)}
+                          <span className="text-xs font-medium">{BANNER_FORMATS[format].label}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {BANNER_FORMATS[format].width}x{BANNER_FORMATS[format].height}
+                          </span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Preserve Identity Toggle */}
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="preserve-identity" className="font-medium">
+                        Preservar Identidade
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {preserveIdentity 
+                          ? "Sua foto será sobreposta ao cenário gerado pela IA" 
+                          : "A IA gerará a pessoa + cenário (pode distorcer)"}
+                      </p>
+                    </div>
+                    <Switch
+                      id="preserve-identity"
+                      checked={preserveIdentity}
+                      onCheckedChange={setPreserveIdentity}
+                    />
+                  </div>
+
                   {/* Image Upload */}
                   <div>
+                    <Label className="font-medium mb-2 block">
+                      {preserveIdentity ? "Sua Foto (será sobreposta)" : "Referência Visual"}
+                    </Label>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -570,7 +819,7 @@ export default function AgenteDiretorArte() {
                       <Upload className="w-5 h-5 mr-2" />
                       {images.length >= 5 
                         ? 'Limite de 5 imagens atingido' 
-                        : `Adicionar Prints (${images.length}/5)`}
+                        : `Adicionar Foto (${images.length}/5)`}
                     </Button>
 
                     {images.length > 0 && (
@@ -579,7 +828,7 @@ export default function AgenteDiretorArte() {
                           <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
                             <img 
                               src={img} 
-                              alt={`Print ${index + 1}`}
+                              alt={`Foto ${index + 1}`}
                               className="w-full h-full object-cover"
                             />
                             <button
@@ -598,30 +847,30 @@ export default function AgenteDiretorArte() {
                   {/* Banner Text */}
                   <div>
                     <Label htmlFor="bannerText" className="font-medium">
-                      Texto do Banner (opcional)
+                      Briefing / Texto Principal
                     </Label>
                     <Input
                       id="bannerText"
                       value={bannerText}
                       onChange={(e) => setBannerText(e.target.value)}
-                      placeholder="Ex: Transforme sua vida hoje"
+                      placeholder="Ex: Lançamento de verão com 50% de desconto"
                       className={`mt-2 ${inputHeight}`}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      O agente usará isso para sugerir headline e subheadline
+                      Descreva o objetivo do banner
                     </p>
                   </div>
 
                   {/* CTA Text */}
                   <div>
                     <Label htmlFor="ctaText" className="font-medium">
-                      CTA desejado (opcional)
+                      CTA (opcional)
                     </Label>
                     <Input
                       id="ctaText"
                       value={ctaText}
                       onChange={(e) => setCtaText(e.target.value)}
-                      placeholder="Ex: Saiba mais"
+                      placeholder="Ex: Compre agora"
                       className={`mt-2 ${inputHeight}`}
                     />
                   </div>
@@ -635,12 +884,12 @@ export default function AgenteDiretorArte() {
                     {loading ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Analisando...
+                        Gerando...
                       </>
                     ) : (
                       <>
                         <Palette className="w-5 h-5 mr-2" />
-                        Gerar Decisão de Design
+                        Gerar Banner
                       </>
                     )}
                   </Button>
@@ -652,7 +901,7 @@ export default function AgenteDiretorArte() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Decisão do Diretor</span>
+                  <span>Resultado</span>
                   {decision && (
                     <Button 
                       variant="outline" 
@@ -677,12 +926,55 @@ export default function AgenteDiretorArte() {
                     <Skeleton className="h-4 w-4/6" />
                     <div className="text-center text-muted-foreground text-sm mt-4">
                       <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                      Analisando identidade visual...
+                      {preserveIdentity 
+                        ? "Gerando cenário de fundo..." 
+                        : "Gerando criativo completo..."}
                     </div>
                   </div>
-                ) : decision ? (
+                ) : decision && (backgroundImageUrl || generatedImageUrl) ? (
                   <div className="space-y-6">
-                    {/* Visual Preview */}
+                    {/* Banner Preview */}
+                    <div className="flex justify-center">
+                      <div 
+                        ref={bannerRef} 
+                        className="overflow-hidden rounded-lg border shadow-lg"
+                      >
+                        <BannerComposite
+                          format={selectedFormat}
+                          backgroundImageUrl={preserveIdentity ? backgroundImageUrl! : (generatedImageUrl || backgroundImageUrl!)}
+                          personPhotoUrl={preserveIdentity ? images[0] : undefined}
+                          personPosition={decision.template.replace('pessoa_', '') as 'esquerda' | 'centro' | 'direita'}
+                          headline={decision.headline}
+                          subheadline={decision.subheadline}
+                          cta={decision.cta}
+                          colors={DEFAULT_COLORS}
+                          style={decision.style}
+                          previewScale={getPreviewScale()}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Export Button */}
+                    <Button
+                      type="button"
+                      onClick={handleExportBanner}
+                      className="w-full"
+                      disabled={exporting}
+                    >
+                      {exporting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Exportando...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 mr-2" />
+                          Baixar {BANNER_FORMATS[selectedFormat].width}x{BANNER_FORMATS[selectedFormat].height}px
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Decision Details */}
                     <div className="space-y-4">
                       {/* Template */}
                       <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -716,38 +1008,7 @@ export default function AgenteDiretorArte() {
                           )}
                         </div>
                       </div>
-
-                      {/* Colors */}
-                      <div className="p-3 bg-muted/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-2">Paleta de Cores</p>
-                        <div className="flex gap-2">
-                          {decision.colors.map((color, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <div 
-                                className="w-8 h-8 rounded-lg border shadow-sm"
-                                style={{ backgroundColor: color }}
-                              />
-                              <span className="text-xs font-mono">{color}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
                     </div>
-
-                    {bannerDecision && (generatedImageUrl || images[0]) && (
-                      <div className="space-y-4">
-                        <div ref={bannerRef} className="w-full">
-                          {renderBannerFromDecision(bannerDecision, generatedImageUrl || images[0])}
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={handleExportBanner}
-                          className="w-full"
-                        >
-                          Baixar imagem
-                        </Button>
-                      </div>
-                    )}
 
                     {/* Raw JSON */}
                     <div className="space-y-3">
@@ -772,8 +1033,8 @@ export default function AgenteDiretorArte() {
                 ) : (
                   <div className="text-center text-muted-foreground py-12">
                     <Palette className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                    <p>Envie prints do Instagram para receber</p>
-                    <p>as decisões de design em JSON.</p>
+                    <p>Configure o formato, envie sua foto</p>
+                    <p>e gere seu banner profissional.</p>
                   </div>
                 )}
               </CardContent>

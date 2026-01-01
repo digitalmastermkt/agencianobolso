@@ -49,10 +49,23 @@ REGRAS:
 
 Não inclua texto fora do JSON.`;
 
+// Formatos fixos com dimensões exatas (matching frontend)
+const BANNER_FORMATS: Record<string, { width: number; height: number }> = {
+  stories: { width: 1080, height: 1920 },
+  retrato: { width: 1080, height: 1350 },
+  quadrado: { width: 1080, height: 1080 },
+};
+
+// Map format to OpenAI supported sizes (closest match)
 const getImageSize = (format: string): "1024x1024" | "1536x1024" | "1024x1536" => {
   const normalized = format.toLowerCase();
-  if (normalized.includes("story") || normalized.includes("vertical")) return "1024x1536";
-  if (normalized.includes("banner") || normalized.includes("horizontal") || normalized.includes("landscape")) return "1536x1024";
+  // Stories (9:16) -> 1024x1536 (vertical)
+  if (normalized === "stories") return "1024x1536";
+  // Retrato (4:5) -> 1024x1536 (closest vertical)
+  if (normalized === "retrato") return "1024x1536";
+  // Quadrado (1:1) -> 1024x1024
+  if (normalized === "quadrado") return "1024x1024";
+  // Fallback
   return "1024x1024";
 };
 
