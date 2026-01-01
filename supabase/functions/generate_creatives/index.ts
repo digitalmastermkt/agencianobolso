@@ -7,83 +7,63 @@ const corsHeaders = {
 };
 
 interface ArtDirectorDecision {
-  template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
+  scene_prompt: string;
+  style: "clean" | "minimal" | "premium";
+  template: "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda";
   headline: string;
   subheadline?: string;
   cta?: string;
-  colors: string[];
-  style: "clean" | "minimal" | "premium";
 }
 
 const artDirectorSystemPrompt = `Você é um Diretor de Arte sênior especializado em criativos publicitários
+para Instagram, Stories e anúncios.
 
-de alto impacto para redes sociais (Instagram, Stories, Ads).
+Seu papel é DECIDIR como a imagem final deve ser gerada por IA,
+como se estivesse dirigindo um ensaio fotográfico profissional.
 
-Sua função é INTERPRETAR a intenção do texto e tomar decisões visuais completas,
+Você NÃO cria layout.
+Você NÃO escreve explicações.
+Você SOMENTE define a DIREÇÃO VISUAL da imagem.
 
-como um designer humano experiente faria.
+ANTES de responder, analise:
+1. Contexto da mensagem (festa, oferta, aviso, institucional)
+2. Objetivo (celebrar, vender, informar)
+3. Perfil da marca
+4. Se existe uma pessoa que precisa manter identidade facial
 
-ANTES de responder, analise cuidadosamente:
-
-1. O CONTEXTO da mensagem (festa, oferta, aviso, institucional, anúncio)
-
-2. O OBJETIVO do criativo (atenção, venda, informar, celebrar)
-
-3. O PERFIL da marca (luxo, acessível, moderno, clean, premium)
-
-4. A presença de uma pessoa e a necessidade de preservar identidade facial
+RESPONDA APENAS com JSON válido neste formato:
+{
+  "scene_prompt": "descrição detalhada do cenário, iluminação, estilo fotográfico, clima emocional, composição e estética",
+  "style": "clean" | "minimal" | "premium",
+  "template": "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda",
+  "headline": "texto curto",
+  "subheadline": "texto opcional",
+  "cta": "texto opcional"
+}
 
 REGRAS:
-
-- FESTA / CELEBRAÇÃO → visual premium, luz quente, dourado, elementos festivos sutis
-
-- OFERTA / PROMOÇÃO → hierarquia clara, foco em conversão, CTA forte
-
-- AVISO / COMUNICADO → visual clean, leitura fácil
-
-- INSTITUCIONAL → composição equilibrada, branding discreto
-
-ESCOLHA DE TEMPLATE:
-
-- pessoa_centro → institucional, emocional, autoridade
-
-- pessoa_direita / pessoa_esquerda → ofertas, anúncios, banners
-
-RESPONDA EXCLUSIVAMENTE COM JSON VÁLIDO NO FORMATO:
-
-{
-
-  "template": "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda",
-
-  "headline": "texto curto e impactante",
-
-  "subheadline": "texto de apoio opcional",
-
-  "cta": "chamada curta se fizer sentido",
-
-  "colors": ["#HEX1", "#HEX2", "#HEX3"],
-
-  "style": "clean" | "minimal" | "premium"
-
-}
+- Se for FESTA ou CELEBRAÇÃO → ambiente elegante, luz quente, elementos festivos sutis
+- Se for OFERTA → visual de conversão, fundo limpo, alto contraste
+- Se for AVISO → visual clean e leitura fácil
+- Preserve SEMPRE a identidade facial da pessoa, se houver imagem de referência
 
 Não inclua texto fora do JSON.`;
 
-const getImageSize = (format: string) => {
+const getImageSize = (format: string): "1024x1024" | "1536x1024" | "1024x1536" => {
   const normalized = format.toLowerCase();
-  if (normalized.includes("story") || normalized.includes("vertical")) return "1024x1792";
-  if (normalized.includes("banner") || normalized.includes("horizontal") || normalized.includes("landscape")) return "1792x1024";
+  if (normalized.includes("story") || normalized.includes("vertical")) return "1024x1536";
+  if (normalized.includes("banner") || normalized.includes("horizontal") || normalized.includes("landscape")) return "1536x1024";
   return "1024x1024";
 };
 
-const normalizeDecision = (raw: ArtDirectorDecision, fallbackHeadline: string): ArtDirectorDecision => {
+const normalizeDecision = (raw: Partial<ArtDirectorDecision>, fallbackHeadline: string): ArtDirectorDecision => {
   const decision: ArtDirectorDecision = {
+    scene_prompt: raw?.scene_prompt ?? "Cenário profissional, iluminação suave, fundo neutro elegante",
+    style: raw?.style ?? "clean",
     template: raw?.template ?? "pessoa_centro",
     headline: raw?.headline ?? fallbackHeadline,
     subheadline: raw?.subheadline,
     cta: raw?.cta,
-    colors: Array.isArray(raw?.colors) ? raw.colors.slice(0, 3) : ["#111827", "#F9FAFB", "#6B7280"],
-    style: raw?.style ?? "clean",
   };
 
   if (!(["pessoa_direita", "pessoa_centro", "pessoa_esquerda"] as const).includes(decision.template)) {
@@ -92,7 +72,6 @@ const normalizeDecision = (raw: ArtDirectorDecision, fallbackHeadline: string): 
   if (!(["clean", "minimal", "premium"] as const).includes(decision.style)) {
     decision.style = "clean";
   }
-  if (!decision.colors.length) decision.colors = ["#111827", "#F9FAFB", "#6B7280"];
 
   return decision;
 };
@@ -102,31 +81,32 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Helper to always return 200 with structured JSON
+  const respond = (data: Record<string, unknown>) => {
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  };
+
   try {
     const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openAIApiKey) throw new Error("OPENAI_API_KEY is not configured");
+    if (!openAIApiKey) {
+      return respond({ success: false, error: "OPENAI_API_KEY is not configured" });
+    }
 
     const { description, brandProfile, personImageUrl, format } = await req.json();
 
     if (!description || typeof description !== "string") {
-      return new Response(JSON.stringify({ error: "O campo description é obrigatório." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond({ success: false, error: "O campo description é obrigatório." });
     }
 
     if (!format || typeof format !== "string") {
-      return new Response(JSON.stringify({ error: "O campo format é obrigatório." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond({ success: false, error: "O campo format é obrigatório." });
     }
 
     if (brandProfile === null || typeof brandProfile !== "object") {
-      return new Response(JSON.stringify({ error: "O campo brandProfile é obrigatório e deve ser JSON." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond({ success: false, error: "O campo brandProfile é obrigatório e deve ser JSON." });
     }
 
     // Sanitize brandProfile - remove large data like base64 images to prevent token overflow
@@ -141,14 +121,16 @@ serve(async (req) => {
       recurring_elements: Array.isArray(brandProfile.recurring_elements) 
         ? brandProfile.recurring_elements.slice(0, 5) 
         : [],
-      // Explicitly exclude: instagram_images, logo_url, person_photos (all can contain large base64)
     };
 
     const userPrompt = `Briefing: ${description.slice(0, 1000)}
 Perfil da marca: ${JSON.stringify(sanitizedBrandProfile)}
 Formato: ${format}
-${personImageUrl ? "Há uma foto de pessoa de referência disponível (considere isso na escolha do template)." : "Não há foto de pessoa."}`;
+${personImageUrl ? "Há uma foto de pessoa de referência disponível (preserve a identidade facial na direção visual)." : "Não há foto de pessoa."}`;
 
+    console.log("[generate_creatives] Calling Art Director...");
+
+    // Step 1: Get Art Director decision
     const artDirectorResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -161,29 +143,25 @@ ${personImageUrl ? "Há uma foto de pessoa de referência disponível (considere
           { role: "system", content: artDirectorSystemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 500,
-        temperature: 0.2,
+        max_tokens: 600,
+        temperature: 0.3,
       }),
     });
 
     if (!artDirectorResponse.ok) {
       const t = await artDirectorResponse.text();
-      return new Response(JSON.stringify({ error: `Falha ao consultar Diretor de Arte: ${t}` }), {
-        status: artDirectorResponse.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("[generate_creatives] Art Director error:", t);
+      return respond({ success: false, error: `Falha ao consultar Diretor de Arte: ${t}` });
     }
 
     const artDirectorData = await artDirectorResponse.json();
     const raw = artDirectorData.choices?.[0]?.message?.content?.trim() as string | undefined;
+    
     if (!raw) {
-      return new Response(JSON.stringify({ error: "Diretor de Arte não retornou dados válidos." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond({ success: false, error: "Diretor de Arte não retornou dados válidos." });
     }
 
-    let parsed: ArtDirectorDecision;
+    let parsed: Partial<ArtDirectorDecision>;
     try {
       const cleanContent = raw
         .replace(/^```json\n?/, "")
@@ -191,54 +169,88 @@ ${personImageUrl ? "Há uma foto de pessoa de referência disponível (considere
         .replace(/\n?```$/, "")
         .trim();
       parsed = JSON.parse(cleanContent);
-    } catch {
-      return new Response(JSON.stringify({ error: "Falha ao interpretar o JSON do Diretor de Arte." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    } catch (parseError) {
+      console.error("[generate_creatives] JSON parse error:", parseError, "Raw:", raw);
+      return respond({ success: false, error: "Falha ao interpretar o JSON do Diretor de Arte.", rawResponse: raw });
     }
 
-    const artDirectorJson = normalizeDecision(parsed, description.slice(0, 60));
+    const decision = normalizeDecision(parsed, description.slice(0, 60));
+    console.log("[generate_creatives] Art Director decision:", decision);
 
-    // Se você quiser só as decisões (sem geração de imagem), basta ignorar a chamada abaixo.
+    // Step 2: Generate image using gpt-image-1 with scene_prompt
+    const imagePrompt = `${decision.scene_prompt}
+
+Fotografia realista, alta qualidade, estética profissional,
+sem distorções faciais, mantendo identidade da pessoa,
+iluminação cinematográfica, profundidade de campo,
+estilo ${decision.style}.
+Não incluir texto, logotipos ou marcas d'água na imagem.`;
+
+    console.log("[generate_creatives] Generating image with gpt-image-1...");
+
+    // Build the request for image generation
+    const imageRequestBody: Record<string, unknown> = {
+      model: "gpt-image-1",
+      prompt: imagePrompt,
+      n: 1,
+      size: getImageSize(format),
+      quality: "high",
+    };
+
     const imageResponse = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${openAIApiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: `Crie um criativo publicitário sem texto legível. Use estas decisões (JSON): ${JSON.stringify(artDirectorJson)}. Briefing: ${description}. Formato: ${format}. Não incluir logotipos nem marcas d'água.`,
-        n: 1,
-        size: getImageSize(format),
-        quality: "hd",
-      }),
+      body: JSON.stringify(imageRequestBody),
     });
 
     if (!imageResponse.ok) {
       const t = await imageResponse.text();
-      return new Response(JSON.stringify({ error: `Falha ao gerar imagem: ${t}`, artDirectorJson }), {
-        status: imageResponse.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      console.error("[generate_creatives] Image generation error:", t);
+      // Return decision even if image fails
+      return respond({ 
+        success: true, 
+        imageUrl: null,
+        headline: decision.headline,
+        subheadline: decision.subheadline,
+        cta: decision.cta,
+        template: decision.template,
+        style: decision.style,
+        scene_prompt: decision.scene_prompt,
+        imageError: `Falha ao gerar imagem: ${t}`,
       });
     }
 
     const imageData = await imageResponse.json();
-    const imageUrl = imageData.data?.[0]?.url as string | undefined;
+    
+    // gpt-image-1 returns base64 data
+    let imageUrl: string | null = null;
+    if (imageData.data?.[0]?.b64_json) {
+      imageUrl = `data:image/png;base64,${imageData.data[0].b64_json}`;
+    } else if (imageData.data?.[0]?.url) {
+      imageUrl = imageData.data[0].url;
+    }
 
-    return new Response(
-      JSON.stringify({
-        artDirectorJson,
-        imageUrl: imageUrl ?? null,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.log("[generate_creatives] Image generated successfully");
+
+    return respond({
+      success: true,
+      imageUrl,
+      headline: decision.headline,
+      subheadline: decision.subheadline,
+      cta: decision.cta,
+      template: decision.template,
+      style: decision.style,
+      scene_prompt: decision.scene_prompt,
+    });
+
   } catch (error: unknown) {
-    console.error("[generate_creatives] Error:", error);
+    console.error("[generate_creatives] Unexpected error:", error);
     const message = error instanceof Error ? error.message : "Erro desconhecido";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
+    return new Response(JSON.stringify({ success: false, error: message }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
