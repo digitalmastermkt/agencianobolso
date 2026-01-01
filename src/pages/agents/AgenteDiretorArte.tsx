@@ -5,6 +5,7 @@ import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -165,8 +166,7 @@ export default function AgenteDiretorArte() {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [personCutoutUrl, setPersonCutoutUrl] = useState<string | null>(null);
-  const [bannerText, setBannerText] = useState("");
-  const [ctaText, setCtaText] = useState("");
+  const [description, setDescription] = useState("");
   
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
@@ -460,11 +460,11 @@ export default function AgenteDiretorArte() {
       return;
     }
 
-    const description = bannerText.trim();
-    if (!description) {
+    const descriptionText = description.trim();
+    if (!descriptionText) {
       toast({
         title: "Descrição necessária",
-        description: "Digite uma descrição (texto principal) para gerar o criativo.",
+        description: "Descreva o criativo que você quer gerar.",
         variant: "destructive",
       });
       return;
@@ -480,7 +480,7 @@ export default function AgenteDiretorArte() {
 
       const { data, error } = await supabase.functions.invoke("generate_creatives", {
         body: { 
-          description, 
+          description: descriptionText, 
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
           personImageUrl,
@@ -495,7 +495,7 @@ export default function AgenteDiretorArte() {
         template: data.template,
         headline: data.headline,
         subheadline: data.subheadline,
-        cta: data.cta || ctaText,
+        cta: data.cta,
         style: data.style,
         scene_prompt: data.scene_prompt,
       };
@@ -896,7 +896,7 @@ export default function AgenteDiretorArte() {
       case 3:
         return !!currentProjectId;
       case 4:
-        return images.length > 0 && bannerText.trim().length > 0;
+        return images.length > 0 && description.trim().length > 0;
       default:
         return true;
     }
@@ -1350,49 +1350,35 @@ export default function AgenteDiretorArte() {
                   )}
 
                   {images.length > 0 && (
-                    <div className="grid grid-cols-2 gap-3 mt-4">
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Original</p>
-                        <div className="relative aspect-square rounded-lg overflow-hidden border">
+                    <div className="mt-4">
+                      <div className="relative inline-block">
+                        <div className="w-24 h-24 rounded-lg overflow-hidden border bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Crect%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3C%2Fsvg%3E')]">
                           <img 
-                            src={images[0]} 
-                            alt="Foto original"
+                            src={personCutoutUrl || images[0]} 
+                            alt="Foto selecionada"
                             className="w-full h-full object-cover"
                           />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(0)}
-                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
                         </div>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Sem fundo</p>
-                        <div className="relative aspect-square rounded-lg overflow-hidden border bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Crect%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3C%2Fsvg%3E')]">
-                          {personCutoutUrl ? (
-                            <img 
-                              src={personCutoutUrl} 
-                              alt="Foto sem fundo"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-muted/50">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleRemoveBackground}
-                                disabled={isRemovingBg}
-                              >
-                                <Scissors className="w-4 h-4 mr-1" />
-                                Remover
-                              </Button>
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(0)}
+                          className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                        {isRemovingBg && (
+                          <div className="absolute inset-0 bg-background/80 rounded-lg flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                          </div>
+                        )}
+                        {personCutoutUrl && (
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                              <Check className="w-2.5 h-2.5 mr-0.5" />
+                              Sem fundo
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1405,35 +1391,27 @@ export default function AgenteDiretorArte() {
                   )}
                 </div>
 
-                {/* Banner Text */}
+                {/* Description - Single field */}
                 <div>
-                  <Label htmlFor="bannerText" className="font-medium">
-                    Briefing / Texto Principal
+                  <Label htmlFor="description" className="font-medium">
+                    Descrição
                   </Label>
-                  <Input
-                    id="bannerText"
-                    value={bannerText}
-                    onChange={(e) => setBannerText(e.target.value)}
-                    placeholder="Ex: Lançamento de verão com 50% de desconto"
-                    className={`mt-2 ${inputHeight}`}
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Descreva o criativo que você quer gerar... Ex: Lançamento de verão com 50% de desconto, saiba mais no site"
+                    className="mt-2 min-h-[120px] resize-none"
+                    maxLength={500}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Descreva o objetivo do banner
-                  </p>
-                </div>
-
-                {/* CTA Text */}
-                <div>
-                  <Label htmlFor="ctaText" className="font-medium">
-                    CTA (opcional)
-                  </Label>
-                  <Input
-                    id="ctaText"
-                    value={ctaText}
-                    onChange={(e) => setCtaText(e.target.value)}
-                    placeholder="Ex: Compre agora"
-                    className={`mt-2 ${inputHeight}`}
-                  />
+                  <div className="flex justify-between mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      A IA identificará título, subtítulo e CTA automaticamente
+                    </p>
+                    <span className="text-xs text-muted-foreground">
+                      {description.length}/500
+                    </span>
+                  </div>
                 </div>
 
                 <Button 
