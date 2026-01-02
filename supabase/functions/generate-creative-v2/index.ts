@@ -7,10 +7,12 @@ const corsHeaders = {
 
 interface ArtDirectorDecision {
   scene_prompt: string;
-  style: "clean" | "minimal" | "premium";
+  style: "clean" | "dynamic" | "premium" | "festive";
   template: "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda";
   pose_suggestion?: string;
-  decorative_elements?: string;
+  creative_elements?: string;
+  atmosphere?: string;
+  suggested_effects?: string;
 }
 
 interface BrandIdentity {
@@ -25,52 +27,85 @@ interface BrandIdentity {
   recurringElements?: string[];
 }
 
-// Art Director analyzes context to define scene + considers brand identity
-const artDirectorSystemPrompt = `Você é um Diretor de Arte sênior de uma agência de publicidade premium.
+// Art Director - More creative and brand-focused
+const artDirectorSystemPrompt = `Você é um Diretor de Arte CRIATIVO de uma agência de publicidade premium.
 
-Sua função é analisar o CONTEXTO fornecido e definir o CENÁRIO VISUAL apropriado, considerando a identidade visual da marca.
+Sua função é analisar o CONTEXTO e criar uma DIREÇÃO VISUAL ÚNICA E IMPACTANTE.
 
-IMPORTANTE:
-- NÃO crie ou sugira textos - os textos são fornecidos pelo usuário e são IMUTÁVEIS
-- Analise SEMANTICAMENTE o contexto para definir cenário, estilo e pose
-- CONSIDERE o mood e estilo visual da marca para manter consistência
+REGRAS CRIATIVAS:
+- Pense FORA DA CAIXA - evite composições genéricas
+- Sugira elementos visuais RICOS que reforcem a mensagem
+- Considere a identidade visual da marca para manter consistência
+- Crie atmosferas MEMORÁVEIS
 
-MAPEAMENTO DE CONTEXTO → CENÁRIO:
-- Aniversário/Parabéns/Feliz aniversário → cenário festivo com balões coloridos, confete, bolo, cores vibrantes e alegres
-- Ano Novo/Réveillon/Feliz 2025/2026 → fogos de artifício, confete dourado, celebração noturna, champagne
-- Natal/Feliz Natal → decoração natalina, neve, árvore de natal, cores vermelhas e douradas
-- Promoção/Black Friday/Desconto → ambiente comercial moderno, elementos de urgência, cores vibrantes
-- Lançamento/Novidade → palco moderno, holofotes, elementos de destaque
-- Corporativo/Institucional → escritório moderno, ambiente profissional, cores neutras
-- Motivacional/Sucesso → paisagem inspiradora, luz dourada, horizonte, natureza épica
-- Casamento/Noivado → flores, ambiente romântico, tons suaves e elegantes
+MAPEAMENTO DE CONTEXTO → ELEMENTOS CRIATIVOS:
+- Promoção/Black Friday/Desconto → explosão de cores, etiquetas de preço flutuantes, confetes, raios de energia, urgência visual
+- Lançamento/Novidade → holofotes dramáticos, partículas brilhantes, efeito de palco, holográfico, futurista
+- Aniversário/Parabéns → balões coloridos explodindo, confetes em movimento, bolo, atmosfera festiva
+- Ano Novo/Réveillon → fogos de artifício, champagne, relógio, estrelas, dourado e prata, celebração noturna
+- Natal → neve caindo, decorações natalinas, vermelho e dourado, aconchegante
+- Corporativo/Institucional → linhas geométricas elegantes, vidro e metal, cityscape moderno
+- Motivacional/Sucesso → horizonte épico, luz dourada, montanhas, natureza grandiosa
 
 RESPONDA APENAS com JSON válido:
 {
-  "scene_prompt": "descrição detalhada do cenário em INGLÊS baseado no contexto analisado",
-  "style": "clean" | "minimal" | "premium",
+  "scene_prompt": "descrição DETALHADA e CRIATIVA do cenário em INGLÊS - seja específico com luz, cores, atmosfera",
+  "style": "clean" | "dynamic" | "premium" | "festive",
   "template": "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda",
-  "pose_suggestion": "descrição da pose apropriada ao contexto em INGLÊS",
-  "decorative_elements": "elementos decorativos sutis usando cores da marca (em INGLÊS)"
+  "pose_suggestion": "pose EXPRESSIVA apropriada ao contexto em INGLÊS",
+  "creative_elements": "elementos visuais ESPECÍFICOS que reforçam a mensagem (em INGLÊS)",
+  "atmosphere": "descrição da atmosfera visual - luz, cores, mood (em INGLÊS)",
+  "suggested_effects": "efeitos visuais sugeridos - lens flare, particles, gradients (em INGLÊS)"
 }`;
 
 const normalizeDecision = (raw: Partial<ArtDirectorDecision>): ArtDirectorDecision => {
   const decision: ArtDirectorDecision = {
-    scene_prompt: raw?.scene_prompt ?? "Modern professional environment with soft lighting",
-    style: raw?.style ?? "clean",
+    scene_prompt: raw?.scene_prompt ?? "Modern professional environment with dramatic lighting",
+    style: raw?.style ?? "dynamic",
     template: raw?.template ?? "pessoa_centro",
-    pose_suggestion: raw?.pose_suggestion ?? "confident pose, natural smile, looking at camera",
-    decorative_elements: raw?.decorative_elements ?? "",
+    pose_suggestion: raw?.pose_suggestion ?? "confident dynamic pose, natural smile, engaging with camera",
+    creative_elements: raw?.creative_elements ?? "subtle geometric shapes, light particles",
+    atmosphere: raw?.atmosphere ?? "vibrant, professional, energetic lighting",
+    suggested_effects: raw?.suggested_effects ?? "subtle lens flare, bokeh background",
   };
 
   if (!(["pessoa_direita", "pessoa_centro", "pessoa_esquerda"] as const).includes(decision.template)) {
     decision.template = "pessoa_centro";
   }
-  if (!(["clean", "minimal", "premium"] as const).includes(decision.style)) {
-    decision.style = "clean";
+  if (!(["clean", "dynamic", "premium", "festive"] as const).includes(decision.style)) {
+    decision.style = "dynamic";
   }
 
   return decision;
+};
+
+// Get creative elements based on context
+const getContextualElements = (context: string): string => {
+  const contextLower = context.toLowerCase();
+  
+  if (contextLower.includes('black friday') || contextLower.includes('promoção') || contextLower.includes('desconto')) {
+    return "Explosive burst effects, floating price tags with dramatic shadows, shopping bags, colorful confetti, bold red/black/yellow color accents, urgency visual cues like lightning bolts, diagonal dynamic stripes, sale stickers";
+  }
+  if (contextLower.includes('lançamento') || contextLower.includes('novidade') || contextLower.includes('novo')) {
+    return "Dramatic spotlight effects, stage lighting with rays, sparkles and glitter particles, premium metallic gold/silver accents, holographic rainbow elements, futuristic floating particles, sleek glass reflections";
+  }
+  if (contextLower.includes('aniversário') || contextLower.includes('parabéns')) {
+    return "Colorful balloons bursting upward, confetti explosion in motion, party streamers, birthday cake elements, festive bokeh lights, joyful atmosphere, golden and colorful accents, celebration ribbons";
+  }
+  if (contextLower.includes('ano novo') || contextLower.includes('réveillon') || contextLower.includes('2025') || contextLower.includes('2026')) {
+    return "Spectacular fireworks bursting in night sky, champagne bubbles and glasses, elegant clock elements, starry night backdrop, golden sparkles rain, countdown visual elements, celebration particles, silver and gold palette";
+  }
+  if (contextLower.includes('natal') || contextLower.includes('feliz natal')) {
+    return "Gentle snow falling, Christmas tree with ornaments, warm red and gold decorations, cozy lighting, gift boxes with ribbons, holly leaves, twinkling fairy lights, winter magic atmosphere";
+  }
+  if (contextLower.includes('corporativo') || contextLower.includes('institucional') || contextLower.includes('empresa')) {
+    return "Sleek geometric patterns, glass and steel architecture reflections, modern city skyline, floating data visualization elements, clean gradient backgrounds, professional blue tones, subtle grid patterns";
+  }
+  if (contextLower.includes('motivacional') || contextLower.includes('sucesso') || contextLower.includes('conquista')) {
+    return "Epic mountain peak vista, golden hour light rays, inspirational horizon, soaring birds, achievement symbols, warm gradient sky, powerful natural elements, triumphant atmosphere";
+  }
+  
+  return "Dynamic geometric shapes, subtle particle effects, professional gradient overlays, elegant accent elements matching brand colors";
 };
 
 serve(async (req) => {
@@ -93,15 +128,14 @@ serve(async (req) => {
     }
 
     const { 
-      context,           // For AI to understand scene
-      headline,          // Exact text to render
-      subheadline,       // Exact text to render
-      cta,               // Exact text to render
+      context,
+      headline,
+      subheadline,
+      cta,
       brandProfile, 
       personImageBase64, 
       format, 
       variationsCount = 1,
-      // NEW: Logo and brand identity for professional design
       logoUrl,
       brandIdentity,
     } = await req.json();
@@ -123,7 +157,7 @@ serve(async (req) => {
       return respond({ success: false, error: "A foto da pessoa é obrigatória." }, 400);
     }
 
-    // Sanitize brandProfile
+    // Sanitize inputs
     const sanitizedBrandProfile = {
       name: brandProfile?.name || "",
       colors: Array.isArray(brandProfile?.colors) ? brandProfile.colors.slice(0, 5) : [],
@@ -131,7 +165,6 @@ serve(async (req) => {
       visual_style: brandProfile?.visual_style || "",
     };
 
-    // Sanitize brandIdentity
     const sanitizedBrandIdentity: BrandIdentity = {
       colors: Array.isArray(brandIdentity?.colors) ? brandIdentity.colors.slice(0, 5) : sanitizedBrandProfile.colors,
       typography: brandIdentity?.typography || {},
@@ -140,24 +173,21 @@ serve(async (req) => {
       recurringElements: Array.isArray(brandIdentity?.recurringElements) ? brandIdentity.recurringElements : [],
     };
 
-    console.log("[generate-creative-v2] Starting...");
+    console.log("[generate-creative-v2] Starting with SUPERIOR MODEL...");
     console.log("[generate-creative-v2] Context:", context);
     console.log("[generate-creative-v2] Headline:", headline);
-    console.log("[generate-creative-v2] Subheadline:", subheadline || "(none)");
-    console.log("[generate-creative-v2] CTA:", cta || "(none)");
     console.log("[generate-creative-v2] Format:", format);
-    console.log("[generate-creative-v2] Has Logo:", !!logoUrl);
-    console.log("[generate-creative-v2] Brand Colors:", sanitizedBrandIdentity.colors);
+    console.log("[generate-creative-v2] Has Logo for overlay:", !!logoUrl);
 
-    // ============ STEP 1: Art Director analyzes CONTEXT + BRAND ============
+    // ============ STEP 1: Art Director - More Creative ============
     const userPrompt = `Contexto da arte: ${context.slice(0, 300)}
 Perfil da marca: ${JSON.stringify(sanitizedBrandProfile)}
 Identidade visual: Cores ${sanitizedBrandIdentity.colors?.join(', ') || 'não definidas'}, Mood: ${sanitizedBrandIdentity.mood || 'profissional'}, Estilo: ${sanitizedBrandIdentity.visualStyle || 'moderno'}
 Formato: ${format}
 
-Analise o contexto e defina o cenário visual apropriado, mantendo consistência com a identidade da marca. NÃO sugira textos.`;
+IMPORTANTE: Seja CRIATIVO! Sugira elementos visuais RICOS e IMPACTANTES que façam esta arte se destacar. Evite composições genéricas.`;
 
-    console.log("[generate-creative-v2] Getting Art Director decision for scene...");
+    console.log("[generate-creative-v2] Getting Creative Art Director decision...");
 
     const artDirectorResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -201,124 +231,23 @@ Analise o contexto e defina o cenário visual apropriado, mantendo consistência
     }
 
     const decision = normalizeDecision(parsed);
-    console.log("[generate-creative-v2] Art Director decision:", decision);
+    console.log("[generate-creative-v2] Creative Art Director decision:", decision);
 
-    // ============ STEP 2: Generate Image with PROFESSIONAL PROMPT ============
+    // ============ STEP 2: Generate Image with CREATIVE PROMPT ============
     const positionText = decision.template === "pessoa_direita" 
       ? "on the right side of the frame"
       : decision.template === "pessoa_esquerda"
         ? "on the left side of the frame"
         : "centered in the frame";
 
-    // Build brand colors string
     const primaryColor = sanitizedBrandIdentity.colors?.[0] || "#3B82F6";
     const secondaryColor = sanitizedBrandIdentity.colors?.[1] || sanitizedBrandIdentity.colors?.[0] || "#8B5CF6";
     const brandColorsString = sanitizedBrandIdentity.colors?.length 
       ? sanitizedBrandIdentity.colors.join(", ") 
       : "professional blue and purple palette";
 
-    // Professional advertising prompt with safe zones and brand identity
-    const imagePrompt = `=== PROFESSIONAL ADVERTISING CREATIVE ===
-
-=== CRITICAL LAYOUT RULES (MUST FOLLOW) ===
-SAFE ZONE: Keep ALL text and important elements at least 5% away from ALL edges.
-- Top margin: minimum 5% from top edge before any text
-- Bottom margin: minimum 5% from bottom edge after CTA
-- Left/Right margins: minimum 5% padding on both sides
-NO TEXT OR IMPORTANT ELEMENTS SHOULD TOUCH THE EDGES. This is CRITICAL for professional design.
-
-=== BRAND IDENTITY (MUST APPLY) ===
-PRIMARY COLOR: ${primaryColor}
-SECONDARY COLOR: ${secondaryColor}
-FULL PALETTE: ${brandColorsString}
-TYPOGRAPHY STYLE: ${sanitizedBrandIdentity.typography?.style || "Modern bold sans-serif (Montserrat Bold style)"}
-VISUAL MOOD: ${sanitizedBrandIdentity.mood || "Professional and engaging"}
-VISUAL STYLE: ${sanitizedBrandIdentity.visualStyle || "Clean and modern"}
-BRAND ELEMENTS: ${sanitizedBrandIdentity.recurringElements?.join(", ") || "clean geometric accents"}
-
-Apply brand colors to:
-- CTA button background: Use PRIMARY brand color (${primaryColor})
-- Accent elements and decorations: Use brand palette
-- Subtle gradient overlays: Use brand colors with transparency
-- Text shadows/glows: Subtle brand color tint
-
-=== LOGO PLACEMENT ===
-${logoUrl ? `
-INCLUDE BRAND LOGO:
-- Position: Bottom-right corner OR top-left corner (choose best for composition)
-- Size: Small, non-intrusive (about 8-10% of image width)
-- Must be clearly visible but not dominant
-- Apply subtle shadow for visibility on any background
-- DO NOT stretch or distort the logo
-` : "NO LOGO - Do not add any logo or brand mark to this creative."}
-
-=== TYPOGRAPHY HIERARCHY (PROFESSIONAL ADVERTISING STANDARD) ===
-
-HEADLINE: "${headline}"
-- Font: Bold, modern sans-serif (Montserrat Bold or similar weight)
-- Size: Large, dominant - main visual text element
-- Color: White with subtle dark shadow for contrast
-- Position: Upper third of image, respecting 5% top margin
-- Alignment: Left-aligned or centered based on person position
-- COPY THIS TEXT EXACTLY - DO NOT MODIFY ANY CHARACTER
-
-${subheadline ? `
-SUBHEADLINE: "${subheadline}"
-- Font: Light/Regular weight, same font family
-- Size: 40-50% of headline size
-- Color: White with 90% opacity
-- Position: Directly below headline with 8-12px spacing
-- COPY THIS TEXT EXACTLY - DO NOT MODIFY ANY CHARACTER
-` : ""}
-
-${cta ? `
-CTA BUTTON: "${cta}"
-- Shape: Rounded rectangle (pill shape) with 20-30px border radius
-- Background: PRIMARY BRAND COLOR (${primaryColor}) - solid fill
-- Text: White or contrasting color, bold weight
-- Size: Prominent but not overwhelming
-- Position: Bottom area, respecting 5% bottom margin
-- Add subtle shadow for depth and clickability appearance
-- COPY THIS TEXT EXACTLY - DO NOT MODIFY ANY CHARACTER
-` : ""}
-
-=== VISUAL COMPOSITION ===
-
-PERSON FROM INPUT PHOTO:
-- CRITICAL: Keep IDENTICAL face and features from input photo
-- Position: ${positionText}
-- Pose: ${decision.pose_suggestion}
-- Natural integration with environment
-- Professional attire appropriate to context
-- Good lighting on face
-
-BACKGROUND SCENE (based on context "${context}"):
-${decision.scene_prompt}
-
-DECORATIVE ELEMENTS (to reinforce brand identity):
-- ${decision.decorative_elements || "Subtle geometric shapes using brand colors"}
-- Light gradient overlays using brand palette with low opacity
-- Consistent visual style matching brand mood: ${sanitizedBrandIdentity.visualStyle || "modern"}
-- DO NOT overdo decorations - keep it professional
-
-=== QUALITY STANDARDS ===
-- Commercial advertising photography quality
-- Professional studio-quality lighting
-- High resolution, print-ready output
-- NO watermarks of any kind
-- NO extra text beyond what is specified
-- NO duplicate text elements
-- Balanced composition following rule of thirds
-
-=== FINAL CRITICAL REMINDERS ===
-1. Person's face = IDENTICAL to input photo (same person, same features)
-2. All text = EXACTLY as written above (character by character, no changes, no corrections)
-3. Safe zones = 5% minimum from all edges
-4. Brand colors = Applied to CTA, accents, and decorative elements
-5. Professional quality = Agency-level advertising creative`;
-
-    console.log("[generate-creative-v2] Professional prompt prepared with brand identity");
-    console.log("[generate-creative-v2] User texts - Headline:", headline, "| Subheadline:", subheadline, "| CTA:", cta);
+    // Get contextual creative elements
+    const contextualElements = getContextualElements(context);
 
     // Generate requested number of variations
     const validCounts = [1, 2, 4];
@@ -326,8 +255,119 @@ DECORATIVE ELEMENTS (to reinforce brand identity):
     const generatedImages: string[] = [];
 
     for (let i = 0; i < actualVariations; i++) {
-      console.log(`[generate-creative-v2] Generating variation ${i + 1}/${actualVariations}...`);
+      console.log(`[generate-creative-v2] Generating variation ${i + 1}/${actualVariations} with SUPERIOR MODEL...`);
       
+      // Variation-specific creative direction
+      const variationStyles = [
+        "More minimalist and elegant, clean composition with strategic negative space",
+        "More dynamic and energetic, with movement, diagonal lines and visual tension",
+        "More decorative and rich, abundant brand elements and visual details",
+        "More dramatic and bold, high contrast lighting and powerful atmosphere"
+      ];
+      const variationInstruction = variationStyles[i % variationStyles.length];
+
+      // Creative professional prompt - NO LOGO (will be added via overlay)
+      const imagePrompt = `=== PROFESSIONAL ADVERTISING CREATIVE - VARIATION ${i + 1} ===
+
+=== CREATIVE DIRECTION (BREAK THE MOLD) ===
+This is NOT a generic stock photo. Create something VISUALLY STRIKING and MEMORABLE.
+VARIATION STYLE: ${variationInstruction}
+
+CREATIVE ELEMENTS FOR THIS CONTEXT:
+${contextualElements}
+
+COMPOSITION TECHNIQUES TO APPLY:
+- Dynamic diagonal lines and asymmetric layouts that create visual tension
+- Depth through foreground/background elements and atmospheric perspective
+- Light effects: lens flares, god rays, rim lighting, dramatic shadows
+- Color blocking with brand palette for visual impact
+- Movement and energy through particle effects and dynamic shapes
+
+=== CRITICAL LAYOUT RULES ===
+SAFE ZONE: Keep ALL text and elements at least 5% away from ALL edges.
+Text must NEVER touch or get cut by the frame edges.
+
+=== BRAND IDENTITY ===
+PRIMARY COLOR: ${primaryColor}
+SECONDARY COLOR: ${secondaryColor}
+FULL PALETTE: ${brandColorsString}
+VISUAL MOOD: ${sanitizedBrandIdentity.mood || "Professional and engaging"}
+
+Apply brand colors to:
+- CTA button background: PRIMARY brand color (${primaryColor})
+- Accent elements, decorations, and effects
+- Gradient overlays with brand colors at low opacity
+
+=== NO LOGO ===
+DO NOT add any logo, watermark, or brand mark to the image.
+The logo will be added separately as an overlay.
+
+=== TYPOGRAPHY HIERARCHY ===
+
+HEADLINE: "${headline}"
+- Font: Bold modern sans-serif (Montserrat Bold style)
+- Size: Large, dominant
+- Color: White with dark shadow for contrast
+- Position: Upper third, respecting 5% safe margin
+- COPY EXACTLY - NO CHANGES
+
+${subheadline ? `
+SUBHEADLINE: "${subheadline}"
+- Font: Light/Regular weight
+- Size: 40-50% of headline
+- Color: White with 90% opacity
+- Position: Below headline
+- COPY EXACTLY - NO CHANGES
+` : ""}
+
+${cta ? `
+CTA BUTTON: "${cta}"
+- Shape: Rounded rectangle (pill shape)
+- Background: ${primaryColor} (solid)
+- Text: White, bold
+- Position: Bottom area, respecting 5% margin
+- Add subtle shadow for depth
+- COPY EXACTLY - NO CHANGES
+` : ""}
+
+=== VISUAL COMPOSITION ===
+
+PERSON:
+- Position: ${positionText}
+- Pose: ${decision.pose_suggestion}
+- CRITICAL: Keep IDENTICAL face and features from input photo
+- Natural integration with environment
+- Good lighting on face, rim light for separation
+
+SCENE:
+${decision.scene_prompt}
+
+ATMOSPHERE:
+${decision.atmosphere || "Vibrant, professional, with dramatic lighting"}
+
+EFFECTS TO INCLUDE:
+${decision.suggested_effects || "Subtle lens flare, bokeh, particle effects"}
+
+CREATIVE ELEMENTS:
+${decision.creative_elements || contextualElements}
+
+=== QUALITY STANDARDS ===
+- Commercial advertising photography quality
+- Dramatic, professional lighting
+- High resolution, print-ready
+- NO watermarks, NO logos
+- NO duplicate text
+- Agency-level creative output
+
+=== FINAL REMINDERS ===
+1. Person's face = IDENTICAL to input photo
+2. All text = EXACTLY as specified (character by character)
+3. Safe zones = 5% minimum from all edges
+4. Brand colors = Applied throughout
+5. BE CREATIVE = This should be visually stunning, not generic`;
+
+      console.log("[generate-creative-v2] Using SUPERIOR MODEL: google/gemini-3-pro-image-preview");
+
       const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -335,7 +375,7 @@ DECORATIVE ELEMENTS (to reinforce brand identity):
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image-preview",
+          model: "google/gemini-3-pro-image-preview", // SUPERIOR MODEL
           messages: [
             {
               role: "user",
@@ -354,7 +394,7 @@ DECORATIVE ELEMENTS (to reinforce brand identity):
 
       if (!imageResponse.ok) {
         const errText = await imageResponse.text();
-        console.error(`[generate-creative-v2] Gemini image error (variation ${i + 1}):`, errText);
+        console.error(`[generate-creative-v2] Image generation error (variation ${i + 1}):`, errText);
         
         if (imageResponse.status === 429) {
           return respond({ 
@@ -377,7 +417,7 @@ DECORATIVE ELEMENTS (to reinforce brand identity):
       
       if (generatedImageUrl) {
         generatedImages.push(generatedImageUrl);
-        console.log(`[generate-creative-v2] Variation ${i + 1} generated successfully`);
+        console.log(`[generate-creative-v2] Variation ${i + 1} generated successfully with SUPERIOR MODEL`);
       }
     }
 
@@ -389,12 +429,11 @@ DECORATIVE ELEMENTS (to reinforce brand identity):
       }, 500);
     }
 
-    console.log(`[generate-creative-v2] Success! Generated ${generatedImages.length} images with professional branding`);
+    console.log(`[generate-creative-v2] Success! Generated ${generatedImages.length} CREATIVE images`);
 
     return respond({
       success: true,
       images: generatedImages,
-      // Return user's original texts (not AI-modified)
       headline: headline,
       subheadline: subheadline || undefined,
       cta: cta || undefined,
@@ -402,6 +441,11 @@ DECORATIVE ELEMENTS (to reinforce brand identity):
       style: decision.style,
       scene_prompt: decision.scene_prompt,
       pose_suggestion: decision.pose_suggestion,
+      creative_elements: decision.creative_elements,
+      atmosphere: decision.atmosphere,
+      // Return logo info for frontend overlay
+      logoUrl: logoUrl || null,
+      logoPosition: "bottom-right", // Frontend will use this for overlay
       brandApplied: {
         primaryColor,
         secondaryColor,
