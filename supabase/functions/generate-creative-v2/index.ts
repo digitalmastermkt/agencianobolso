@@ -9,42 +9,40 @@ interface ArtDirectorDecision {
   scene_prompt: string;
   style: "clean" | "minimal" | "premium";
   template: "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda";
-  headline: string;
-  subheadline?: string;
-  cta?: string;
   pose_suggestion?: string;
 }
 
-const artDirectorSystemPrompt = `Você é um Diretor de Arte sênior especializado em criativos publicitários.
+// Art Director now ONLY analyzes context to define scene - NO TEXT CREATION
+const artDirectorSystemPrompt = `Você é um Diretor de Arte sênior. Sua ÚNICA função é analisar o CONTEXTO fornecido e definir o CENÁRIO VISUAL apropriado.
 
-Seu papel é definir a DIREÇÃO VISUAL COMPLETA para um banner onde a pessoa da foto será RECRIADA em um novo cenário, mantendo sua identidade facial.
+IMPORTANTE:
+- NÃO crie ou sugira textos - os textos são fornecidos pelo usuário e são IMUTÁVEIS
+- Analise SEMANTICAMENTE o contexto para definir cenário, estilo e pose
 
-RESPONDA APENAS com JSON válido neste formato:
+MAPEAMENTO DE CONTEXTO → CENÁRIO:
+- Aniversário/Parabéns/Feliz aniversário → cenário festivo com balões coloridos, confete, bolo, cores vibrantes e alegres
+- Ano Novo/Réveillon/Feliz 2025/2026 → fogos de artifício, confete dourado, celebração noturna, champagne
+- Natal/Feliz Natal → decoração natalina, neve, árvore de natal, cores vermelhas e douradas
+- Promoção/Black Friday/Desconto → ambiente comercial moderno, elementos de urgência, cores vibrantes
+- Lançamento/Novidade → palco moderno, holofotes, elementos de destaque
+- Corporativo/Institucional → escritório moderno, ambiente profissional, cores neutras
+- Motivacional/Sucesso → paisagem inspiradora, luz dourada, horizonte, natureza épica
+- Casamento/Noivado → flores, ambiente romântico, tons suaves e elegantes
+
+RESPONDA APENAS com JSON válido:
 {
-  "scene_prompt": "descrição detalhada do cenário em INGLÊS - ambiente, iluminação, elementos decorativos",
+  "scene_prompt": "descrição detalhada do cenário em INGLÊS baseado no contexto analisado",
   "style": "clean" | "minimal" | "premium",
   "template": "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda",
-  "headline": "texto principal curto e impactante em português",
-  "subheadline": "texto secundário opcional em português",
-  "cta": "texto do botão opcional em português",
-  "pose_suggestion": "descrição da pose ideal em INGLÊS"
-}
+  "pose_suggestion": "descrição da pose apropriada ao contexto em INGLÊS"
+}`;
 
-REGRAS:
-- scene_prompt e pose_suggestion devem ser em INGLÊS para melhor resultado na IA de imagem
-- headline, subheadline e cta devem ser em PORTUGUÊS
-- Cenário deve ser profissional e adequado para publicidade
-- Sugira poses naturais e profissionais`;
-
-const normalizeDecision = (raw: Partial<ArtDirectorDecision>, fallbackHeadline: string): ArtDirectorDecision => {
+const normalizeDecision = (raw: Partial<ArtDirectorDecision>): ArtDirectorDecision => {
   const decision: ArtDirectorDecision = {
-    scene_prompt: raw?.scene_prompt ?? "Modern professional office with soft cinematic lighting, clean background with subtle gradient",
+    scene_prompt: raw?.scene_prompt ?? "Modern professional environment with soft lighting",
     style: raw?.style ?? "clean",
     template: raw?.template ?? "pessoa_centro",
-    headline: raw?.headline ?? fallbackHeadline,
-    subheadline: raw?.subheadline,
-    cta: raw?.cta,
-    pose_suggestion: raw?.pose_suggestion ?? "confident professional pose, natural smile, looking at camera",
+    pose_suggestion: raw?.pose_suggestion ?? "confident pose, natural smile, looking at camera",
   };
 
   if (!(["pessoa_direita", "pessoa_centro", "pessoa_esquerda"] as const).includes(decision.template)) {
@@ -76,10 +74,25 @@ serve(async (req) => {
       return respond({ success: false, error: "LOVABLE_API_KEY não configurada" }, 500);
     }
 
-    const { description, brandProfile, personImageBase64, format, variationsCount = 1 } = await req.json();
+    // NEW: Receive separate fields - context for AI, texts directly for image
+    const { 
+      context,           // For AI to understand scene (e.g., "Aniversário de 30 anos")
+      headline,          // Exact text to render (e.g., "Parabéns, João!")
+      subheadline,       // Exact text to render
+      cta,               // Exact text to render
+      brandProfile, 
+      personImageBase64, 
+      format, 
+      variationsCount = 1 
+    } = await req.json();
 
-    if (!description || typeof description !== "string") {
-      return respond({ success: false, error: "O campo description é obrigatório." }, 400);
+    // Validate required fields
+    if (!headline || typeof headline !== "string" || headline.trim().length === 0) {
+      return respond({ success: false, error: "O campo headline é obrigatório." }, 400);
+    }
+
+    if (!context || typeof context !== "string" || context.trim().length === 0) {
+      return respond({ success: false, error: "O campo context é obrigatório." }, 400);
     }
 
     if (!format || typeof format !== "string") {
@@ -96,22 +109,23 @@ serve(async (req) => {
       colors: Array.isArray(brandProfile?.colors) ? brandProfile.colors.slice(0, 5) : [],
       mood: brandProfile?.mood || "",
       visual_style: brandProfile?.visual_style || "",
-      overall_description: typeof brandProfile?.overall_description === "string" 
-        ? brandProfile.overall_description.slice(0, 500) 
-        : "",
     };
 
-    console.log("[generate-creative-v2] Starting with Gemini...");
+    console.log("[generate-creative-v2] Starting...");
+    console.log("[generate-creative-v2] Context:", context);
+    console.log("[generate-creative-v2] Headline:", headline);
+    console.log("[generate-creative-v2] Subheadline:", subheadline || "(none)");
+    console.log("[generate-creative-v2] CTA:", cta || "(none)");
     console.log("[generate-creative-v2] Format:", format);
 
-    // ============ STEP 1: Get Art Director Decision via Gemini ============
-    const userPrompt = `Briefing: ${description.slice(0, 800)}
+    // ============ STEP 1: Art Director analyzes CONTEXT only (not texts) ============
+    const userPrompt = `Contexto da arte: ${context.slice(0, 300)}
 Perfil da marca: ${JSON.stringify(sanitizedBrandProfile)}
 Formato: ${format}
 
-Defina a direção visual para um banner onde a pessoa da foto será recriada no cenário.`;
+Analise o contexto e defina o cenário visual apropriado. NÃO sugira textos.`;
 
-    console.log("[generate-creative-v2] Getting Art Director decision...");
+    console.log("[generate-creative-v2] Getting Art Director decision for scene...");
 
     const artDirectorResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -154,69 +168,71 @@ Defina a direção visual para um banner onde a pessoa da foto será recriada no
       parsed = {};
     }
 
-    const decision = normalizeDecision(parsed, description.slice(0, 50));
-    console.log("[generate-creative-v2] Art Director decision:", decision);
+    const decision = normalizeDecision(parsed);
+    console.log("[generate-creative-v2] Art Director scene decision:", decision);
 
-    // ============ STEP 2: Generate Image with Gemini (Character Consistency) ============
+    // ============ STEP 2: Generate Image with USER'S EXACT TEXTS ============
     const positionText = decision.template === "pessoa_direita" 
       ? "on the right side of the frame"
       : decision.template === "pessoa_esquerda"
         ? "on the left side of the frame"
         : "centered in the frame";
 
-    // IMPROVED prompt for Gemini - text preservation + character consistency
-    const imagePrompt = `=== CRITICAL RULES - READ FIRST ===
+    // Build text section - texts come DIRECTLY from user, not from AI
+    const textSection = `=== TEXT TO RENDER - COPY EXACTLY CHARACTER BY CHARACTER ===
+DO NOT modify, translate, correct spelling, or change ANY character.
+Even if text appears misspelled, keep it EXACTLY as provided. This is CRITICAL.
 
-1. CHARACTER IDENTITY: The person in the output MUST be the EXACT SAME PERSON from the input photo. Same face, same features, same skin tone, same identity. DO NOT create a different person.
+HEADLINE (large bold text at top): "${headline}"
+${subheadline ? `SUBHEADLINE (smaller text below headline): "${subheadline}"` : ''}
+${cta ? `CTA BUTTON (button text at bottom): "${cta}"` : ''}
 
-2. TEXT PRESERVATION - EXTREMELY IMPORTANT: 
-   Copy the text EXACTLY as written below. DO NOT modify, translate, correct spelling, or change ANY character.
-   Even if text appears to have errors, keep it EXACTLY as provided.
+COPY THESE STRINGS EXACTLY. ANY MODIFICATION IS A CRITICAL ERROR.`;
 
-=== TEXT TO RENDER (COPY EXACTLY - NO CHANGES) ===
-${decision.headline ? `HEADLINE: "${decision.headline}"` : ''}
-${decision.subheadline ? `SUBHEADLINE: "${decision.subheadline}"` : ''}
-${decision.cta ? `BUTTON: "${decision.cta}"` : ''}
+    const imagePrompt = `=== CRITICAL RULES ===
+
+1. CHARACTER IDENTITY: The person in output MUST be the EXACT SAME PERSON from input photo. Same face, same features, same skin tone. DO NOT create a different person.
+
+2. TEXT PRESERVATION - EXTREMELY IMPORTANT:
+${textSection}
 
 === VISUAL COMPOSITION ===
 
 PERSON FROM INPUT PHOTO:
-- Keep the IDENTICAL face and features from input photo
+- Keep IDENTICAL face and features from input
 - Position: ${positionText}
 - Pose: ${decision.pose_suggestion}
-- Natural integration with the environment
-- You may adjust clothing to be more professional if needed
+- Natural integration with environment
+- Professional attire if needed
 
-BACKGROUND SCENE:
+BACKGROUND SCENE (based on context "${context}"):
 ${decision.scene_prompt}
 
 TYPOGRAPHY STYLING:
-- Headline: Large, bold, modern sans-serif font (like Montserrat Bold), white color with subtle drop shadow
-- Position headline in upper area with good contrast against background
-${decision.subheadline ? '- Subheadline: Smaller, elegant font below headline, slightly transparent white' : ''}
-${decision.cta ? '- CTA Button: Rounded rectangle with vibrant brand color, white text, positioned at bottom' : ''}
+- Headline: Large, bold, modern sans-serif font (Montserrat Bold style), white with subtle shadow
+- Position headline in upper area with good contrast
+${subheadline ? '- Subheadline: Smaller elegant font below headline, slightly transparent white' : ''}
+${cta ? '- CTA Button: Rounded rectangle with brand color, white text, at bottom' : ''}
 
-DESIGN STYLE: ${decision.style} (${decision.style === 'premium' ? 'luxurious, sophisticated, rich textures' : decision.style === 'minimal' ? 'clean, simple, lots of whitespace' : 'balanced, professional, modern'})
+DESIGN STYLE: ${decision.style}
 
-BRAND COLORS: ${sanitizedBrandProfile.colors.length > 0 ? sanitizedBrandProfile.colors.join(', ') : 'modern professional palette'}
-Use these colors for accent elements, decorations, and CTA button.
+BRAND COLORS: ${sanitizedBrandProfile.colors.length > 0 ? sanitizedBrandProfile.colors.join(', ') : 'professional palette'}
 
-QUALITY REQUIREMENTS:
-- Commercial advertising photography quality
-- Professional studio lighting
-- High resolution, crisp details
-- Clean composition
+QUALITY:
+- Commercial advertising photography
+- Professional lighting
+- High resolution
 - NO watermarks
-- NO extra text beyond what's specified above
+- NO extra text beyond specified
 
 === FINAL REMINDER ===
 1. Person's face = IDENTICAL to input photo
-2. All text = EXACTLY as written above (no corrections, no translations)`;
+2. Text = EXACTLY as written above (character by character, no changes)`;
 
-    console.log("[generate-creative-v2] Generating image with Gemini...");
-    console.log("[generate-creative-v2] Image prompt:", imagePrompt);
+    console.log("[generate-creative-v2] Image prompt prepared");
+    console.log("[generate-creative-v2] User texts - Headline:", headline, "| Subheadline:", subheadline, "| CTA:", cta);
 
-    // Generate requested number of variations (1, 2, or 4)
+    // Generate requested number of variations
     const validCounts = [1, 2, 4];
     const actualVariations = validCounts.includes(variationsCount) ? variationsCount : 1;
     const generatedImages: string[] = [];
@@ -265,7 +281,6 @@ QUALITY REQUIREMENTS:
           }, 402);
         }
         
-        // Continue to next variation if one fails
         continue;
       }
 
@@ -291,9 +306,10 @@ QUALITY REQUIREMENTS:
     return respond({
       success: true,
       images: generatedImages,
-      headline: decision.headline,
-      subheadline: decision.subheadline,
-      cta: decision.cta,
+      // Return user's original texts (not AI-modified)
+      headline: headline,
+      subheadline: subheadline || undefined,
+      cta: cta || undefined,
       template: decision.template,
       style: decision.style,
       scene_prompt: decision.scene_prompt,
