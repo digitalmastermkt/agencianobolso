@@ -523,11 +523,29 @@ REGRA: Usar no mínimo 2 destas cores na arte!
 === TYPOGRAPHY WITH BRAND COLORS ===
 
 HEADLINE: "${headline}"
-- Font: Bold modern sans-serif (Montserrat Bold style)
+TYPOGRAPHY STYLE (choose based on context):
+- IMPACT: Very bold, condensed, maximum attention (for sales, urgency)
+- ELEGANT: Light weight, generous letter spacing (for premium, institutional)
+- PLAYFUL: Rounded, friendly letterforms (for celebration, festive)
+- CORPORATE: Clean, balanced weight (for business, professional)
+
+TEXT ORIENTATION (vary for creativity):
+- Horizontal (classic, reliable)
+- Diagonal 15-20° (dynamic, energetic)
+- Curved following a path (creative, unique)
+- Stacked vertically (modern, impactful)
+
+- Font: Bold modern sans-serif appropriate to style
 - Size: ${decision.protagonist === 'text' ? 'ENORMOUS, dominates the frame' : decision.protagonist === 'person' ? 'Medium, elegant, not dominant' : 'Large but balanced'}
 - Color: ${textColors.headline}
-- Strong shadow for contrast
+- Strong shadow for contrast and legibility
 - COPY EXACTLY - NO CHANGES
+
+COLOR CONTRAST RULE (CRITICAL FOR READABILITY):
+- If background is DARK → headline should be LIGHT (white, cream, or bright brand color)
+- If background is LIGHT → headline should be DARK or saturated brand color
+- NEVER use similar tones that reduce readability
+- Add text shadow or outline when needed for contrast
 
 ${subheadline ? `
 SUBHEADLINE: "${subheadline}"
@@ -539,11 +557,23 @@ SUBHEADLINE: "${subheadline}"
 ` : ""}
 
 ${cta ? `
-CTA BUTTON: "${cta}"
-- Shape: Rounded rectangle (pill shape)
-- Background: ${textColors.cta_bg}
-- Text: ${textColors.cta_text}, bold
-- Make it look CLICKABLE - add subtle shadow/glow
+CTA ELEMENT: "${cta}"
+Choose the BEST format for this context (NOT ALWAYS A BUTTON!):
+- BUTTON: Pill shape with solid background (for promotions, urgency, flash sales)
+- HIGHLIGHTED TEXT: Bold text with subtle underline or glow (for institutional, premium)
+- BADGE/TAG: Small floating element with accent color (for launches, novelty)
+- INTEGRATED: Text seamlessly integrated with design, arrow pointing (for premium, minimalist)
+- TEXT WITH ARROW: Bold CTA text with arrow icon "→" (for actions like "Saiba Mais →")
+
+Select format based on context:
+- Urgency/Sales/Promoção → BUTTON (pill shape)
+- Premium/Institutional/Corporativo → HIGHLIGHTED TEXT or INTEGRATED
+- Celebration/Festivo → BADGE or playful element
+- Launch/Lançamento → BADGE/TAG with glow
+
+Background: ${textColors.cta_bg}
+Text: ${textColors.cta_text}, bold
+Make it look CLICKABLE if button format
 - COPY EXACTLY - NO CHANGES
 ` : ""}
 
