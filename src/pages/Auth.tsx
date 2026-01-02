@@ -106,7 +106,7 @@ export default function Auth() {
 
       toast({
         title: "Login realizado!",
-        description: "Bem-vindo de volta ao SparkAgen."
+        description: "Bem-vindo de volta à Agência no Bolso."
       });
       navigate(from, { replace: true });
     } catch (error: any) {
@@ -265,18 +265,18 @@ export default function Auth() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="p-3 rounded-lg bg-gradient-creative text-white">
+              <div className="p-3 rounded-lg bg-gradient-creative text-white shadow-glow">
                 <Sparkles className="w-8 h-8" />
               </div>
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Acesse SparkAgen
+              Acesse Agência no Bolso
             </h1>
             <p className="text-muted-foreground">
-              Entre na plataforma de agentes de IA mais avançada
+              Sua plataforma de criação com IA
             </p>
-            <Badge variant="secondary" className="mt-2">
-              6 Agentes Especializados
+            <Badge className="mt-2 bg-green-500/10 text-green-600 border-green-500/30">
+              ✓ 1 Agente Disponível
             </Badge>
           </div>
 

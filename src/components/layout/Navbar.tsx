@@ -41,7 +41,7 @@ export function Navbar() {
               <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">AgênciaNoBolso AI</span>
+              <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">Agência no Bolso</span>
             </Link>
           </div>
 

@@ -5,17 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
-  TrendingUp, 
-  Heart, 
-  Zap, 
-  MessageCircle, 
-  Link as LinkIcon, 
-  Image,
+  Palette,
   ArrowRight,
-  BarChart3,
-  Clock,
-  Target,
-  Sparkles
+  Sparkles,
+  CheckCircle2
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionPanel } from "@/components/subscriptions/SubscriptionPanel";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
+import { useAgentAvailability } from "@/hooks/useAgentAvailability";
 
 interface AgentStats {
   id: string;
@@ -43,50 +37,21 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const { isAvailable, loading: availabilityLoading } = useAgentAvailability();
+  
   const agents = [
     {
-      id: "vendas",
-      name: "VENDAS",
-      icon: TrendingUp,
-      color: "from-emerald-500 to-teal-600",
-      path: "/agentes/vendas"
-    },
-    {
-      id: "storytelling", 
-      name: "STORYTELLING",
-      icon: Heart,
-      color: "from-pink-500 to-rose-600",
-      path: "/agentes/storytelling"
-    },
-    {
-      id: "viral",
-      name: "VIRAL",
-      icon: Zap,
-      color: "from-purple-500 to-violet-600",
-      path: "/agentes/viral"
-    },
-    {
-      id: "interacao",
-      name: "INTERAÇÃO",
-      icon: MessageCircle,
-      color: "from-blue-500 to-cyan-600",
-      path: "/agentes/interacao"
-    },
-    {
-      id: "conexao",
-      name: "CONEXÃO",
-      icon: LinkIcon,
-      color: "from-orange-500 to-amber-600",
-      path: "/agentes/conexao"
-    },
-    {
-      id: "banner",
-      name: "CRIADOR DE BANNER",
-      icon: Image,
-      color: "from-red-500 to-pink-600",
-      path: "/agentes/banner"
+      id: "diretor-arte",
+      name: "DIRETOR DE ARTE",
+      icon: Palette,
+      color: "from-violet-500 to-purple-600",
+      path: "/agentes/diretor-arte",
+      style: "Artes com IA"
     }
   ];
+
+  // Filter only available agents
+  const availableAgents = agents.filter(agent => isAvailable(agent.id));
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -198,63 +163,63 @@ export default function Dashboard() {
             <TrialStatusCard />
           </div>
 
-          {/* Agents Grid with Stats */}
+          {/* Featured Agent - Diretor de Arte */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground mb-6">Seus Agentes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {agentStats.map((agent) => {
-                const IconComponent = agent.icon;
-                const progressValue = totalGenerations > 0 ? (agent.usageCount / totalGenerations) * 100 : 0;
-                
-                return (
-                  <Card key={agent.id} className="group hover:shadow-card transition-all duration-300">
-                    <div className={`h-2 bg-gradient-to-r ${agent.color}`}></div>
-                    
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className={`p-3 rounded-lg bg-gradient-to-r ${agent.color} text-white`}>
-                            <IconComponent className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg font-bold text-foreground">
-                              {agent.name}
-                            </CardTitle>
-                            <Badge variant="secondary" className="mt-1 text-xs">
-                              {agent.usageCount} usos
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Uso relativo</span>
-                          <span className="font-medium">{Math.round(progressValue)}%</span>
-                        </div>
-                        <Progress value={progressValue} className="h-2" />
-                      </div>
-
-                      <div className="text-xs text-muted-foreground">
-                        Último uso: {formatDate(agent.lastUsed)}
-                      </div>
-
-                      <Link to={agent.path} className="block">
-                        <Button 
-                          className="w-full group-hover:shadow-glow transition-all duration-300"
-                          variant="gradient"
-                        >
-                          Usar Agente
-                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+            <div className="flex items-center gap-3 mb-6">
+              <CheckCircle2 className="w-6 h-6 text-green-500" />
+              <h2 className="text-2xl font-bold text-foreground">Agente Disponível</h2>
             </div>
+            
+            <Card className="group hover:shadow-neon hover:scale-[1.01] transition-all duration-300 ring-2 ring-primary/20 bg-gradient-to-br from-violet-500/5 to-purple-600/5">
+              <div className="h-2 bg-gradient-to-r from-violet-500 to-purple-600"></div>
+              
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all">
+                      <Palette className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-bold text-foreground">
+                        DIRETOR DE ARTE
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">Artes com IA</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-500/10 text-green-600 border-green-500/30 animate-pulse">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    Ativo
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <CardDescription className="text-base">
+                  Crie artes profissionais com IA que parecem feitas por um designer experiente. 
+                  Templates inteligentes, tipografia premium e paletas de cores harmoniosas.
+                </CardDescription>
+
+                <div className="flex flex-wrap gap-2">
+                  {["Template Inteligente", "Tipografia", "Paleta de Cores", "CTA Otimizado"].map((feature) => (
+                    <Badge key={feature} variant="outline" className="text-xs">
+                      {feature}
+                    </Badge>
+                  ))}
+                </div>
+
+                <Link to="/agentes/diretor-arte" className="block">
+                  <Button 
+                    className="w-full group-hover:shadow-glow transition-all duration-300"
+                    variant="gradient"
+                    size="lg"
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Criar Arte Agora
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Quick Actions */}
@@ -268,21 +233,21 @@ export default function Dashboard() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Link to="/agentes">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full hover:scale-[1.02] transition-transform">
                     <Sparkles className="w-4 h-4 mr-2" />
                     Ver Todos os Agentes
                   </Button>
                 </Link>
-                <Link to="/agentes/vendas">
-                  <Button variant="outline" className="w-full">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Criar Vídeo de Vendas
+                <Link to="/agentes/diretor-arte">
+                  <Button variant="gradient" className="w-full hover:scale-[1.02] transition-transform">
+                    <Palette className="w-4 h-4 mr-2" />
+                    Criar Arte com IA
                   </Button>
                 </Link>
-                <Link to="/agentes/viral">
-                  <Button variant="outline" className="w-full">
-                    <Zap className="w-4 h-4 mr-2" />
-                    Conteúdo Viral
+                <Link to="/treinamentos">
+                  <Button variant="outline" className="w-full hover:scale-[1.02] transition-transform">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Ver Treinamentos
                   </Button>
                 </Link>
               </div>
