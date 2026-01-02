@@ -501,7 +501,7 @@ export default function AgenteDiretorArte() {
     if (!contextText) {
       toast({
         title: "Contexto necessário",
-        description: "Descreva o contexto da arte (ex: aniversário, promoção, lançamento).",
+        description: "Descreva o contexto da arte (ex: promoção, lançamento, campanha comercial).",
         variant: "destructive",
       });
       return;
@@ -1538,7 +1538,7 @@ export default function AgenteDiretorArte() {
                     id="context"
                     value={contextDescription}
                     onChange={(e) => setContextDescription(e.target.value)}
-                    placeholder="Descreva o objetivo da arte... Ex: Aniversário de 30 anos do João, Promoção Black Friday, Feliz Ano Novo 2026"
+                    placeholder="Descreva o objetivo da arte... Ex: Campanha de tráfego pago, Lançamento de produto, Black Friday, Promoção de vendas"
                     className="mt-2 min-h-[80px] resize-none"
                     maxLength={300}
                   />
@@ -1567,7 +1567,7 @@ export default function AgenteDiretorArte() {
                       id="headline"
                       value={headline}
                       onChange={(e) => setHeadline(e.target.value)}
-                      placeholder="Ex: Parabéns, João Silva!"
+                      placeholder="Ex: Últimos Dias de Oferta!"
                       className="mt-1"
                       maxLength={100}
                     />
@@ -1581,7 +1581,7 @@ export default function AgenteDiretorArte() {
                       id="subheadline"
                       value={subheadline}
                       onChange={(e) => setSubheadline(e.target.value)}
-                      placeholder="Ex: Deus te abençoe e te guie sempre!"
+                      placeholder="Ex: Essa é sua última chance do ano"
                       className="mt-1"
                       maxLength={150}
                     />
@@ -1595,7 +1595,7 @@ export default function AgenteDiretorArte() {
                       id="cta"
                       value={cta}
                       onChange={(e) => setCta(e.target.value)}
-                      placeholder="Ex: Celebre Conosco"
+                      placeholder="Ex: Clique em Saiba Mais"
                       className="mt-1"
                       maxLength={50}
                     />
@@ -1693,7 +1693,7 @@ export default function AgenteDiretorArte() {
                     <div>
                       <p className="font-medium">Recriando você no cenário...</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        A IA está gerando 3 variações com preservação de identidade facial
+                        A IA está gerando {variationsCount} variação(ões) com preservação de identidade facial
                       </p>
                     </div>
                     <div className="flex justify-center gap-1 mt-4">
@@ -2004,7 +2004,7 @@ export default function AgenteDiretorArte() {
               Voltar
             </Button>
             
-            {currentStep < 5 && (
+            {currentStep < 5 && currentStep !== 4 && (
               <Button
                 type="button"
                 onClick={handleNextStep}
