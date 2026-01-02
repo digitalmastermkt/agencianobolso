@@ -182,6 +182,7 @@ export default function AgenteDiretorArte() {
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [preserveIdentity, setPreserveIdentity] = useState(true);
   const [decorationStyle, setDecorationStyle] = useState<'geometric' | 'neon' | 'lines' | 'corners'>('geometric');
+  const [variationsCount, setVariationsCount] = useState<1 | 2 | 4>(1);
   
   // Brand profile
   const [selectedBrandProfileId, setSelectedBrandProfileId] = useState<string | null>(null);
@@ -516,7 +517,7 @@ export default function AgenteDiretorArte() {
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
           personImageBase64,
-          variationsCount: 3, // Generate 3 variations
+          variationsCount, // User selected: 1, 2, or 4
         },
       });
 
@@ -1526,6 +1527,31 @@ export default function AgenteDiretorArte() {
                       {description.length}/500
                     </span>
                   </div>
+                </div>
+
+                {/* Variations Count Selector */}
+                <div>
+                  <Label className="font-medium mb-3 block">Quantidade de Variações</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([1, 2, 4] as const).map((count) => (
+                      <Button
+                        key={count}
+                        type="button"
+                        variant={variationsCount === count ? "default" : "outline"}
+                        className="flex flex-col items-center gap-1 h-auto py-3"
+                        onClick={() => setVariationsCount(count)}
+                      >
+                        <ImagePlus className="w-4 h-4" />
+                        <span className="text-sm font-medium">{count}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {count === 1 ? 'Mais barato' : count === 2 ? 'Equilibrado' : 'Mais opções'}
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Cada variação consome créditos. Escolha 1 para testar, 4 para mais opções.
+                  </p>
                 </div>
 
                 <Button 
