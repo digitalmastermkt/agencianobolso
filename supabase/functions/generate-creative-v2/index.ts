@@ -164,50 +164,61 @@ Defina a direção visual para um banner onde a pessoa da foto será recriada no
         ? "on the left side of the frame"
         : "centered in the frame";
 
-    // Optimized prompt for Gemini character consistency
-    const imagePrompt = `CHARACTER CONSISTENCY TASK - CRITICAL INSTRUCTION:
-You MUST keep the EXACT SAME PERSON from the input photo.
-The face, facial features, skin tone, and identity must be IDENTICAL to the input image.
-DO NOT create a different person. Preserve the person's appearance exactly.
+    // IMPROVED prompt for Gemini - text preservation + character consistency
+    const imagePrompt = `=== CRITICAL RULES - READ FIRST ===
 
-CREATE A PROFESSIONAL ADVERTISING BANNER:
+1. CHARACTER IDENTITY: The person in the output MUST be the EXACT SAME PERSON from the input photo. Same face, same features, same skin tone, same identity. DO NOT create a different person.
 
-PERSON (from input photo):
-- Keep EXACT face identity from input photo
+2. TEXT PRESERVATION - EXTREMELY IMPORTANT: 
+   Copy the text EXACTLY as written below. DO NOT modify, translate, correct spelling, or change ANY character.
+   Even if text appears to have errors, keep it EXACTLY as provided.
+
+=== TEXT TO RENDER (COPY EXACTLY - NO CHANGES) ===
+${decision.headline ? `HEADLINE: "${decision.headline}"` : ''}
+${decision.subheadline ? `SUBHEADLINE: "${decision.subheadline}"` : ''}
+${decision.cta ? `BUTTON: "${decision.cta}"` : ''}
+
+=== VISUAL COMPOSITION ===
+
+PERSON FROM INPUT PHOTO:
+- Keep the IDENTICAL face and features from input photo
 - Position: ${positionText}
 - Pose: ${decision.pose_suggestion}
-- Expression: confident, professional, approachable
-- The person must look NATURAL in the new environment
-- You may adjust clothing to match professional context
+- Natural integration with the environment
+- You may adjust clothing to be more professional if needed
 
-BACKGROUND/SCENE:
+BACKGROUND SCENE:
 ${decision.scene_prompt}
 
-TYPOGRAPHY (render as part of image):
-- Main headline: "${decision.headline}" 
-  Style: large, bold, modern sans-serif, white color with subtle shadow
-${decision.subheadline ? `- Subheadline: "${decision.subheadline}"
-  Style: smaller, elegant, below headline` : ''}
-${decision.cta ? `- CTA button: "${decision.cta}"
-  Style: rounded button, vibrant color, positioned at bottom` : ''}
+TYPOGRAPHY STYLING:
+- Headline: Large, bold, modern sans-serif font (like Montserrat Bold), white color with subtle drop shadow
+- Position headline in upper area with good contrast against background
+${decision.subheadline ? '- Subheadline: Smaller, elegant font below headline, slightly transparent white' : ''}
+${decision.cta ? '- CTA Button: Rounded rectangle with vibrant brand color, white text, positioned at bottom' : ''}
 
-VISUAL STYLE:
-- Style: ${decision.style} (${decision.style === 'premium' ? 'luxurious, sophisticated' : decision.style === 'minimal' ? 'clean, simple' : 'balanced, professional'})
-- Brand colors: ${sanitizedBrandProfile.colors.join(', ') || 'modern professional palette'}
-- Add subtle decorative elements (geometric shapes or accent lines) using brand colors
+DESIGN STYLE: ${decision.style} (${decision.style === 'premium' ? 'luxurious, sophisticated, rich textures' : decision.style === 'minimal' ? 'clean, simple, lots of whitespace' : 'balanced, professional, modern'})
 
-QUALITY:
-- Commercial advertising quality
+BRAND COLORS: ${sanitizedBrandProfile.colors.length > 0 ? sanitizedBrandProfile.colors.join(', ') : 'modern professional palette'}
+Use these colors for accent elements, decorations, and CTA button.
+
+QUALITY REQUIREMENTS:
+- Commercial advertising photography quality
 - Professional studio lighting
 - High resolution, crisp details
-- No watermarks, no extra text
+- Clean composition
+- NO watermarks
+- NO extra text beyond what's specified above
 
-REMEMBER: The person's face MUST be identical to the input photo.`;
+=== FINAL REMINDER ===
+1. Person's face = IDENTICAL to input photo
+2. All text = EXACTLY as written above (no corrections, no translations)`;
 
     console.log("[generate-creative-v2] Generating image with Gemini...");
+    console.log("[generate-creative-v2] Image prompt:", imagePrompt);
 
-    // Generate requested number of variations (max 3)
-    const actualVariations = Math.min(Math.max(1, variationsCount), 3);
+    // Generate requested number of variations (1, 2, or 4)
+    const validCounts = [1, 2, 4];
+    const actualVariations = validCounts.includes(variationsCount) ? variationsCount : 1;
     const generatedImages: string[] = [];
 
     for (let i = 0; i < actualVariations; i++) {
