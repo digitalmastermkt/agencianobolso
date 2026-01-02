@@ -48,6 +48,8 @@ import {
   Wand2,
   CheckCircle2,
   ImagePlus,
+  Package,
+  FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -185,9 +187,11 @@ export default function AgenteDiretorArte() {
   
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
-  const [preserveIdentity, setPreserveIdentity] = useState(true);
+  const [generationMode, setGenerationMode] = useState<'person' | 'product' | 'text-only'>('person');
   const [variationsCount, setVariationsCount] = useState<1 | 2 | 4>(1);
   const [includeLogo, setIncludeLogo] = useState(true);
+  const [productImage, setProductImage] = useState<string | null>(null);
+  const productInputRef = useRef<HTMLInputElement>(null);
   
   // Brand profile
   const [selectedBrandProfileId, setSelectedBrandProfileId] = useState<string | null>(null);
@@ -330,7 +334,7 @@ export default function AgenteDiretorArte() {
     setPersonCutoutUrl(null);
     setSelectedGalleryPhoto(null);
 
-    if (preserveIdentity) {
+    if (generationMode === 'person') {
       try {
         toast({
           title: "Processando imagem...",
@@ -507,10 +511,20 @@ export default function AgenteDiretorArte() {
       return;
     }
 
-    if (!images[0]) {
+    // Validate image based on mode
+    if (generationMode === 'person' && !images[0]) {
       toast({
         title: "Foto necessária",
-        description: "Faça upload de uma foto para gerar o criativo.",
+        description: "Faça upload de uma foto sua para gerar o criativo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (generationMode === 'product' && !productImage) {
+      toast({
+        title: "Foto do produto necessária",
+        description: "Faça upload de uma foto do seu produto.",
         variant: "destructive",
       });
       return;
@@ -524,7 +538,8 @@ export default function AgenteDiretorArte() {
     setSelectedVariationId(null);
 
     try {
-      const personImageBase64 = images[0];
+      // Determine which image to send based on mode
+      const imageToSend = generationMode === 'product' ? productImage : images[0];
 
       // Use new V2 edge function for AI-powered creative generation
       // Pass user's exact texts separately from context
@@ -536,7 +551,9 @@ export default function AgenteDiretorArte() {
           cta: cta.trim() || undefined, // Exact text
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
-          personImageBase64,
+          personImageBase64: generationMode === 'person' ? imageToSend : undefined,
+          productImageBase64: generationMode === 'product' ? imageToSend : undefined,
+          generationMode, // NEW: 'person' | 'product' | 'text-only'
           variationsCount, // User selected: 1, 2, or 4
           // NEW: Logo and brand identity for professional design
           logoUrl: includeLogo && brandProfile?.logo_url ? brandProfile.logo_url : null,
@@ -796,7 +813,7 @@ export default function AgenteDiretorArte() {
         throw new Error('Não foi possível criar o canvas');
       }
 
-      const bgUrl = preserveIdentity ? backgroundImageUrl : (generatedImageUrl || backgroundImageUrl);
+      const bgUrl = generationMode === 'person' ? backgroundImageUrl : (generatedImageUrl || backgroundImageUrl);
       if (!bgUrl) {
         throw new Error('Nenhuma imagem de fundo disponível');
       }
@@ -810,7 +827,7 @@ export default function AgenteDiretorArte() {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height * 0.5);
 
-      if (preserveIdentity && images[0]) {
+      if (generationMode === 'person' && images[0]) {
         const personImage = await loadImage(personCutoutUrl || images[0]);
         const personHeight = height * 0.7;
         const personWidth = (personImage.width / personImage.height) * personHeight;
@@ -983,7 +1000,7 @@ export default function AgenteDiretorArte() {
   useEffect(() => {
     if (!decision) return;
     
-    const bgImage = preserveIdentity ? backgroundImageUrl : generatedImageUrl;
+    const bgImage = generationMode === 'person' ? backgroundImageUrl : generatedImageUrl;
     if (!bgImage) return;
     
     if (limitReached) return;
@@ -996,8 +1013,8 @@ export default function AgenteDiretorArte() {
       id: crypto.randomUUID(),
       format: selectedFormat,
       backgroundImageUrl: bgImage,
-      personPhotoUrl: preserveIdentity ? images[0] : undefined,
-      personCutoutUrl: preserveIdentity ? personCutoutUrl ?? undefined : undefined,
+      personPhotoUrl: generationMode === 'person' ? images[0] : undefined,
+      personCutoutUrl: generationMode === 'person' ? personCutoutUrl ?? undefined : undefined,
       personPosition,
       headline: decision.headline,
       subheadline: decision.subheadline,
@@ -1382,28 +1399,69 @@ export default function AgenteDiretorArte() {
                   </div>
                 </div>
 
-                {/* Preserve Identity Toggle */}
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="preserve-identity" className="font-medium">
-                      Preservar Identidade
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {preserveIdentity 
-                        ? "Sua foto será sobreposta ao cenário gerado pela IA" 
-                        : "A IA gerará a pessoa + cenário (pode distorcer)"}
-                    </p>
+                {/* Generation Mode Selector */}
+                <div>
+                  <Label className="font-medium mb-3 block">Tipo de Arte</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setGenerationMode('person')}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        generationMode === 'person'
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                          : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/50'
+                      }`}
+                    >
+                      <User className={`w-6 h-6 ${generationMode === 'person' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className={`text-sm font-medium ${generationMode === 'person' ? 'text-primary' : ''}`}>
+                        Pessoa
+                      </span>
+                      <span className="text-[10px] text-muted-foreground text-center leading-tight">
+                        Inclui sua foto
+                      </span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setGenerationMode('product')}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        generationMode === 'product'
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                          : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/50'
+                      }`}
+                    >
+                      <Package className={`w-6 h-6 ${generationMode === 'product' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className={`text-sm font-medium ${generationMode === 'product' ? 'text-primary' : ''}`}>
+                        Produto
+                      </span>
+                      <span className="text-[10px] text-muted-foreground text-center leading-tight">
+                        Destaque seu produto
+                      </span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setGenerationMode('text-only')}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        generationMode === 'text-only'
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                          : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/50'
+                      }`}
+                    >
+                      <FileText className={`w-6 h-6 ${generationMode === 'text-only' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className={`text-sm font-medium ${generationMode === 'text-only' ? 'text-primary' : ''}`}>
+                        Texto
+                      </span>
+                      <span className="text-[10px] text-muted-foreground text-center leading-tight">
+                        Só tipografia
+                      </span>
+                    </button>
                   </div>
-                  <Switch
-                    id="preserve-identity"
-                    checked={preserveIdentity}
-                    onCheckedChange={setPreserveIdentity}
-                  />
                 </div>
 
 
-                {/* Gallery Photos */}
-                {personPhotos.length > 0 && (
+                {/* Gallery Photos - Only for person mode */}
+                {generationMode === 'person' && personPhotos.length > 0 && (
                   <div>
                     <Label className="font-medium mb-3 block">Fotos da Galeria</Label>
                     <div className="grid grid-cols-4 gap-2">
@@ -1429,81 +1487,160 @@ export default function AgenteDiretorArte() {
                   </div>
                 )}
 
-                {/* Upload Photo */}
-                <div>
-                  <Label className="font-medium mb-2 block">
-                    {preserveIdentity ? "Sua Foto (será sobreposta)" : "Referência Visual"}
-                  </Label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={`w-full border-dashed border-2 ${inputHeight}`}
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={images.length >= 1 || isRemovingBg}
-                  >
-                    <Upload className="w-5 h-5 mr-2" />
-                    {isRemovingBg ? 'Processando...' : 'Upload Nova Foto'}
-                  </Button>
+                {/* Person Photo Upload - Only for person mode */}
+                {generationMode === 'person' && (
+                  <div>
+                    <Label className="font-medium mb-2 block">
+                      Sua Foto
+                    </Label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={`w-full border-dashed border-2 ${inputHeight}`}
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={images.length >= 1 || isRemovingBg}
+                    >
+                      <Upload className="w-5 h-5 mr-2" />
+                      {isRemovingBg ? 'Processando...' : 'Upload Nova Foto'}
+                    </Button>
 
-                  {isRemovingBg && (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Scissors className="w-4 h-4 animate-pulse" />
-                        <span>Removendo fundo... {bgRemovalProgress}%</span>
-                      </div>
-                      <Progress value={bgRemovalProgress} className="h-2" />
-                    </div>
-                  )}
-
-                  {images.length > 0 && (
-                    <div className="mt-4">
-                      <div className="relative inline-block">
-                        <div className="w-24 h-24 rounded-lg overflow-hidden border bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Crect%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3C%2Fsvg%3E')]">
-                          <img 
-                            src={personCutoutUrl || images[0]} 
-                            alt="Foto selecionada"
-                            className="w-full h-full object-cover"
-                          />
+                    {isRemovingBg && (
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Scissors className="w-4 h-4 animate-pulse" />
+                          <span>Removendo fundo... {bgRemovalProgress}%</span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => removeImage(0)}
-                          className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                        {isRemovingBg && (
-                          <div className="absolute inset-0 bg-background/80 rounded-lg flex items-center justify-center">
-                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                          </div>
-                        )}
-                        {personCutoutUrl && (
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                              <Check className="w-2.5 h-2.5 mr-0.5" />
-                              Sem fundo
-                            </Badge>
-                          </div>
-                        )}
+                        <Progress value={bgRemovalProgress} className="h-2" />
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {bgRemovalError && (
-                    <div className="mt-2 flex items-center gap-2 text-xs text-destructive">
-                      <AlertCircle className="w-3 h-3" />
-                      {bgRemovalError}
+                    {images.length > 0 && (
+                      <div className="mt-4">
+                        <div className="relative inline-block">
+                          <div className="w-24 h-24 rounded-lg overflow-hidden border bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Crect%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3C%2Fsvg%3E')]">
+                            <img 
+                              src={personCutoutUrl || images[0]} 
+                              alt="Foto selecionada"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(0)}
+                            className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          {isRemovingBg && (
+                            <div className="absolute inset-0 bg-background/80 rounded-lg flex items-center justify-center">
+                              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                            </div>
+                          )}
+                          {personCutoutUrl && (
+                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                <Check className="w-2.5 h-2.5 mr-0.5" />
+                                Sem fundo
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {bgRemovalError && (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-destructive">
+                        <AlertCircle className="w-3 h-3" />
+                        {bgRemovalError}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Product Photo Upload - Only for product mode */}
+                {generationMode === 'product' && (
+                  <div>
+                    <Label className="font-medium mb-2 block">
+                      Foto do Produto
+                    </Label>
+                    <input
+                      ref={productInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (e) => {
+                            if (e.target?.result) {
+                              setProductImage(e.target.result as string);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={`w-full border-dashed border-2 ${inputHeight}`}
+                      onClick={() => productInputRef.current?.click()}
+                      disabled={!!productImage}
+                    >
+                      <Package className="w-5 h-5 mr-2" />
+                      Upload Foto do Produto
+                    </Button>
+
+                    {productImage && (
+                      <div className="mt-4">
+                        <div className="relative inline-block">
+                          <div className="w-24 h-24 rounded-lg overflow-hidden border">
+                            <img 
+                              src={productImage} 
+                              alt="Produto"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setProductImage(null)}
+                            className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Dica: Use uma foto com fundo claro ou transparente para melhor resultado.
+                    </p>
+                  </div>
+                )}
+
+                {/* Text-only mode info */}
+                {generationMode === 'text-only' && (
+                  <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <FileText className="w-5 h-5" />
+                      <span className="text-sm font-medium">Modo Tipografia</span>
                     </div>
-                  )}
-                </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      A arte será gerada apenas com texto e elementos gráficos, sem fotos. 
+                      Ideal para promoções, anúncios institucionais e campanhas focadas na mensagem.
+                    </p>
+                  </div>
+                )}
 
                 {/* Context - For AI scene understanding */}
                 <div>

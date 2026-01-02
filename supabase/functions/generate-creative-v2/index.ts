@@ -287,6 +287,59 @@ PROTAGONIST: BALANCED (Equilíbrio)
   return instructions[protagonist] || instructions['balanced'];
 };
 
+// Get mode-specific instructions
+const getModeInstructions = (mode: string): { focus: string; composition: string } => {
+  switch (mode) {
+    case 'product':
+      return {
+        focus: `
+MODO: PRODUTO (Product Hero Shot)
+- PRODUTO é o PROTAGONISTA ABSOLUTO da arte
+- Produto deve ocupar 50-70% do frame, centralizado ou em posição de destaque
+- Iluminação profissional de estúdio focada no produto
+- Fundo limpo ou com gradiente sutil usando cores da marca
+- Sem pessoas - apenas o produto como estrela`,
+        composition: `
+COMPOSIÇÃO PARA PRODUTO:
+- Produto em destaque central ou ligeiramente deslocado para criar interesse
+- Texto posicionado ao redor do produto, NUNCA sobreposto
+- Sombra suave e realista sob o produto
+- Reflexos sutis para profundidade
+- Elementos gráficos da marca ao redor`
+      };
+    case 'text-only':
+      return {
+        focus: `
+MODO: TEXTO (Typography-Driven Design)
+- TIPOGRAFIA é o PROTAGONISTA ABSOLUTO
+- NENHUMA pessoa ou produto na arte
+- Design 100% gráfico, focado na mensagem
+- Use formas geométricas, gradientes e elementos abstratos
+- Cores da marca como elementos visuais principais`,
+        composition: `
+COMPOSIÇÃO PARA TEXTO:
+- Headline GIGANTE como elemento visual principal
+- Fundo abstrato ou gradiente usando cores da marca
+- Elementos gráficos sutis (linhas, formas, partículas)
+- Alta legibilidade é prioridade máxima
+- Design moderno, limpo, impactante`
+      };
+    default: // 'person'
+      return {
+        focus: `
+MODO: PESSOA (Human Connection)
+- PESSOA é o elemento de conexão humana
+- Integrar pessoa naturalmente ao cenário
+- Expressão e pose profissionais`,
+        composition: `
+COMPOSIÇÃO COM PESSOA:
+- Pessoa posicionada estrategicamente no frame
+- Texto complementando, não competindo
+- Integração cromática natural`
+      };
+  }
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -313,6 +366,8 @@ serve(async (req) => {
       cta,
       brandProfile, 
       personImageBase64, 
+      productImageBase64,
+      generationMode = 'person', // 'person' | 'product' | 'text-only'
       format, 
       variationsCount = 1,
       logoUrl,
@@ -332,9 +387,16 @@ serve(async (req) => {
       return respond({ success: false, error: "O campo format é obrigatório." }, 400);
     }
 
-    if (!personImageBase64 || typeof personImageBase64 !== "string") {
-      return respond({ success: false, error: "A foto da pessoa é obrigatória." }, 400);
+    // Validate image based on mode
+    if (generationMode === 'person' && (!personImageBase64 || typeof personImageBase64 !== "string")) {
+      return respond({ success: false, error: "A foto da pessoa é obrigatória para o modo 'pessoa'." }, 400);
     }
+
+    if (generationMode === 'product' && (!productImageBase64 || typeof productImageBase64 !== "string")) {
+      return respond({ success: false, error: "A foto do produto é obrigatória para o modo 'produto'." }, 400);
+    }
+
+    console.log("[generate-creative-v2] Generation mode:", generationMode);
 
     // Sanitize inputs
     const sanitizedBrandProfile = {
@@ -452,6 +514,9 @@ IMPORTANTE:
     // Get protagonist instructions
     const protagonistInstructions = getProtagonistInstructions(decision.protagonist);
 
+    // Get mode-specific instructions
+    const modeInstructions = getModeInstructions(generationMode);
+
     // Get text colors from AI decision
     const textColors = decision.text_colors || {
       headline: "#FFFFFF",
@@ -475,17 +540,21 @@ IMPORTANTE:
       const variationLayout = layoutVariations[i % layoutVariations.length];
       const variationLayoutInstructions = getLayoutInstructions(variationLayout, positionText);
 
-      // Professional brand prompt with philosophy
+      // Professional brand prompt with philosophy - adapted for generation mode
       const imagePrompt = `=== DIRETOR DE ARTE SÊNIOR - CRIATIVO PROFISSIONAL - VARIAÇÃO ${i + 1} ===
+
+=== MODO DE GERAÇÃO: ${generationMode.toUpperCase()} ===
+${modeInstructions.focus}
+
+${modeInstructions.composition}
 
 === PRINCÍPIOS FUNDAMENTAIS (OBRIGATÓRIOS) ===
 1. IDENTIDADE VISUAL É FIXA - Fundo e cenário são VARIÁVEIS
 2. O fundo deve REFORÇAR a mensagem, NUNCA COMPETIR com ela
 3. A marca deve ser RECONHECIDA mesmo com fundos diferentes
-4. APENAS UM PROTAGONISTA nesta arte
 
-=== PROTAGONISTA DESTA ARTE ===
-${protagonistInstructions}
+${generationMode === 'person' ? `=== PROTAGONISTA DESTA ARTE ===
+${protagonistInstructions}` : ''}
 
 === LAYOUT STYLE: ${variationLayout.toUpperCase()} ===
 ${variationLayoutInstructions}
@@ -536,7 +605,7 @@ TEXT ORIENTATION (vary for creativity):
 - Stacked vertically (modern, impactful)
 
 - Font: Bold modern sans-serif appropriate to style
-- Size: ${decision.protagonist === 'text' ? 'ENORMOUS, dominates the frame' : decision.protagonist === 'person' ? 'Medium, elegant, not dominant' : 'Large but balanced'}
+- Size: ${generationMode === 'text-only' ? 'ENORMOUS, dominates the frame as the main visual element' : decision.protagonist === 'text' ? 'ENORMOUS, dominates the frame' : decision.protagonist === 'person' ? 'Medium, elegant, not dominant' : 'Large but balanced'}
 - Color: ${textColors.headline}
 - Strong shadow for contrast and legibility
 - COPY EXACTLY - NO CHANGES
@@ -565,18 +634,13 @@ Choose the BEST format for this context (NOT ALWAYS A BUTTON!):
 - INTEGRATED: Text seamlessly integrated with design, arrow pointing (for premium, minimalist)
 - TEXT WITH ARROW: Bold CTA text with arrow icon "→" (for actions like "Saiba Mais →")
 
-Select format based on context:
-- Urgency/Sales/Promoção → BUTTON (pill shape)
-- Premium/Institutional/Corporativo → HIGHLIGHTED TEXT or INTEGRATED
-- Celebration/Festivo → BADGE or playful element
-- Launch/Lançamento → BADGE/TAG with glow
-
 Background: ${textColors.cta_bg}
 Text: ${textColors.cta_text}, bold
 Make it look CLICKABLE if button format
 - COPY EXACTLY - NO CHANGES
 ` : ""}
 
+${generationMode === 'person' ? `
 === INTEGRAÇÃO HUMANA (PESSOA COMO ELEMENTO ESTRUTURAL) ===
 Position: ${positionText}
 Pose: ${decision.pose_suggestion}
@@ -585,6 +649,17 @@ CRITICAL: Keep IDENTICAL face and features from input photo
 Postura profissional, expressão natural
 Integração cromática com o fundo (NÃO parecer "colado" ou recortado)
 A pessoa deve parecer PARTE DO SISTEMA VISUAL, não um adesivo
+` : ''}
+
+${generationMode === 'product' ? `
+=== INTEGRAÇÃO DO PRODUTO ===
+- Produto deve ser o HERÓI VISUAL da composição
+- Posicionar produto com iluminação profissional de estúdio
+- Sombra realista e reflexos sutis
+- Fundo complementar, não competitivo
+- Texto posicionado ao redor, NUNCA sobre o produto
+- O produto da imagem de referência deve ser reproduzido FIELMENTE
+` : ''}
 
 === SCENE ===
 ${decision.scene_prompt}
@@ -610,9 +685,11 @@ ${decision.creative_elements || contextualElements}
 1. ✓ Identidade visual respeitada (mínimo 2 cores da marca USADAS)
 2. ✓ Fundo coerente com o contexto (sustenta, não compete)
 3. ✓ Texto legível em 1 segundo
-4. ✓ PROTAGONISTA CLARO: ${decision.protagonist === 'text' ? 'TEXTO é o herói' : decision.protagonist === 'person' ? 'PESSOA é o herói' : 'Equilíbrio texto/pessoa'}
+4. ✓ MODO: ${generationMode.toUpperCase()}
 5. ✓ Arte parece parte de uma SÉRIE, não isolada
-6. ✓ Pessoa integrada naturalmente (não parece recortada/colada)
+${generationMode === 'person' ? '6. ✓ Pessoa integrada naturalmente (não parece recortada/colada)' : ''}
+${generationMode === 'product' ? '6. ✓ Produto em destaque com iluminação profissional' : ''}
+${generationMode === 'text-only' ? '6. ✓ Tipografia como elemento visual principal' : ''}
 7. ✓ CTA proeminente e clicável
 8. ✓ LAYOUT = ${variationLayout}
 
