@@ -10,11 +10,27 @@ import {
   Link as LinkIcon, 
   Image,
   ArrowRight,
-  Palette
+  Palette,
+  Clock,
+  CheckCircle2,
+  Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAgentAvailability } from "@/hooks/useAgentAvailability";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const agents = [
+  {
+    id: "diretor-arte",
+    name: "DIRETOR DE ARTE",
+    description: "Crie artes profissionais com IA que parecem feitas por um designer experiente",
+    icon: Palette,
+    style: "Design Profissional",
+    features: ["Template Inteligente", "Tipografia", "Paleta de Cores", "CTA Otimizado"],
+    color: "from-violet-500 to-purple-600",
+    path: "/agentes/diretor-arte"
+  },
   {
     id: "vendas",
     name: "VENDAS",
@@ -64,30 +80,16 @@ const agents = [
     features: ["Bastidores", "Humanização", "Vínculo Emocional"],
     color: "from-orange-500 to-amber-600",
     path: "/agentes/conexao"
-  },
-  {
-    id: "banner",
-    name: "CRIADOR DE BANNER",
-    description: "Crie posts visuais estilo banner para redes sociais",
-    icon: Image,
-    style: "Design Profissional",
-    features: ["Copy Publicitária", "Prompt para IA", "Paleta de Cores"],
-    color: "from-red-500 to-pink-600",
-    path: "/agentes/banner"
-  },
-  {
-    id: "diretor-arte",
-    name: "DIRETOR DE ARTE",
-    description: "Analisa prints e retorna decisões de design em JSON",
-    icon: Palette,
-    style: "Decisor de Template",
-    features: ["Template", "Headline", "Paleta de Cores", "Estilo"],
-    color: "from-violet-500 to-purple-600",
-    path: "/agentes/diretor-arte"
   }
 ];
 
 export default function Agentes() {
+  const { isAvailable, getComingSoonMessage, loading, availableCount, totalCount } = useAgentAvailability();
+
+  // Separate available and coming soon agents
+  const availableAgents = agents.filter(agent => isAvailable(agent.id));
+  const comingSoonAgents = agents.filter(agent => !isAvailable(agent.id));
+
   return (
     <DashboardLayout>
       {/* Hero Section */}
@@ -101,92 +103,223 @@ export default function Agentes() {
                 Powered by AI
               </span>
             </h1>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto mb-8">
-              6 especialistas em IA para criar conteúdo viral, roteiros de vendas, 
-              stories interativos e banners profissionais para suas redes sociais.
+            <p className="text-xl text-white/80 max-w-3xl mx-auto mb-6">
+              Especialistas em IA para criar conteúdo profissional, 
+              roteiros de vendas, stories interativos e artes para suas redes sociais.
             </p>
+            {!loading && (
+              <Badge className="bg-white/20 text-white border-white/30 text-lg px-4 py-2">
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                {availableCount} de {totalCount} agentes disponíveis
+              </Badge>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Agents Grid */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {agents.map((agent) => {
-              const IconComponent = agent.icon;
-              return (
-                <Card key={agent.id} className="group hover:shadow-card transition-all duration-300 border-0 bg-white/50 backdrop-blur-sm overflow-hidden">
-                  <div className={`h-2 bg-gradient-to-r ${agent.color}`}></div>
-                  
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-3 rounded-lg bg-gradient-to-r ${agent.color} text-white`}>
-                        <IconComponent className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-bold text-foreground">
-                          {agent.name}
-                        </CardTitle>
-                        <Badge variant="secondary" className="mt-1 text-xs">
-                          {agent.style}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    <CardDescription className="text-muted-foreground leading-relaxed">
-                      {agent.description}
-                    </CardDescription>
-
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold text-foreground">Features:</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {agent.features.map((feature, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {feature}
+      {/* Available Agents Section */}
+      {availableAgents.length > 0 && (
+        <section className="py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3 mb-8">
+              <CheckCircle2 className="w-6 h-6 text-green-500" />
+              <h2 className="text-2xl font-bold text-foreground">Disponíveis Agora</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {loading ? (
+                Array.from({ length: 1 }).map((_, i) => (
+                  <Card key={i} className="overflow-hidden">
+                    <Skeleton className="h-2 w-full" />
+                    <CardHeader><Skeleton className="h-16 w-full" /></CardHeader>
+                    <CardContent><Skeleton className="h-32 w-full" /></CardContent>
+                  </Card>
+                ))
+              ) : (
+                availableAgents.map((agent) => {
+                  const IconComponent = agent.icon;
+                  return (
+                    <Card 
+                      key={agent.id} 
+                      className="group hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 border-0 bg-white/50 dark:bg-white/5 backdrop-blur-sm overflow-hidden hover:-translate-y-1"
+                    >
+                      <div className={`h-2 bg-gradient-to-r ${agent.color}`}></div>
+                      
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className={`p-3 rounded-lg bg-gradient-to-r ${agent.color} text-white shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300`}>
+                              <IconComponent className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-lg font-bold text-foreground">
+                                {agent.name}
+                              </CardTitle>
+                              <Badge variant="secondary" className="mt-1 text-xs">
+                                {agent.style}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Ativo
                           </Badge>
-                        ))}
-                      </div>
-                    </div>
+                        </div>
+                      </CardHeader>
 
-                    <Link to={agent.path} className="block">
-                      <Button 
-                        className="w-full group-hover:shadow-glow transition-all duration-300"
-                        variant="gradient"
-                      >
-                        Usar Agente
-                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                      <CardContent className="space-y-4">
+                        <CardDescription className="text-muted-foreground leading-relaxed">
+                          {agent.description}
+                        </CardDescription>
+
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-semibold text-foreground">Features:</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {agent.features.map((feature, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {feature}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <Link to={agent.path} className="block">
+                          <Button 
+                            className="w-full group-hover:shadow-glow transition-all duration-300"
+                            variant="gradient"
+                          >
+                            Usar Agente
+                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Coming Soon Agents Section */}
+      {comingSoonAgents.length > 0 && (
+        <section className="py-16 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3 mb-8">
+              <Clock className="w-6 h-6 text-amber-500" />
+              <h2 className="text-2xl font-bold text-foreground">Em Breve</h2>
+              <Badge variant="outline" className="text-amber-600 border-amber-500/30">
+                {comingSoonAgents.length} agentes
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <Card key={i} className="overflow-hidden opacity-60">
+                    <Skeleton className="h-2 w-full" />
+                    <CardHeader><Skeleton className="h-16 w-full" /></CardHeader>
+                    <CardContent><Skeleton className="h-32 w-full" /></CardContent>
+                  </Card>
+                ))
+              ) : (
+                comingSoonAgents.map((agent) => {
+                  const IconComponent = agent.icon;
+                  const comingSoonMessage = getComingSoonMessage(agent.id);
+                  
+                  return (
+                    <Card 
+                      key={agent.id} 
+                      className="relative overflow-hidden border-0 bg-white/30 dark:bg-white/5 backdrop-blur-sm opacity-75 hover:opacity-90 transition-all duration-300"
+                    >
+                      <div className={`h-2 bg-gradient-to-r ${agent.color} opacity-50`}></div>
+                      
+                      {/* Coming Soon Overlay */}
+                      <div className="absolute top-4 right-4 z-10">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 cursor-help">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {comingSoonMessage}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Este agente estará disponível em breve!</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className={`p-3 rounded-lg bg-gradient-to-r ${agent.color} text-white opacity-60`}>
+                            <IconComponent className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg font-bold text-foreground/70">
+                              {agent.name}
+                            </CardTitle>
+                            <Badge variant="secondary" className="mt-1 text-xs opacity-70">
+                              {agent.style}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="space-y-4">
+                        <CardDescription className="text-muted-foreground/80 leading-relaxed">
+                          {agent.description}
+                        </CardDescription>
+
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-semibold text-foreground/70">Features:</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {agent.features.map((feature, index) => (
+                              <Badge key={index} variant="outline" className="text-xs opacity-60">
+                                {feature}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <Button 
+                          className="w-full"
+                          variant="outline"
+                          disabled
+                        >
+                          <Lock className="w-4 h-4 mr-2" />
+                          Em Breve
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="py-16 bg-gradient-primary/10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-foreground mb-4">
-            Pronto para criar conteúdo viral?
+            Pronto para criar conteúdo profissional?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Escolha o agente ideal para seu tipo de conteúdo e deixe a IA 
-            criar roteiros profissionais em segundos.
+            Comece agora com o Diretor de Arte e crie artes incríveis 
+            para suas redes sociais em segundos.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/agentes/diretor-arte">
+              <Button variant="gradient" size="lg">
+                <Palette className="w-5 h-5 mr-2" />
+                Usar Diretor de Arte
+              </Button>
+            </Link>
             <Link to="/treinamentos">
               <Button variant="outline" size="lg">
                 Ver Treinamentos
-              </Button>
-            </Link>
-            <Link to="/comunidade">
-              <Button variant="creative" size="lg">
-                Participar da Comunidade
               </Button>
             </Link>
           </div>

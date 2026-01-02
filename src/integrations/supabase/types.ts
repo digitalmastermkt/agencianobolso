@@ -53,6 +53,39 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_availability: {
+        Row: {
+          agent_key: string
+          agent_name: string
+          coming_soon_message: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_available: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_key: string
+          agent_name: string
+          coming_soon_message?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_available?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_key?: string
+          agent_name?: string
+          coming_soon_message?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_available?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agent_master_prompts: {
         Row: {
           agent_key: string

@@ -5,8 +5,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CheckCircle2, Clock, Palette, TrendingUp, Heart, Zap, MessageCircle, Link as LinkIcon } from "lucide-react";
+
+const agentIcons: Record<string, React.ElementType> = {
+  "diretor-arte": Palette,
+  "vendas": TrendingUp,
+  "storytelling": Heart,
+  "viral": Zap,
+  "interacao": MessageCircle,
+  "conexao": LinkIcon,
+};
+
+interface AgentAvailability {
+  id: string;
+  agent_key: string;
+  agent_name: string;
+  is_available: boolean;
+  coming_soon_message: string | null;
+  display_order: number;
+}
 
 export function PlansAdmin() {
   const { toast } = useToast();
@@ -26,23 +47,29 @@ export function PlansAdmin() {
   // Available courses for dropdown
   const [availableCourses, setAvailableCourses] = useState<Array<{ id: string; title: string }>>([]);
 
+  // Agent availability
+  const [agentAvailability, setAgentAvailability] = useState<AgentAvailability[]>([]);
+
   const loadAll = async () => {
     try {
       setLoadingSettings(true);
-      const [ps, agents, courses, availableCoursesData] = await Promise.all([
+      const [ps, agents, courses, availableCoursesData, availability] = await Promise.all([
         supabase.from("plan_settings").select("id, plan, monthly_credits, description").order("plan", { ascending: true }),
         supabase.from("plan_agents_access").select("id, plan, agent_key, label").order("plan"),
         supabase.from("plan_courses_access").select("id, plan, course_id").order("plan"),
         supabase.from("courses").select("id, title").eq("is_published", true).order("title"),
+        supabase.from("agent_availability").select("*").order("display_order"),
       ]);
       if (ps.error) throw ps.error;
       if (agents.error) throw agents.error;
       if (courses.error) throw courses.error;
       if (availableCoursesData.error) throw availableCoursesData.error;
+      if (availability.error) throw availability.error;
       setPlanSettings(ps.data || []);
       setAgentRows(agents.data || []);
       setCourseRows(courses.data || []);
       setAvailableCourses(availableCoursesData.data || []);
+      setAgentAvailability(availability.data || []);
     } catch (e: any) {
       console.error(e);
       toast({ title: "Erro ao carregar", description: e.message, variant: "destructive" });
@@ -97,6 +124,34 @@ export function PlansAdmin() {
     await loadAll();
   };
 
+  const toggleAgentAvailability = async (agentKey: string, currentValue: boolean) => {
+    const { error } = await supabase
+      .from("agent_availability")
+      .update({ is_available: !currentValue })
+      .eq("agent_key", agentKey);
+    
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: !currentValue ? "Agente ativado" : "Agente desativado" });
+    await loadAll();
+  };
+
+  const updateAgentMessage = async (agentKey: string, message: string) => {
+    const { error } = await supabase
+      .from("agent_availability")
+      .update({ coming_soon_message: message })
+      .eq("agent_key", agentKey);
+    
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Mensagem atualizada" });
+    await loadAll();
+  };
+
   const knownPlans = useMemo(() => planSettings.map((p) => p.plan) as string[] || ["Essencial", "Premium", "Elite"], [planSettings]);
 
   return (
@@ -106,12 +161,89 @@ export function PlansAdmin() {
         <p className="text-muted-foreground">Defina créditos e o que cada plano pode acessar.</p>
       </div>
 
-      <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="availability" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
           <TabsTrigger value="settings">Configurações</TabsTrigger>
-          <TabsTrigger value="agents">Agentes</TabsTrigger>
+          <TabsTrigger value="agents">Planos x Agentes</TabsTrigger>
           <TabsTrigger value="courses">Cursos</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="availability">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Disponibilidade dos Agentes
+              </CardTitle>
+              <CardDescription>
+                Controle quais agentes estão disponíveis para os usuários. 
+                Agentes desativados aparecem como "Em Breve".
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {agentAvailability.map((agent) => {
+                const IconComponent = agentIcons[agent.agent_key] || Palette;
+                return (
+                  <Card key={agent.id} className={`p-4 transition-all ${agent.is_available ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' : 'bg-muted/50'}`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${agent.is_available ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400' : 'bg-muted text-muted-foreground'}`}>
+                          <IconComponent className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="font-medium flex items-center gap-2">
+                            {agent.agent_name}
+                            {agent.is_available ? (
+                              <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                Ativo
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-amber-600 border-amber-500/30">
+                                <Clock className="w-3 h-3 mr-1" />
+                                Em Breve
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Chave: {agent.agent_key}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4">
+                        {!agent.is_available && (
+                          <div className="flex items-center gap-2">
+                            <Label className="text-sm">Mensagem:</Label>
+                            <Input
+                              className="w-40"
+                              defaultValue={agent.coming_soon_message || "Em breve"}
+                              onBlur={(e) => updateAgentMessage(agent.agent_key, e.target.value)}
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Label className="text-sm">Disponível</Label>
+                          <Switch
+                            checked={agent.is_available}
+                            onCheckedChange={() => toggleAgentAvailability(agent.agent_key, agent.is_available)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+              
+              {agentAvailability.length === 0 && (
+                <div className="text-center text-muted-foreground py-8">
+                  Nenhum agente cadastrado ainda.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="settings">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

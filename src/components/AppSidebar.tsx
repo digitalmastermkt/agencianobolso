@@ -19,8 +19,11 @@ import {
   CreditCard,
   Calendar,
   Shield,
-  Star
+  Star,
+  Clock,
+  Palette
 } from "lucide-react";
+import { useAgentAvailability } from "@/hooks/useAgentAvailability";
 import {
   Sidebar,
   SidebarContent,
@@ -43,40 +46,46 @@ import { ProfileDialog } from "./ProfileDialog";
 
 const agentItems = [
   {
+    title: "DIRETOR DE ARTE",
+    url: "/agentes/diretor-arte",
+    icon: Palette,
+    color: "text-violet-600",
+    key: "diretor-arte"
+  },
+  {
     title: "VENDAS",
     url: "/agentes/vendas",
     icon: TrendingUp,
-    color: "text-emerald-600"
+    color: "text-emerald-600",
+    key: "vendas"
   },
   {
     title: "STORYTELLING",
     url: "/agentes/storytelling",
     icon: Heart,
-    color: "text-pink-600"
+    color: "text-pink-600",
+    key: "storytelling"
   },
   {
     title: "VIRAL",
     url: "/agentes/viral",
     icon: Zap,
-    color: "text-purple-600"
+    color: "text-purple-600",
+    key: "viral"
   },
   {
     title: "INTERAÇÃO",
     url: "/agentes/interacao",
     icon: MessageCircle,
-    color: "text-blue-600"
+    color: "text-blue-600",
+    key: "interacao"
   },
   {
     title: "CONEXÃO",
     url: "/agentes/conexao",
     icon: LinkIcon,
-    color: "text-orange-600"
-  },
-  {
-    title: "DIRETOR DE ARTE",
-    url: "/agentes/diretor-arte",
-    icon: Image,
-    color: "text-red-600"
+    color: "text-orange-600",
+    key: "conexao"
   }
 ];
 
@@ -163,6 +172,7 @@ export function AppSidebar() {
   const { isAdmin, role } = useUserRole();
   const { toast } = useToast();
   const [profileOpen, setProfileOpen] = useState(false);
+  const { isAvailable } = useAgentAvailability();
 
   const currentPath = location.pathname;
   const isActive = (path: string) => currentPath === path;
@@ -252,19 +262,25 @@ export function AppSidebar() {
             <SidebarGroupLabel>Agentes IA</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {agentItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} className={getNavClass}>
-                        <item.icon className={`mr-2 h-5 w-5 ${item.color}`} />
-                        <span>{item.title}</span>
-                        {isActive(item.url) && (
-                          <ChevronRight className="ml-auto h-5 w-5" />
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {agentItems.map((item) => {
+                  const available = isAvailable(item.key);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink to={item.url} className={getNavClass}>
+                          <item.icon className={`mr-2 h-5 w-5 ${available ? item.color : 'text-muted-foreground/50'}`} />
+                          <span className={available ? '' : 'text-muted-foreground/70'}>{item.title}</span>
+                          {!available && (
+                            <Clock className="ml-auto h-4 w-4 text-amber-500" />
+                          )}
+                          {available && isActive(item.url) && (
+                            <ChevronRight className="ml-auto h-5 w-5" />
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
