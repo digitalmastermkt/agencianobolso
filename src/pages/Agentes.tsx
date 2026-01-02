@@ -26,7 +26,7 @@ const agents = [
     name: "DIRETOR DE ARTE",
     description: "Crie artes profissionais com IA que parecem feitas por um designer experiente",
     icon: Palette,
-    style: "Design Profissional",
+    style: "Artes com IA",
     features: ["Template Inteligente", "Tipografia", "Paleta de Cores", "CTA Otimizado"],
     color: "from-violet-500 to-purple-600",
     path: "/agentes/diretor-arte"
@@ -36,7 +36,7 @@ const agents = [
     name: "VENDAS",
     description: "Crie vídeos curtos persuasivos para vender produtos/serviços",
     icon: TrendingUp,
-    style: "Bruno Ladeira (Ladeirinha)",
+    style: "Roteiros Persuasivos",
     features: ["Hook + Dor + Transformação", "Prova Social", "CTA Direto"],
     color: "from-emerald-500 to-teal-600",
     path: "/agentes/vendas"
@@ -46,7 +46,7 @@ const agents = [
     name: "STORYTELLING",
     description: "Crie mini-roteiros com storytelling para conexão emocional",
     icon: Heart,
-    style: "Leandro Aguiari",
+    style: "Narrativas Emocionais",
     features: ["Abertura Emocional", "Microhistória", "Valores da Marca"],
     color: "from-pink-500 to-rose-600",
     path: "/agentes/storytelling"
@@ -56,7 +56,7 @@ const agents = [
     name: "VIRAL",
     description: "Crie vídeos curtos tipo Reels para viralizar",
     icon: Zap,
-    style: "Camilo Coutinho",
+    style: "Conteúdo Explosivo",
     features: ["Hook Viral", "Timing de Cortes", "Hashtags Estratégicas"],
     color: "from-purple-500 to-violet-600",
     path: "/agentes/viral"
@@ -66,7 +66,7 @@ const agents = [
     name: "INTERAÇÃO",
     description: "Crie sequência de stories provocativos para engajamento",
     icon: MessageCircle,
-    style: "Rafael Bem",
+    style: "Engajamento Alto",
     features: ["Stories Provocativos", "Enquetes e Perguntas", "Swipe e CTAs"],
     color: "from-blue-500 to-cyan-600",
     path: "/agentes/interacao"
@@ -76,7 +76,7 @@ const agents = [
     name: "CONEXÃO",
     description: "Crie stories criativos que geram vínculo emocional",
     icon: LinkIcon,
-    style: "Bastidores Autênticos",
+    style: "Humanização",
     features: ["Bastidores", "Humanização", "Vínculo Emocional"],
     color: "from-orange-500 to-amber-600",
     path: "/agentes/conexao"
@@ -95,20 +95,21 @@ export default function Agentes() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-creative py-20">
         <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 tech-grid opacity-20"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="animate-float">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Agentes Criativos
-              <span className="block text-2xl md:text-3xl font-normal mt-2 text-white/90">
-                Powered by AI
+          <div className="animate-slide-up">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 glow-text">
+              Seus Assistentes Criativos
+              <span className="block text-2xl md:text-3xl font-normal mt-4 text-white/90">
+                IA que cria conteúdo profissional em segundos
               </span>
             </h1>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto mb-6">
-              Especialistas em IA para criar conteúdo profissional, 
-              roteiros de vendas, stories interativos e artes para suas redes sociais.
+            <p className="text-xl text-white/80 max-w-3xl mx-auto mb-8">
+              Transforme suas ideias em artes, roteiros e stories 
+              que convertem e engajam sua audiência.
             </p>
             {!loading && (
-              <Badge className="bg-white/20 text-white border-white/30 text-lg px-4 py-2">
+              <Badge className="bg-white/20 text-white border-white/30 text-lg px-4 py-2 animate-pulse-glow">
                 <CheckCircle2 className="w-5 h-5 mr-2" />
                 {availableCount} de {totalCount} agentes disponíveis
               </Badge>
@@ -141,7 +142,7 @@ export default function Agentes() {
                   return (
                     <Card 
                       key={agent.id} 
-                      className="group hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 border-0 bg-white/50 dark:bg-white/5 backdrop-blur-sm overflow-hidden hover:-translate-y-1"
+                      className="group hover:shadow-neon hover:scale-[1.02] transition-all duration-300 border-0 bg-white/80 dark:bg-white/5 backdrop-blur-sm overflow-hidden ring-1 ring-primary/10 hover:ring-primary/30"
                     >
                       <div className={`h-2 bg-gradient-to-r ${agent.color}`}></div>
                       
@@ -160,7 +161,7 @@ export default function Agentes() {
                               </Badge>
                             </div>
                           </div>
-                          <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
+                          <Badge className="bg-green-500/10 text-green-600 border-green-500/30 animate-pulse">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Ativo
                           </Badge>

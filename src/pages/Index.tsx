@@ -90,117 +90,118 @@ const Index = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Agent Cards */}
-              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
+              {/* Diretor de Arte - Destacado */}
+              <Card className="group hover:shadow-neon hover:scale-[1.02] transition-all duration-300 border border-primary/20 bg-white/90 backdrop-blur-sm ring-2 ring-primary/20">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
-                      <TrendingUp className="w-6 h-6" />
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all">
+                      <Sparkles className="w-6 h-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">VENDAS</CardTitle>
-                      <Badge variant="secondary" className="mt-1">Bruno Ladeira Style</Badge>
+                      <CardTitle className="text-lg">DIRETOR DE ARTE</CardTitle>
+                      <Badge className="mt-1 bg-green-500/10 text-green-600 border-green-500/30">✓ Disponível</Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
+                    Crie artes profissionais com IA em segundos
+                  </CardDescription>
+                </CardContent>
+              </Card>
+
+              {/* Agent Cards - Em Breve */}
+              <Card className="group hover:shadow-card hover:scale-[1.01] transition-all duration-300 border border-muted/30 bg-white/70 backdrop-blur-sm opacity-75">
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-white/80 shadow-lg">
+                      <TrendingUp className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg text-foreground/70">VENDAS</CardTitle>
+                      <Badge variant="outline" className="mt-1 text-amber-600 border-amber-500/30">Em Breve</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-muted-foreground/70">
                     Vídeos persuasivos com hook + dor + transformação + CTA direto
                   </CardDescription>
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
+              <Card className="group hover:shadow-card hover:scale-[1.01] transition-all duration-300 border border-muted/30 bg-white/70 backdrop-blur-sm opacity-75">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 text-white/80 shadow-lg">
                       <Heart className="w-6 h-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">STORYTELLING</CardTitle>
-                      <Badge variant="secondary" className="mt-1">Leandro Aguiari Style</Badge>
+                      <CardTitle className="text-lg text-foreground/70">STORYTELLING</CardTitle>
+                      <Badge variant="outline" className="mt-1 text-amber-600 border-amber-500/30">Em Breve</Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground/70">
                     Mini-roteiros com storytelling para conexão emocional profunda
                   </CardDescription>
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
+              <Card className="group hover:shadow-card hover:scale-[1.01] transition-all duration-300 border border-muted/30 bg-white/70 backdrop-blur-sm opacity-75">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 text-white/80 shadow-lg">
                       <Zap className="w-6 h-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">VIRAL</CardTitle>
-                      <Badge variant="secondary" className="mt-1">Camilo Coutinho Style</Badge>
+                      <CardTitle className="text-lg text-foreground/70">VIRAL</CardTitle>
+                      <Badge variant="outline" className="mt-1 text-amber-600 border-amber-500/30">Em Breve</Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground/70">
                     Conteúdo tipo Reels com timing perfeito para viralizar
                   </CardDescription>
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
+              <Card className="group hover:shadow-card hover:scale-[1.01] transition-all duration-300 border border-muted/30 bg-white/70 backdrop-blur-sm opacity-75">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 text-white/80 shadow-lg">
                       <MessageCircle className="w-6 h-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">INTERAÇÃO</CardTitle>
-                      <Badge variant="secondary" className="mt-1">Rafael Bem Style</Badge>
+                      <CardTitle className="text-lg text-foreground/70">INTERAÇÃO</CardTitle>
+                      <Badge variant="outline" className="mt-1 text-amber-600 border-amber-500/30">Em Breve</Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground/70">
                     Stories provocativos com enquetes, perguntas e swipes
                   </CardDescription>
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
+              <Card className="group hover:shadow-card hover:scale-[1.01] transition-all duration-300 border border-muted/30 bg-white/70 backdrop-blur-sm opacity-75">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
-                      <Heart className="w-6 h-6" />
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-orange-500 to-amber-600 text-white/80 shadow-lg">
+                      <Users className="w-6 h-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">CONEXÃO</CardTitle>
-                      <Badge variant="secondary" className="mt-1">Bastidores Autênticos</Badge>
+                      <CardTitle className="text-lg text-foreground/70">CONEXÃO</CardTitle>
+                      <Badge variant="outline" className="mt-1 text-amber-600 border-amber-500/30">Em Breve</Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground/70">
                     Stories de bastidores que humanizam e criam vínculo emocional
-                  </CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="group hover:shadow-neon hover:scale-105 transition-all duration-300 border border-primary/10 bg-white/90 backdrop-blur-sm">
-                <CardHeader>
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
-                      <Sparkles className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">BANNER</CardTitle>
-                      <Badge variant="secondary" className="mt-1">Design Profissional</Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>
-                    Banners profissionais com copy + prompt para geração de imagem
                   </CardDescription>
                 </CardContent>
               </Card>
