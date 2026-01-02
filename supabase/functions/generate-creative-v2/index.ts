@@ -10,14 +10,30 @@ interface ArtDirectorDecision {
   style: "clean" | "minimal" | "premium";
   template: "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda";
   pose_suggestion?: string;
+  decorative_elements?: string;
 }
 
-// Art Director now ONLY analyzes context to define scene - NO TEXT CREATION
-const artDirectorSystemPrompt = `Você é um Diretor de Arte sênior. Sua ÚNICA função é analisar o CONTEXTO fornecido e definir o CENÁRIO VISUAL apropriado.
+interface BrandIdentity {
+  colors?: string[];
+  typography?: {
+    primaryFont?: string;
+    secondaryFont?: string;
+    style?: string;
+  };
+  visualStyle?: string;
+  mood?: string;
+  recurringElements?: string[];
+}
+
+// Art Director analyzes context to define scene + considers brand identity
+const artDirectorSystemPrompt = `Você é um Diretor de Arte sênior de uma agência de publicidade premium.
+
+Sua função é analisar o CONTEXTO fornecido e definir o CENÁRIO VISUAL apropriado, considerando a identidade visual da marca.
 
 IMPORTANTE:
 - NÃO crie ou sugira textos - os textos são fornecidos pelo usuário e são IMUTÁVEIS
 - Analise SEMANTICAMENTE o contexto para definir cenário, estilo e pose
+- CONSIDERE o mood e estilo visual da marca para manter consistência
 
 MAPEAMENTO DE CONTEXTO → CENÁRIO:
 - Aniversário/Parabéns/Feliz aniversário → cenário festivo com balões coloridos, confete, bolo, cores vibrantes e alegres
@@ -34,7 +50,8 @@ RESPONDA APENAS com JSON válido:
   "scene_prompt": "descrição detalhada do cenário em INGLÊS baseado no contexto analisado",
   "style": "clean" | "minimal" | "premium",
   "template": "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda",
-  "pose_suggestion": "descrição da pose apropriada ao contexto em INGLÊS"
+  "pose_suggestion": "descrição da pose apropriada ao contexto em INGLÊS",
+  "decorative_elements": "elementos decorativos sutis usando cores da marca (em INGLÊS)"
 }`;
 
 const normalizeDecision = (raw: Partial<ArtDirectorDecision>): ArtDirectorDecision => {
@@ -43,6 +60,7 @@ const normalizeDecision = (raw: Partial<ArtDirectorDecision>): ArtDirectorDecisi
     style: raw?.style ?? "clean",
     template: raw?.template ?? "pessoa_centro",
     pose_suggestion: raw?.pose_suggestion ?? "confident pose, natural smile, looking at camera",
+    decorative_elements: raw?.decorative_elements ?? "",
   };
 
   if (!(["pessoa_direita", "pessoa_centro", "pessoa_esquerda"] as const).includes(decision.template)) {
@@ -74,16 +92,18 @@ serve(async (req) => {
       return respond({ success: false, error: "LOVABLE_API_KEY não configurada" }, 500);
     }
 
-    // NEW: Receive separate fields - context for AI, texts directly for image
     const { 
-      context,           // For AI to understand scene (e.g., "Aniversário de 30 anos")
-      headline,          // Exact text to render (e.g., "Parabéns, João!")
+      context,           // For AI to understand scene
+      headline,          // Exact text to render
       subheadline,       // Exact text to render
       cta,               // Exact text to render
       brandProfile, 
       personImageBase64, 
       format, 
-      variationsCount = 1 
+      variationsCount = 1,
+      // NEW: Logo and brand identity for professional design
+      logoUrl,
+      brandIdentity,
     } = await req.json();
 
     // Validate required fields
@@ -111,19 +131,31 @@ serve(async (req) => {
       visual_style: brandProfile?.visual_style || "",
     };
 
+    // Sanitize brandIdentity
+    const sanitizedBrandIdentity: BrandIdentity = {
+      colors: Array.isArray(brandIdentity?.colors) ? brandIdentity.colors.slice(0, 5) : sanitizedBrandProfile.colors,
+      typography: brandIdentity?.typography || {},
+      visualStyle: brandIdentity?.visualStyle || sanitizedBrandProfile.visual_style,
+      mood: brandIdentity?.mood || sanitizedBrandProfile.mood,
+      recurringElements: Array.isArray(brandIdentity?.recurringElements) ? brandIdentity.recurringElements : [],
+    };
+
     console.log("[generate-creative-v2] Starting...");
     console.log("[generate-creative-v2] Context:", context);
     console.log("[generate-creative-v2] Headline:", headline);
     console.log("[generate-creative-v2] Subheadline:", subheadline || "(none)");
     console.log("[generate-creative-v2] CTA:", cta || "(none)");
     console.log("[generate-creative-v2] Format:", format);
+    console.log("[generate-creative-v2] Has Logo:", !!logoUrl);
+    console.log("[generate-creative-v2] Brand Colors:", sanitizedBrandIdentity.colors);
 
-    // ============ STEP 1: Art Director analyzes CONTEXT only (not texts) ============
+    // ============ STEP 1: Art Director analyzes CONTEXT + BRAND ============
     const userPrompt = `Contexto da arte: ${context.slice(0, 300)}
 Perfil da marca: ${JSON.stringify(sanitizedBrandProfile)}
+Identidade visual: Cores ${sanitizedBrandIdentity.colors?.join(', ') || 'não definidas'}, Mood: ${sanitizedBrandIdentity.mood || 'profissional'}, Estilo: ${sanitizedBrandIdentity.visualStyle || 'moderno'}
 Formato: ${format}
 
-Analise o contexto e defina o cenário visual apropriado. NÃO sugira textos.`;
+Analise o contexto e defina o cenário visual apropriado, mantendo consistência com a identidade da marca. NÃO sugira textos.`;
 
     console.log("[generate-creative-v2] Getting Art Director decision for scene...");
 
@@ -169,67 +201,123 @@ Analise o contexto e defina o cenário visual apropriado. NÃO sugira textos.`;
     }
 
     const decision = normalizeDecision(parsed);
-    console.log("[generate-creative-v2] Art Director scene decision:", decision);
+    console.log("[generate-creative-v2] Art Director decision:", decision);
 
-    // ============ STEP 2: Generate Image with USER'S EXACT TEXTS ============
+    // ============ STEP 2: Generate Image with PROFESSIONAL PROMPT ============
     const positionText = decision.template === "pessoa_direita" 
       ? "on the right side of the frame"
       : decision.template === "pessoa_esquerda"
         ? "on the left side of the frame"
         : "centered in the frame";
 
-    // Build text section - texts come DIRECTLY from user, not from AI
-    const textSection = `=== TEXT TO RENDER - COPY EXACTLY CHARACTER BY CHARACTER ===
-DO NOT modify, translate, correct spelling, or change ANY character.
-Even if text appears misspelled, keep it EXACTLY as provided. This is CRITICAL.
+    // Build brand colors string
+    const primaryColor = sanitizedBrandIdentity.colors?.[0] || "#3B82F6";
+    const secondaryColor = sanitizedBrandIdentity.colors?.[1] || sanitizedBrandIdentity.colors?.[0] || "#8B5CF6";
+    const brandColorsString = sanitizedBrandIdentity.colors?.length 
+      ? sanitizedBrandIdentity.colors.join(", ") 
+      : "professional blue and purple palette";
 
-HEADLINE (large bold text at top): "${headline}"
-${subheadline ? `SUBHEADLINE (smaller text below headline): "${subheadline}"` : ''}
-${cta ? `CTA BUTTON (button text at bottom): "${cta}"` : ''}
+    // Professional advertising prompt with safe zones and brand identity
+    const imagePrompt = `=== PROFESSIONAL ADVERTISING CREATIVE ===
 
-COPY THESE STRINGS EXACTLY. ANY MODIFICATION IS A CRITICAL ERROR.`;
+=== CRITICAL LAYOUT RULES (MUST FOLLOW) ===
+SAFE ZONE: Keep ALL text and important elements at least 5% away from ALL edges.
+- Top margin: minimum 5% from top edge before any text
+- Bottom margin: minimum 5% from bottom edge after CTA
+- Left/Right margins: minimum 5% padding on both sides
+NO TEXT OR IMPORTANT ELEMENTS SHOULD TOUCH THE EDGES. This is CRITICAL for professional design.
 
-    const imagePrompt = `=== CRITICAL RULES ===
+=== BRAND IDENTITY (MUST APPLY) ===
+PRIMARY COLOR: ${primaryColor}
+SECONDARY COLOR: ${secondaryColor}
+FULL PALETTE: ${brandColorsString}
+TYPOGRAPHY STYLE: ${sanitizedBrandIdentity.typography?.style || "Modern bold sans-serif (Montserrat Bold style)"}
+VISUAL MOOD: ${sanitizedBrandIdentity.mood || "Professional and engaging"}
+VISUAL STYLE: ${sanitizedBrandIdentity.visualStyle || "Clean and modern"}
+BRAND ELEMENTS: ${sanitizedBrandIdentity.recurringElements?.join(", ") || "clean geometric accents"}
 
-1. CHARACTER IDENTITY: The person in output MUST be the EXACT SAME PERSON from input photo. Same face, same features, same skin tone. DO NOT create a different person.
+Apply brand colors to:
+- CTA button background: Use PRIMARY brand color (${primaryColor})
+- Accent elements and decorations: Use brand palette
+- Subtle gradient overlays: Use brand colors with transparency
+- Text shadows/glows: Subtle brand color tint
 
-2. TEXT PRESERVATION - EXTREMELY IMPORTANT:
-${textSection}
+=== LOGO PLACEMENT ===
+${logoUrl ? `
+INCLUDE BRAND LOGO:
+- Position: Bottom-right corner OR top-left corner (choose best for composition)
+- Size: Small, non-intrusive (about 8-10% of image width)
+- Must be clearly visible but not dominant
+- Apply subtle shadow for visibility on any background
+- DO NOT stretch or distort the logo
+` : "NO LOGO - Do not add any logo or brand mark to this creative."}
+
+=== TYPOGRAPHY HIERARCHY (PROFESSIONAL ADVERTISING STANDARD) ===
+
+HEADLINE: "${headline}"
+- Font: Bold, modern sans-serif (Montserrat Bold or similar weight)
+- Size: Large, dominant - main visual text element
+- Color: White with subtle dark shadow for contrast
+- Position: Upper third of image, respecting 5% top margin
+- Alignment: Left-aligned or centered based on person position
+- COPY THIS TEXT EXACTLY - DO NOT MODIFY ANY CHARACTER
+
+${subheadline ? `
+SUBHEADLINE: "${subheadline}"
+- Font: Light/Regular weight, same font family
+- Size: 40-50% of headline size
+- Color: White with 90% opacity
+- Position: Directly below headline with 8-12px spacing
+- COPY THIS TEXT EXACTLY - DO NOT MODIFY ANY CHARACTER
+` : ""}
+
+${cta ? `
+CTA BUTTON: "${cta}"
+- Shape: Rounded rectangle (pill shape) with 20-30px border radius
+- Background: PRIMARY BRAND COLOR (${primaryColor}) - solid fill
+- Text: White or contrasting color, bold weight
+- Size: Prominent but not overwhelming
+- Position: Bottom area, respecting 5% bottom margin
+- Add subtle shadow for depth and clickability appearance
+- COPY THIS TEXT EXACTLY - DO NOT MODIFY ANY CHARACTER
+` : ""}
 
 === VISUAL COMPOSITION ===
 
 PERSON FROM INPUT PHOTO:
-- Keep IDENTICAL face and features from input
+- CRITICAL: Keep IDENTICAL face and features from input photo
 - Position: ${positionText}
 - Pose: ${decision.pose_suggestion}
 - Natural integration with environment
-- Professional attire if needed
+- Professional attire appropriate to context
+- Good lighting on face
 
 BACKGROUND SCENE (based on context "${context}"):
 ${decision.scene_prompt}
 
-TYPOGRAPHY STYLING:
-- Headline: Large, bold, modern sans-serif font (Montserrat Bold style), white with subtle shadow
-- Position headline in upper area with good contrast
-${subheadline ? '- Subheadline: Smaller elegant font below headline, slightly transparent white' : ''}
-${cta ? '- CTA Button: Rounded rectangle with brand color, white text, at bottom' : ''}
+DECORATIVE ELEMENTS (to reinforce brand identity):
+- ${decision.decorative_elements || "Subtle geometric shapes using brand colors"}
+- Light gradient overlays using brand palette with low opacity
+- Consistent visual style matching brand mood: ${sanitizedBrandIdentity.visualStyle || "modern"}
+- DO NOT overdo decorations - keep it professional
 
-DESIGN STYLE: ${decision.style}
+=== QUALITY STANDARDS ===
+- Commercial advertising photography quality
+- Professional studio-quality lighting
+- High resolution, print-ready output
+- NO watermarks of any kind
+- NO extra text beyond what is specified
+- NO duplicate text elements
+- Balanced composition following rule of thirds
 
-BRAND COLORS: ${sanitizedBrandProfile.colors.length > 0 ? sanitizedBrandProfile.colors.join(', ') : 'professional palette'}
+=== FINAL CRITICAL REMINDERS ===
+1. Person's face = IDENTICAL to input photo (same person, same features)
+2. All text = EXACTLY as written above (character by character, no changes, no corrections)
+3. Safe zones = 5% minimum from all edges
+4. Brand colors = Applied to CTA, accents, and decorative elements
+5. Professional quality = Agency-level advertising creative`;
 
-QUALITY:
-- Commercial advertising photography
-- Professional lighting
-- High resolution
-- NO watermarks
-- NO extra text beyond specified
-
-=== FINAL REMINDER ===
-1. Person's face = IDENTICAL to input photo
-2. Text = EXACTLY as written above (character by character, no changes)`;
-
-    console.log("[generate-creative-v2] Image prompt prepared");
+    console.log("[generate-creative-v2] Professional prompt prepared with brand identity");
     console.log("[generate-creative-v2] User texts - Headline:", headline, "| Subheadline:", subheadline, "| CTA:", cta);
 
     // Generate requested number of variations
@@ -301,7 +389,7 @@ QUALITY:
       }, 500);
     }
 
-    console.log(`[generate-creative-v2] Success! Generated ${generatedImages.length} images`);
+    console.log(`[generate-creative-v2] Success! Generated ${generatedImages.length} images with professional branding`);
 
     return respond({
       success: true,
@@ -314,6 +402,11 @@ QUALITY:
       style: decision.style,
       scene_prompt: decision.scene_prompt,
       pose_suggestion: decision.pose_suggestion,
+      brandApplied: {
+        primaryColor,
+        secondaryColor,
+        hasLogo: !!logoUrl,
+      },
     });
 
   } catch (error: unknown) {
