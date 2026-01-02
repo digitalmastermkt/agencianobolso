@@ -176,7 +176,12 @@ export default function AgenteDiretorArte() {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [personCutoutUrl, setPersonCutoutUrl] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
+  
+  // Separate text fields - user controls exact text
+  const [contextDescription, setContextDescription] = useState(""); // For AI to understand scene
+  const [headline, setHeadline] = useState(""); // Exact text to render
+  const [subheadline, setSubheadline] = useState(""); // Exact text to render
+  const [cta, setCta] = useState(""); // Exact text to render
   
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
@@ -481,11 +486,22 @@ export default function AgenteDiretorArte() {
       return;
     }
 
-    const descriptionText = description.trim();
-    if (!descriptionText) {
+    const contextText = contextDescription.trim();
+    const headlineText = headline.trim();
+    
+    if (!headlineText) {
       toast({
-        title: "Descrição necessária",
-        description: "Descreva o criativo que você quer gerar.",
+        title: "Texto principal obrigatório",
+        description: "Digite o headline que aparecerá no banner.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!contextText) {
+      toast({
+        title: "Contexto necessário",
+        description: "Descreva o contexto da arte (ex: aniversário, promoção, lançamento).",
         variant: "destructive",
       });
       return;
@@ -511,9 +527,13 @@ export default function AgenteDiretorArte() {
       const personImageBase64 = images[0];
 
       // Use new V2 edge function for AI-powered creative generation
+      // Pass user's exact texts separately from context
       const { data, error } = await supabase.functions.invoke("generate-creative-v2", {
         body: { 
-          description: descriptionText, 
+          context: contextText, // For AI to understand scene
+          headline: headlineText, // Exact text - passed directly to image
+          subheadline: subheadline.trim() || undefined, // Exact text
+          cta: cta.trim() || undefined, // Exact text
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
           personImageBase64,
@@ -589,7 +609,10 @@ export default function AgenteDiretorArte() {
     try {
       const { data, error } = await supabase.functions.invoke("generate-creative-v2", {
         body: { 
-          description: description.trim(), 
+          context: contextDescription.trim(),
+          headline: headline.trim(),
+          subheadline: subheadline.trim() || undefined,
+          cta: cta.trim() || undefined,
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
           personImageBase64: images[0],
@@ -1011,7 +1034,7 @@ export default function AgenteDiretorArte() {
       case 3:
         return !!currentProjectId;
       case 4:
-        return images.length > 0 && description.trim().length > 0;
+        return images.length > 0 && headline.trim().length > 0 && contextDescription.trim().length > 0;
       default:
         return true;
     }
@@ -1506,27 +1529,81 @@ export default function AgenteDiretorArte() {
                   )}
                 </div>
 
-                {/* Description - Single field */}
+                {/* Context - For AI scene understanding */}
                 <div>
-                  <Label htmlFor="description" className="font-medium">
-                    Descrição
+                  <Label htmlFor="context" className="font-medium">
+                    Contexto da Arte
                   </Label>
                   <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Descreva o criativo que você quer gerar... Ex: Lançamento de verão com 50% de desconto, saiba mais no site"
-                    className="mt-2 min-h-[120px] resize-none"
-                    maxLength={500}
+                    id="context"
+                    value={contextDescription}
+                    onChange={(e) => setContextDescription(e.target.value)}
+                    placeholder="Descreva o objetivo da arte... Ex: Aniversário de 30 anos do João, Promoção Black Friday, Feliz Ano Novo 2026"
+                    className="mt-2 min-h-[80px] resize-none"
+                    maxLength={300}
                   />
                   <div className="flex justify-between mt-1">
                     <p className="text-xs text-muted-foreground">
-                      A IA identificará título, subtítulo e CTA automaticamente
+                      A IA usará isso para criar o cenário apropriado (festivo, comercial, etc)
                     </p>
                     <span className="text-xs text-muted-foreground">
-                      {description.length}/500
+                      {contextDescription.length}/300
                     </span>
                   </div>
+                </div>
+
+                {/* User-controlled exact texts */}
+                <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Type className="w-4 h-4 text-primary" />
+                    <span className="font-medium text-sm">Textos do Banner (exatamente como digitado)</span>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="headline" className="font-medium text-sm">
+                      Headline (Texto Principal) *
+                    </Label>
+                    <Input
+                      id="headline"
+                      value={headline}
+                      onChange={(e) => setHeadline(e.target.value)}
+                      placeholder="Ex: Parabéns, João Silva!"
+                      className="mt-1"
+                      maxLength={100}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="subheadline" className="font-medium text-sm">
+                      Subheadline (Texto Secundário)
+                    </Label>
+                    <Input
+                      id="subheadline"
+                      value={subheadline}
+                      onChange={(e) => setSubheadline(e.target.value)}
+                      placeholder="Ex: Deus te abençoe e te guie sempre!"
+                      className="mt-1"
+                      maxLength={150}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="cta" className="font-medium text-sm">
+                      CTA (Botão)
+                    </Label>
+                    <Input
+                      id="cta"
+                      value={cta}
+                      onChange={(e) => setCta(e.target.value)}
+                      placeholder="Ex: Celebre Conosco"
+                      className="mt-1"
+                      maxLength={50}
+                    />
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground">
+                    ⚠️ Estes textos serão renderizados EXATAMENTE como você digitar. Verifique a ortografia!
+                  </p>
                 </div>
 
                 {/* Variations Count Selector */}
