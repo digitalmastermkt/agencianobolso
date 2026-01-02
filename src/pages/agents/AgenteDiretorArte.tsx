@@ -188,6 +188,7 @@ export default function AgenteDiretorArte() {
   const [preserveIdentity, setPreserveIdentity] = useState(true);
   const [decorationStyle, setDecorationStyle] = useState<'geometric' | 'neon' | 'lines' | 'corners'>('geometric');
   const [variationsCount, setVariationsCount] = useState<1 | 2 | 4>(1);
+  const [includeLogo, setIncludeLogo] = useState(true);
   
   // Brand profile
   const [selectedBrandProfileId, setSelectedBrandProfileId] = useState<string | null>(null);
@@ -538,6 +539,15 @@ export default function AgenteDiretorArte() {
           format: selectedFormat, 
           personImageBase64,
           variationsCount, // User selected: 1, 2, or 4
+          // NEW: Logo and brand identity for professional design
+          logoUrl: includeLogo && brandProfile?.logo_url ? brandProfile.logo_url : null,
+          brandIdentity: {
+            colors: brandColors.length > 0 ? brandColors : brandProfile?.colors || [],
+            typography: extractedIdentity?.typography,
+            visualStyle: extractedIdentity?.visualStyle || brandProfile?.visual_style,
+            mood: extractedIdentity?.mood || brandProfile?.mood,
+            recurringElements: extractedIdentity?.recurringElements,
+          },
         },
       });
 
@@ -1605,6 +1615,29 @@ export default function AgenteDiretorArte() {
                     ⚠️ Estes textos serão renderizados EXATAMENTE como você digitar. Verifique a ortografia!
                   </p>
                 </div>
+
+                {/* Logo Toggle */}
+                {brandProfile?.logo_url && (
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={brandProfile.logo_url} 
+                        alt="Logo da marca" 
+                        className="w-8 h-8 object-contain rounded"
+                      />
+                      <div>
+                        <Label className="font-medium">Incluir Logo na Arte</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Logo será posicionada sutilmente
+                        </p>
+                      </div>
+                    </div>
+                    <Switch 
+                      checked={includeLogo} 
+                      onCheckedChange={setIncludeLogo}
+                    />
+                  </div>
+                )}
 
                 {/* Variations Count Selector */}
                 <div>
