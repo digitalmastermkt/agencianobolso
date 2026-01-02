@@ -73,8 +73,8 @@ const agentItems = [
     color: "text-orange-600"
   },
   {
-    title: "BANNER",
-    url: "/agentes/banner",
+    title: "DIRETOR DE ARTE",
+    url: "/agentes/diretor-arte",
     icon: Image,
     color: "text-red-600"
   }
