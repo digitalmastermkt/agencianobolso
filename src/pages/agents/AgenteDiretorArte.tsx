@@ -78,6 +78,8 @@ interface GeneratedVariation {
   id: string;
   imageUrl: string;
   isRegenerating?: boolean;
+  logoUrl?: string | null;
+  logoPosition?: string;
 }
 
 interface ProjectBanner {
@@ -567,20 +569,26 @@ export default function AgenteDiretorArte() {
       setDecision(newDecision);
       
       // Handle multiple variations from V2 API
+      // Include logo info for overlay
+      const returnedLogoUrl = includeLogo && brandProfile?.logo_url ? brandProfile.logo_url : null;
+      
       if (data.images && Array.isArray(data.images) && data.images.length > 0) {
         const variations: GeneratedVariation[] = data.images.map((imageUrl: string, index: number) => ({
           id: crypto.randomUUID(),
           imageUrl,
+          logoUrl: returnedLogoUrl,
+          logoPosition: data.logoPosition || "bottom-right",
         }));
         setGeneratedVariations(variations);
         setSelectedVariationId(variations[0].id);
-        // Also set first image as generatedImageUrl for compatibility
         setGeneratedImageUrl(variations[0].imageUrl);
       } else if (data.imageUrl) {
         // Fallback for single image
         const variation: GeneratedVariation = {
           id: crypto.randomUUID(),
           imageUrl: data.imageUrl,
+          logoUrl: returnedLogoUrl,
+          logoPosition: data.logoPosition || "bottom-right",
         };
         setGeneratedVariations([variation]);
         setSelectedVariationId(variation.id);
@@ -1764,11 +1772,22 @@ export default function AgenteDiretorArte() {
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
                           </div>
                         ) : (
-                          <img 
-                            src={variation.imageUrl} 
-                            alt={`Variação ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
+                          <>
+                            <img 
+                              src={variation.imageUrl} 
+                              alt={`Variação ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            {/* Logo Overlay - Real logo on top */}
+                            {variation.logoUrl && (
+                              <img 
+                                src={variation.logoUrl} 
+                                alt="Logo"
+                                className="absolute bottom-3 right-3 w-12 h-12 object-contain drop-shadow-lg"
+                                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+                              />
+                            )}
+                          </>
                         )}
                         
                         {/* Selection indicator */}
@@ -1828,12 +1847,21 @@ export default function AgenteDiretorArte() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex justify-center">
-                        <div className="overflow-hidden rounded-lg border shadow-lg max-w-md">
+                        <div className="overflow-hidden rounded-lg border shadow-lg max-w-md relative">
                           <img 
                             src={selectedVariation.imageUrl} 
                             alt="Preview selecionado"
                             className="w-full h-auto"
                           />
+                          {/* Logo Overlay in Preview */}
+                          {selectedVariation.logoUrl && (
+                            <img 
+                              src={selectedVariation.logoUrl} 
+                              alt="Logo"
+                              className="absolute bottom-4 right-4 w-16 h-16 object-contain drop-shadow-lg"
+                              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+                            />
+                          )}
                         </div>
                       </div>
 
