@@ -10,6 +10,7 @@ interface ArtDirectorDecision {
   style: "clean" | "dynamic" | "premium" | "festive";
   template: "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda";
   layout_style: "classic" | "diagonal" | "centered_bold" | "inverted" | "side_text";
+  protagonist: "text" | "person" | "balanced";
   pose_suggestion?: string;
   creative_elements?: string;
   atmosphere?: string;
@@ -34,13 +35,35 @@ interface BrandIdentity {
   recurringElements?: string[];
 }
 
-// Art Director - COMMERCIAL SALES FOCUS with LAYOUT VARIATION
-const artDirectorSystemPrompt = `Você é um DIRETOR DE ARTE COMERCIAL especializado em ANÚNCIOS QUE VENDEM.
+// ==========================================
+// DIRETOR DE ARTE SÊNIOR - FILOSOFIA PROFISSIONAL
+// ==========================================
+const artDirectorSystemPrompt = `Você é um DIRETOR DE ARTE SÊNIOR com mais de 20 anos de experiência em branding, publicidade e criação de criativos para empresas de tecnologia, estratégia e educação premium.
 
-Sua função é analisar o CONTEXTO e criar uma DIREÇÃO VISUAL focada em CONVERSÃO e VENDAS.
+Seu objetivo é criar artes visuais PROFISSIONAIS, COERENTES com a identidade visual da marca, respeitando o contexto da mensagem, sem engessar o design.
 
-=== FOCO PRINCIPAL: VENDER ===
-- Artes que CONVERTEM, não que ganham prêmios de design
+=== PRINCÍPIOS FUNDAMENTAIS (OBRIGATÓRIOS) ===
+1. IDENTIDADE VISUAL É FIXA - Fundo e cenário são VARIÁVEIS
+2. O fundo deve REFORÇAR o contexto da mensagem, NUNCA COMPETIR com ela
+3. A marca deve ser RECONHECIDA mesmo com fundos diferentes
+4. APENAS UM PROTAGONISTA por arte (texto OU pessoa OU ideia visual)
+
+=== REGRAS DE IDENTIDADE VISUAL (NÃO ALTERAR) ===
+Paleta de cores:
+- Use EXCLUSIVAMENTE as cores institucionais da marca
+- Toda arte deve conter NO MÍNIMO 2 cores institucionais
+- Tons neutros de apoio são permitidos
+
+Tipografia:
+- Respeite a hierarquia por peso, tamanho, cor e espaçamento
+- NUNCA trocar fonte ou cores para "combinar com o fundo"
+
+Linguagem gráfica:
+- Mantenha padrão recorrente de elementos visuais entre as artes
+- Shapes, setas, linhas, margens e ritmo visual devem ser consistentes
+
+=== FOCO PRINCIPAL: ARTES QUE VENDEM ===
+- Criativos que CONVERTEM, não que ganham prêmios de design
 - Hierarquia visual clara: mensagem principal DESTACA
 - CTA proeminente e clicável
 - Pessoa cria CONEXÃO HUMANA e CONFIANÇA
@@ -62,11 +85,27 @@ Escolha layouts diferentes para cada arte:
 - "inverted": Título embaixo, imagem domina, CTA no topo
 - "side_text": Texto ao lado da pessoa (não em cima), CTA lateral
 
+=== REGRA DO PROTAGONISTA (CRÍTICO) ===
+Em cada arte, escolha apenas UM protagonista:
+- "text": Texto é o destaque principal, pessoa apoia sutilmente
+- "person": Pessoa é o destaque, texto é secundário/menor
+- "balanced": Equilíbrio entre texto e pessoa (mais difícil de executar bem)
+
 === CORES DE TEXTO VARIADAS ===
 NÃO use sempre branco! Sugira cores que combinam com a marca:
 - Pode usar cores da marca no headline
 - CTA com cor contrastante (não sempre a primária)
 - Subheadline pode ter cor diferente do headline
+- GARANTA legibilidade com sombras/outlines quando necessário
+
+=== CONTEXTO VISUAL (VARIÁVEL) ===
+Escolha o fundo de acordo com o contexto do conteúdo:
+- Tecnologia / IA → dashboards, HUDs, circuitos, interfaces futuristas
+- Execução / ação → ambientes corporativos, luz forte, foco
+- Clareza / decisão → fundos limpos, gradientes suaves
+- Autoridade → fundo escuro, iluminação premium
+- Educacional → fundo neutro, leitura fácil
+- Humano / bastidores → fotografia real ou cenário orgânico
 
 === ELEMENTOS CRIATIVOS POR CONTEXTO ===
 - Promoção/Desconto → etiquetas de preço, raios, urgência visual, explosão
@@ -80,6 +119,7 @@ RESPONDA APENAS com JSON válido:
   "style": "clean" | "dynamic" | "premium" | "festive",
   "template": "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda",
   "layout_style": "classic" | "diagonal" | "centered_bold" | "inverted" | "side_text",
+  "protagonist": "text" | "person" | "balanced",
   "pose_suggestion": "pose que VENDE - confiança, ação, engajamento (em INGLÊS)",
   "creative_elements": "elementos visuais que CONVERTEM (em INGLÊS)",
   "atmosphere": "atmosfera comercial - energia, confiança, urgência (em INGLÊS)",
@@ -98,6 +138,7 @@ const normalizeDecision = (raw: Partial<ArtDirectorDecision>): ArtDirectorDecisi
     style: raw?.style ?? "dynamic",
     template: raw?.template ?? "pessoa_centro",
     layout_style: raw?.layout_style ?? "classic",
+    protagonist: raw?.protagonist ?? "balanced",
     pose_suggestion: raw?.pose_suggestion ?? "confident engaging pose, direct eye contact, professional smile, ready for action",
     creative_elements: raw?.creative_elements ?? "subtle energy lines, professional lighting, commercial appeal",
     atmosphere: raw?.atmosphere ?? "energetic, trustworthy, conversion-focused lighting",
@@ -118,6 +159,9 @@ const normalizeDecision = (raw: Partial<ArtDirectorDecision>): ArtDirectorDecisi
   }
   if (!(["classic", "diagonal", "centered_bold", "inverted", "side_text"] as const).includes(decision.layout_style)) {
     decision.layout_style = "classic";
+  }
+  if (!(["text", "person", "balanced"] as const).includes(decision.protagonist)) {
+    decision.protagonist = "balanced";
   }
 
   return decision;
@@ -215,6 +259,34 @@ SIDE TEXT LAYOUT:
   return layouts[layoutStyle] || layouts['classic'];
 };
 
+// Get protagonist instructions
+const getProtagonistInstructions = (protagonist: string): string => {
+  const instructions: Record<string, string> = {
+    'text': `
+PROTAGONIST: TEXT (Texto é o destaque)
+- Headline deve ser ENORME e dominar a composição
+- Pessoa em segundo plano, menor, mais sutil, semi-transparente ou sombreada
+- CTA muito proeminente
+- A mensagem é o HERÓI, pessoa é apoio`,
+    'person': `
+PROTAGONIST: PERSON (Pessoa é o destaque)
+- Pessoa deve DOMINAR a composição (60-70% do frame)
+- Headline menor, discreto, elegante
+- Subheadline mínimo ou ausente visualmente
+- CTA secundário mas presente
+- A CONEXÃO HUMANA é o foco`,
+    'balanced': `
+PROTAGONIST: BALANCED (Equilíbrio)
+- Pessoa e texto com peso visual equilibrado
+- Headline médio, legível, não dominante
+- Pessoa com boa presença mas não dominante
+- Composição harmoniosa, profissional
+- CUIDADO: mais difícil de executar bem`,
+  };
+  
+  return instructions[protagonist] || instructions['balanced'];
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -284,13 +356,13 @@ serve(async (req) => {
     const detectedStyle = detectStyleFromContext(context);
     console.log("[generate-creative-v2] Auto-detected style from context:", detectedStyle);
 
-    console.log("[generate-creative-v2] Starting COMMERCIAL SALES-FOCUSED generation...");
+    console.log("[generate-creative-v2] Starting PROFESSIONAL BRAND generation...");
     console.log("[generate-creative-v2] Context:", context);
     console.log("[generate-creative-v2] Headline:", headline);
     console.log("[generate-creative-v2] Format:", format);
     console.log("[generate-creative-v2] Has Logo for overlay:", !!logoUrl);
 
-    // ============ STEP 1: Art Director - COMMERCIAL FOCUS ============
+    // ============ STEP 1: Art Director - PROFESSIONAL BRAND PHILOSOPHY ============
     const userPrompt = `Contexto da arte: ${context.slice(0, 300)}
 
 ESTILO DETECTADO AUTOMATICAMENTE: ${detectedStyle}
@@ -303,12 +375,14 @@ Mood: ${sanitizedBrandIdentity.mood || 'comercial, profissional'}
 Formato: ${format}
 
 IMPORTANTE: 
-1. Foque em CONVERSÃO e VENDAS, não em arte
-2. Escolha um LAYOUT DIFERENTE do padrão (não sempre classic!)
-3. Sugira CORES DE TEXTO que combinem com a marca (não sempre branco!)
-4. Crie uma arte que faça as pessoas CLICAREM e COMPRAREM`;
+1. IDENTIDADE VISUAL É FIXA - use as cores da marca obrigatoriamente
+2. Escolha o PROTAGONISTA: texto OU pessoa (não ambos competindo!)
+3. Escolha um LAYOUT DIFERENTE do padrão (não sempre classic!)
+4. Sugira CORES DE TEXTO que usem cores da marca (no mínimo 2 cores institucionais)
+5. O fundo deve SUSTENTAR a mensagem, não COMPETIR com ela
+6. Crie uma arte que pareça PARTE DE UMA SÉRIE, não isolada`;
 
-    console.log("[generate-creative-v2] Getting Commercial Art Director decision...");
+    console.log("[generate-creative-v2] Getting Professional Art Director decision...");
 
     const artDirectorResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -352,10 +426,11 @@ IMPORTANTE:
     }
 
     const decision = normalizeDecision(parsed);
-    console.log("[generate-creative-v2] Commercial Art Director decision:", decision);
+    console.log("[generate-creative-v2] Professional Art Director decision:", decision);
     console.log("[generate-creative-v2] Layout Style:", decision.layout_style);
+    console.log("[generate-creative-v2] Protagonist:", decision.protagonist);
 
-    // ============ STEP 2: Generate Image with COMMERCIAL SALES PROMPT ============
+    // ============ STEP 2: Generate Image with PROFESSIONAL BRAND PROMPT ============
     const positionText = decision.template === "pessoa_direita" 
       ? "on the right side of the frame"
       : decision.template === "pessoa_esquerda"
@@ -373,6 +448,9 @@ IMPORTANTE:
     
     // Get layout instructions based on AI decision
     const layoutInstructions = getLayoutInstructions(decision.layout_style, positionText);
+
+    // Get protagonist instructions
+    const protagonistInstructions = getProtagonistInstructions(decision.protagonist);
 
     // Get text colors from AI decision
     const textColors = decision.text_colors || {
@@ -397,26 +475,38 @@ IMPORTANTE:
       const variationLayout = layoutVariations[i % layoutVariations.length];
       const variationLayoutInstructions = getLayoutInstructions(variationLayout, positionText);
 
-      // Commercial professional prompt - SALES FOCUSED
-      const imagePrompt = `=== COMMERCIAL ADVERTISING CREATIVE FOR SALES - VARIATION ${i + 1} ===
+      // Professional brand prompt with philosophy
+      const imagePrompt = `=== DIRETOR DE ARTE SÊNIOR - CRIATIVO PROFISSIONAL - VARIAÇÃO ${i + 1} ===
 
-GOAL: This ad must CONVERT. Make people CLICK and BUY.
+=== PRINCÍPIOS FUNDAMENTAIS (OBRIGATÓRIOS) ===
+1. IDENTIDADE VISUAL É FIXA - Fundo e cenário são VARIÁVEIS
+2. O fundo deve REFORÇAR a mensagem, NUNCA COMPETIR com ela
+3. A marca deve ser RECONHECIDA mesmo com fundos diferentes
+4. APENAS UM PROTAGONISTA nesta arte
+
+=== PROTAGONISTA DESTA ARTE ===
+${protagonistInstructions}
 
 === LAYOUT STYLE: ${variationLayout.toUpperCase()} ===
 ${variationLayoutInstructions}
 
-=== STYLE: ${decision.style.toUpperCase()} ===
+=== ESTILO: ${decision.style.toUpperCase()} ===
 ${decision.style === 'dynamic' ? 'High energy, bold colors, movement, urgency cues, action-oriented' : ''}
 ${decision.style === 'premium' ? 'Sophisticated, luxurious, metallic accents, refined elegance' : ''}
 ${decision.style === 'festive' ? 'Celebratory, vibrant colors, party elements, joyful atmosphere' : ''}
 ${decision.style === 'clean' ? 'Professional, minimal, trustworthy, corporate elegance' : ''}
 
-=== CRITICAL SALES DESIGN PRINCIPLES ===
-1. HEADLINE MUST POP - It's the first thing people see
-2. CTA MUST BE PROMINENT - Make it look clickable
-3. PERSON CREATES TRUST - Human connection sells
-4. CLEAR HIERARCHY - Guide the eye to the message
-5. PROFESSIONAL BUT NOT BORING - Stand out in the feed
+=== REGRAS DE IDENTIDADE VISUAL (OBRIGATÓRIO) ===
+1. Usar NO MÍNIMO 2 cores institucionais da marca em cada arte
+2. NUNCA trocar cores para "combinar com o fundo"
+3. Manter linguagem gráfica consistente
+4. Arte deve parecer PARTE DE UMA SÉRIE, não isolada
+
+=== COMPOSIÇÃO PROFISSIONAL ===
+- Layout em camadas: fundo contextual > elementos gráficos sutis > protagonista > identidade
+- Leitura clara (padrão Z ou F)
+- Respiro visual adequado
+- Texto ocupando NO MÁXIMO 40% da arte
 
 === CREATIVE ELEMENTS FOR THIS CONTEXT ===
 ${contextualElements}
@@ -424,17 +514,18 @@ ${contextualElements}
 === SAFE ZONE: 5% minimum from ALL edges ===
 Text must NEVER touch or get cut by the frame edges.
 
-=== BRAND IDENTITY ===
+=== BRAND IDENTITY (USAR OBRIGATORIAMENTE) ===
 PRIMARY COLOR: ${primaryColor}
 SECONDARY COLOR: ${secondaryColor}
 FULL PALETTE: ${brandColorsString}
+REGRA: Usar no mínimo 2 destas cores na arte!
 
-=== TYPOGRAPHY WITH VARIED COLORS ===
+=== TYPOGRAPHY WITH BRAND COLORS ===
 
 HEADLINE: "${headline}"
 - Font: Bold modern sans-serif (Montserrat Bold style)
-- Size: Large, dominant, attention-grabbing
-- Color: ${textColors.headline} (NOT always white - use brand colors when appropriate)
+- Size: ${decision.protagonist === 'text' ? 'ENORMOUS, dominates the frame' : decision.protagonist === 'person' ? 'Medium, elegant, not dominant' : 'Large but balanced'}
+- Color: ${textColors.headline}
 - Strong shadow for contrast
 - COPY EXACTLY - NO CHANGES
 
@@ -450,21 +541,24 @@ SUBHEADLINE: "${subheadline}"
 ${cta ? `
 CTA BUTTON: "${cta}"
 - Shape: Rounded rectangle (pill shape)
-- Background: ${textColors.cta_bg} (can be different from primary!)
+- Background: ${textColors.cta_bg}
 - Text: ${textColors.cta_text}, bold
 - Make it look CLICKABLE - add subtle shadow/glow
 - COPY EXACTLY - NO CHANGES
 ` : ""}
 
-=== PERSON COMPOSITION ===
+=== INTEGRAÇÃO HUMANA (PESSOA COMO ELEMENTO ESTRUTURAL) ===
 Position: ${positionText}
 Pose: ${decision.pose_suggestion}
+Prominence: ${decision.protagonist === 'person' ? 'DOMINANT - 60-70% of frame, pessoa é o herói' : decision.protagonist === 'text' ? 'SUBTLE - smaller, background support, semi-transparent feel' : 'BALANCED - good presence but not overwhelming'}
 CRITICAL: Keep IDENTICAL face and features from input photo
-Natural integration with commercial environment
-Professional lighting on face, rim light for separation
+Postura profissional, expressão natural
+Integração cromática com o fundo (NÃO parecer "colado" ou recortado)
+A pessoa deve parecer PARTE DO SISTEMA VISUAL, não um adesivo
 
 === SCENE ===
 ${decision.scene_prompt}
+IMPORTANT: Background supports the message, NEVER competes with it
 
 === ATMOSPHERE ===
 ${decision.atmosphere || "Commercial, trustworthy, conversion-focused lighting"}
@@ -480,17 +574,21 @@ ${decision.creative_elements || contextualElements}
 - Professional studio lighting
 - High resolution, print-ready
 - NO watermarks, NO logos
-- Agency-level output that SELLS
+- Agency-level output
 
-=== FINAL CHECKLIST ===
-1. Person's face = IDENTICAL to input photo
-2. All text = EXACTLY as specified (character by character)
-3. Safe zones = 5% minimum from all edges
-4. Brand colors = Applied strategically
-5. LAYOUT = ${variationLayout} (NOT always the same!)
-6. FOCUS = This must CONVERT, not just look pretty`;
+=== CHECKLIST FINAL (ANTES DE GERAR) ===
+1. ✓ Identidade visual respeitada (mínimo 2 cores da marca USADAS)
+2. ✓ Fundo coerente com o contexto (sustenta, não compete)
+3. ✓ Texto legível em 1 segundo
+4. ✓ PROTAGONISTA CLARO: ${decision.protagonist === 'text' ? 'TEXTO é o herói' : decision.protagonist === 'person' ? 'PESSOA é o herói' : 'Equilíbrio texto/pessoa'}
+5. ✓ Arte parece parte de uma SÉRIE, não isolada
+6. ✓ Pessoa integrada naturalmente (não parece recortada/colada)
+7. ✓ CTA proeminente e clicável
+8. ✓ LAYOUT = ${variationLayout}
 
-      console.log(`[generate-creative-v2] Using layout style: ${variationLayout}`);
+"Consistência é reconhecimento, não repetição."`;
+
+      console.log(`[generate-creative-v2] Using layout style: ${variationLayout}, protagonist: ${decision.protagonist}`);
 
       const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -541,7 +639,7 @@ ${decision.creative_elements || contextualElements}
       
       if (generatedImageUrl) {
         generatedImages.push(generatedImageUrl);
-        console.log(`[generate-creative-v2] Variation ${i + 1} generated successfully with layout: ${variationLayout}`);
+        console.log(`[generate-creative-v2] Variation ${i + 1} generated successfully with layout: ${variationLayout}, protagonist: ${decision.protagonist}`);
       }
     }
 
@@ -553,7 +651,7 @@ ${decision.creative_elements || contextualElements}
       }, 500);
     }
 
-    console.log(`[generate-creative-v2] Success! Generated ${generatedImages.length} COMMERCIAL SALES images`);
+    console.log(`[generate-creative-v2] Success! Generated ${generatedImages.length} PROFESSIONAL BRAND images`);
 
     return respond({
       success: true,
@@ -564,6 +662,7 @@ ${decision.creative_elements || contextualElements}
       template: decision.template,
       style: decision.style,
       layout_style: decision.layout_style,
+      protagonist: decision.protagonist,
       scene_prompt: decision.scene_prompt,
       pose_suggestion: decision.pose_suggestion,
       creative_elements: decision.creative_elements,
