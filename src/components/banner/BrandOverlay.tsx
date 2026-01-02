@@ -6,6 +6,7 @@ export interface BrandOverlayProps {
   colors: string[];
   logoUrl?: string;
   logoPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  logoContainer?: 'none' | 'glass' | 'solid';
   showDecorations?: boolean;
   decorationStyle?: 'geometric' | 'neon' | 'lines' | 'corners';
   scale?: number;
@@ -17,6 +18,7 @@ export function BrandOverlay({
   colors,
   logoUrl,
   logoPosition = 'bottom-right',
+  logoContainer = 'glass',
   showDecorations = true,
   decorationStyle = 'geometric',
   scale = 1,
@@ -283,14 +285,42 @@ export function BrandOverlay({
         <div key={index} style={style as CSSProperties} />
       ))}
 
-      {/* Logo */}
+      {/* Logo with elegant container */}
       {logoUrl && (
-        <img
-          src={logoUrl}
-          alt="Brand logo"
-          style={getLogoStyle()}
-          crossOrigin="anonymous"
-        />
+        <div
+          style={{
+            ...getLogoStyle(),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            ...(logoContainer === 'glass' ? {
+              background: 'rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              borderRadius: 8 * scale,
+              padding: 8 * scale,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+            } : logoContainer === 'solid' ? {
+              background: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: 8 * scale,
+              padding: 8 * scale,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+            } : {}),
+          }}
+        >
+          <img
+            src={logoUrl}
+            alt="Brand logo"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+            }}
+            crossOrigin="anonymous"
+          />
+        </div>
       )}
     </div>
   );

@@ -47,7 +47,6 @@ import {
   FolderOpen,
   Wand2,
   CheckCircle2,
-  RefreshCw,
   ImagePlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1191,8 +1190,12 @@ export default function AgenteDiretorArte() {
                           <span className="text-primary font-medium">Clique para enviar</span> o logo da marca
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          PNG, JPG ou SVG (fundo transparente recomendado)
+                          PNG com fundo transparente recomendado para melhor resultado
                         </p>
+                        <div className="flex items-center gap-1.5 mt-2 text-xs text-amber-600 dark:text-amber-400">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Dica: Logos com fundo branco podem não integrar bem à arte</span>
+                        </div>
                       </div>
                     )}
                     <input
@@ -1759,36 +1762,20 @@ export default function AgenteDiretorArte() {
                       </div>
                       
                       <CardContent className="p-3">
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRegenerateVariation(variation.id);
-                            }}
-                            disabled={variation.isRegenerating}
-                          >
-                            <RefreshCw className={`w-3 h-3 mr-1 ${variation.isRegenerating ? 'animate-spin' : ''}`} />
-                            Regenerar
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="default"
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownloadVariation(variation.imageUrl, `criativo-${index + 1}-${Date.now()}.png`);
-                            }}
-                            disabled={variation.isRegenerating}
-                          >
-                            <Download className="w-3 h-3 mr-1" />
-                            Baixar
-                          </Button>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          className="w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadVariation(variation.imageUrl, `criativo-${index + 1}-${Date.now()}.png`);
+                          }}
+                          disabled={variation.isRegenerating}
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          Baixar
+                        </Button>
                       </CardContent>
                     </Card>
                   ))}
