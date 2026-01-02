@@ -39,9 +39,6 @@ import {
   Scissors,
   AlertCircle,
   Sparkles,
-  Hexagon,
-  Zap,
-  Minus,
   Trash2,
   ChevronRight,
   ChevronLeft,
@@ -155,90 +152,7 @@ const STEPS = [
   { id: 5, title: 'Resultado', icon: CheckCircle2, description: 'Exporte e salve' },
 ];
 
-// Visual style options
-type VisualStyle = 'minimalista' | 'dinamico' | 'premium' | 'festivo';
-
-const VISUAL_STYLES: { value: VisualStyle; label: string; description: string; icon: React.ElementType }[] = [
-  { value: 'minimalista', label: 'Minimalista', description: 'Clean, elegante, espaços negativos', icon: Minus },
-  { value: 'dinamico', label: 'Dinâmico', description: 'Energia, movimento, diagonais', icon: Zap },
-  { value: 'premium', label: 'Premium', description: 'Sofisticado, luxuoso, dourado', icon: Sparkles },
-  { value: 'festivo', label: 'Festivo', description: 'Celebração, cores vibrantes', icon: Hexagon },
-];
-
-// Campaign templates with pre-configured settings
-interface CampaignTemplate {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ElementType;
-  style: VisualStyle;
-  suggestedContext: string;
-  palette: string[];
-  mood: string;
-}
-
-const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
-  {
-    id: 'black-friday',
-    name: 'Black Friday',
-    description: 'Promoções explosivas, urgência, descontos',
-    icon: Zap,
-    style: 'dinamico',
-    suggestedContext: 'Promoção Black Friday com ofertas imperdíveis',
-    palette: ['#000000', '#FF0000', '#FFD700', '#FFFFFF'],
-    mood: 'Urgente, explosivo, impactante',
-  },
-  {
-    id: 'natal',
-    name: 'Natal',
-    description: 'Celebração natalina, aconchegante',
-    icon: Sparkles,
-    style: 'festivo',
-    suggestedContext: 'Campanha de Natal com espírito natalino e celebração',
-    palette: ['#C41E3A', '#228B22', '#FFD700', '#FFFFFF'],
-    mood: 'Aconchegante, festivo, mágico',
-  },
-  {
-    id: 'ano-novo',
-    name: 'Ano Novo',
-    description: 'Celebração, fogos, dourado e prata',
-    icon: Hexagon,
-    style: 'festivo',
-    suggestedContext: 'Celebração de Ano Novo com fogos e brinde',
-    palette: ['#000033', '#FFD700', '#C0C0C0', '#FFFFFF'],
-    mood: 'Celebração, glamour, esperança',
-  },
-  {
-    id: 'lancamento',
-    name: 'Lançamento',
-    description: 'Novidade, destaque, holofotes',
-    icon: Sparkles,
-    style: 'premium',
-    suggestedContext: 'Lançamento de novo produto com destaque especial',
-    palette: ['#1a1a2e', '#4a00e0', '#8e2de2', '#FFFFFF'],
-    mood: 'Inovador, exclusivo, impactante',
-  },
-  {
-    id: 'promocao',
-    name: 'Promoção',
-    description: 'Ofertas, descontos, oportunidade',
-    icon: Zap,
-    style: 'dinamico',
-    suggestedContext: 'Promoção especial com descontos exclusivos',
-    palette: ['#FF4500', '#FFD700', '#FFFFFF', '#000000'],
-    mood: 'Urgente, oportunidade, impactante',
-  },
-  {
-    id: 'institucional',
-    name: 'Institucional',
-    description: 'Corporativo, profissional, confiança',
-    icon: Minus,
-    style: 'minimalista',
-    suggestedContext: 'Comunicação institucional da marca',
-    palette: ['#1e3a5f', '#4a90d9', '#FFFFFF', '#f0f4f8'],
-    mood: 'Profissional, confiável, elegante',
-  },
-];
+// Visual styles are now auto-detected from context by the AI
 
 export default function AgenteDiretorArte() {
   const { toast } = useToast();
@@ -273,11 +187,8 @@ export default function AgenteDiretorArte() {
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [preserveIdentity, setPreserveIdentity] = useState(true);
-  const [decorationStyle, setDecorationStyle] = useState<'geometric' | 'neon' | 'lines' | 'corners'>('geometric');
   const [variationsCount, setVariationsCount] = useState<1 | 2 | 4>(1);
   const [includeLogo, setIncludeLogo] = useState(true);
-  const [selectedVisualStyle, setSelectedVisualStyle] = useState<VisualStyle>('dinamico');
-  const [selectedCampaignTemplate, setSelectedCampaignTemplate] = useState<string | null>(null);
   
   // Brand profile
   const [selectedBrandProfileId, setSelectedBrandProfileId] = useState<string | null>(null);
@@ -637,9 +548,6 @@ export default function AgenteDiretorArte() {
             mood: extractedIdentity?.mood || brandProfile?.mood,
             recurringElements: extractedIdentity?.recurringElements,
           },
-          // NEW: Visual style and campaign template
-          visualStyle: selectedVisualStyle,
-          campaignTemplate: selectedCampaignTemplate,
         },
       });
 
@@ -1100,7 +1008,6 @@ export default function AgenteDiretorArte() {
         brandPrimary: brandColors[0],
       },
       brandColors: brandColors,
-      decorationStyle: decorationStyle,
       style: decision.style,
       createdAt: new Date().toISOString(),
     };
@@ -1491,134 +1398,6 @@ export default function AgenteDiretorArte() {
                   />
                 </div>
 
-                {/* Campaign Templates Library */}
-                <div>
-                  <Label className="font-medium mb-3 block">Template de Campanha (Opcional)</Label>
-                  <p className="text-xs text-muted-foreground mb-3">Paletas e estilos visuais prontos</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    <Button
-                      type="button"
-                      variant={selectedCampaignTemplate === null ? "default" : "outline"}
-                      className="flex flex-col items-center gap-1 h-auto py-3"
-                      onClick={() => {
-                        setSelectedCampaignTemplate(null);
-                      }}
-                    >
-                      <Paintbrush className="w-4 h-4" />
-                      <span className="text-xs font-medium">Personalizado</span>
-                      <span className="text-[10px] text-muted-foreground">Estilo livre</span>
-                    </Button>
-                    {CAMPAIGN_TEMPLATES.map((template) => (
-                      <Button
-                        key={template.id}
-                        type="button"
-                        variant={selectedCampaignTemplate === template.id ? "default" : "outline"}
-                        className="flex flex-col items-center gap-1 h-auto py-3"
-                        onClick={() => {
-                          setSelectedCampaignTemplate(template.id);
-                          setSelectedVisualStyle(template.style);
-                          setContextDescription(template.suggestedContext);
-                        }}
-                      >
-                        <template.icon className="w-4 h-4" />
-                        <span className="text-xs font-medium">{template.name}</span>
-                        <span className="text-[10px] text-muted-foreground text-center line-clamp-1">{template.description}</span>
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  {/* Selected Template Preview */}
-                  {selectedCampaignTemplate && (
-                    <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                      {(() => {
-                        const template = CAMPAIGN_TEMPLATES.find(t => t.id === selectedCampaignTemplate);
-                        if (!template) return null;
-                        return (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <template.icon className="w-4 h-4" />
-                              <span className="font-medium text-sm">{template.name}</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">{template.mood}</p>
-                            <div className="flex gap-1">
-                              {template.palette.map((color, idx) => (
-                                <div 
-                                  key={idx}
-                                  className="w-6 h-6 rounded border shadow-sm"
-                                  style={{ backgroundColor: color }}
-                                  title={color}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
-
-                {/* Visual Style Selector */}
-                <div>
-                  <Label className="font-medium mb-3 block">Estilo Visual</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {VISUAL_STYLES.map((style) => (
-                      <Button
-                        key={style.value}
-                        type="button"
-                        variant={selectedVisualStyle === style.value ? "default" : "outline"}
-                        className="flex flex-col items-center gap-1 h-auto py-3"
-                        onClick={() => setSelectedVisualStyle(style.value)}
-                      >
-                        <style.icon className="w-4 h-4" />
-                        <span className="text-xs font-medium">{style.label}</span>
-                        <span className="text-[10px] text-muted-foreground text-center">{style.description}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Decoration Style Selector */}
-                <div>
-                  <Label className="font-medium mb-3 block">Estilo de Decoração</Label>
-                  <div className="grid grid-cols-4 gap-2">
-                    <Button
-                      type="button"
-                      variant={decorationStyle === 'geometric' ? "default" : "outline"}
-                      className="flex flex-col items-center gap-1 h-auto py-2"
-                      onClick={() => setDecorationStyle('geometric')}
-                    >
-                      <Hexagon className="w-4 h-4" />
-                      <span className="text-[10px]">Geométrico</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={decorationStyle === 'neon' ? "default" : "outline"}
-                      className="flex flex-col items-center gap-1 h-auto py-2"
-                      onClick={() => setDecorationStyle('neon')}
-                    >
-                      <Zap className="w-4 h-4" />
-                      <span className="text-[10px]">Neon</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={decorationStyle === 'lines' ? "default" : "outline"}
-                      className="flex flex-col items-center gap-1 h-auto py-2"
-                      onClick={() => setDecorationStyle('lines')}
-                    >
-                      <Minus className="w-4 h-4" />
-                      <span className="text-[10px]">Linhas</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={decorationStyle === 'corners' ? "default" : "outline"}
-                      className="flex flex-col items-center gap-1 h-auto py-2"
-                      onClick={() => setDecorationStyle('corners')}
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span className="text-[10px]">Cantos</span>
-                    </Button>
-                  </div>
-                </div>
 
                 {/* Gallery Photos */}
                 {personPhotos.length > 0 && (
