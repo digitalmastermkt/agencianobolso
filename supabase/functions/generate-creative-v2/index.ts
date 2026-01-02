@@ -79,8 +79,24 @@ const normalizeDecision = (raw: Partial<ArtDirectorDecision>): ArtDirectorDecisi
   return decision;
 };
 
-// Get creative elements based on context
-const getContextualElements = (context: string): string => {
+// Get creative elements based on context and campaign template
+const getContextualElements = (context: string, campaignTemplate?: string): string => {
+  // First check campaign template for more specific styling
+  if (campaignTemplate) {
+    const templateElements: Record<string, string> = {
+      'black-friday': "Explosive dramatic burst effects, floating 3D price tags with neon glow, shopping bags flying, colorful confetti explosion, bold red/black/yellow electric accents, pulsating urgency cues like lightning bolts and timer icons, aggressive diagonal stripes, glowing sale badges, speed lines, impact effects",
+      'natal': "Magical snow gently falling, beautifully decorated Christmas tree with glowing ornaments, warm rich red and gold decorations, cozy fireplace lighting glow, elegant gift boxes with silk ribbons, holly leaves and berries, enchanting twinkling fairy lights bokeh, winter wonderland magic atmosphere, candy canes, snowflakes",
+      'ano-novo': "Spectacular golden fireworks bursting across midnight sky, crystal champagne glasses with bubbles rising, elegant ornate clock striking midnight, deep starry night backdrop, luxurious golden sparkles cascading down, glowing countdown numbers, celebration confetti and streamers, sophisticated silver and gold palette, party elements",
+      'lancamento': "Dramatic theatrical spotlight beams, premium stage with velvet curtains, spectacular sparkles and glitter particles trail, luxurious metallic gold and chrome accents, futuristic holographic elements floating, sleek glass and mirror reflections, product pedestal with dramatic shadows, reveal moment energy, innovation particles",
+      'promocao': "Bold eye-catching burst graphics, floating discount percentage badges, dynamic arrow elements pointing to action, bright vibrant color splashes, opportunity visual cues like stars and sparkles, energetic diagonal composition, attention-grabbing price displays, urgency timer elements, limited time visual effects",
+      'institucional': "Sophisticated minimal geometric patterns, elegant glass and brushed steel textures, impressive modern city skyline silhouette, subtle floating abstract data visualization, clean professional gradient transitions, refined corporate blue and gray tones, precision grid alignment, professional photography style, trust symbols",
+    };
+    
+    if (templateElements[campaignTemplate]) {
+      return templateElements[campaignTemplate];
+    }
+  }
+  
   const contextLower = context.toLowerCase();
   
   if (contextLower.includes('black friday') || contextLower.includes('promoção') || contextLower.includes('desconto')) {
@@ -106,6 +122,50 @@ const getContextualElements = (context: string): string => {
   }
   
   return "Dynamic geometric shapes, subtle particle effects, professional gradient overlays, elegant accent elements matching brand colors";
+};
+
+// Get visual style instructions
+const getVisualStyleInstructions = (style?: string): string => {
+  const styles: Record<string, string> = {
+    'minimalista': `
+MINIMALIST STYLE DIRECTION:
+- Clean, uncluttered composition with generous negative space
+- Subtle, refined color palette - avoid loud colors
+- Elegant typography with plenty of breathing room
+- Soft, diffused lighting with gentle shadows
+- Geometric simplicity - avoid complex decorations
+- Premium white space usage
+- Less is more approach`,
+    'dinamico': `
+DYNAMIC STYLE DIRECTION:
+- High energy composition with diagonal lines and movement
+- Bold, contrasting colors that pop
+- Dynamic angles and asymmetric layouts
+- Action-oriented elements suggesting motion
+- Speed lines, blur effects, energy particles
+- Aggressive typography with impact
+- Visual tension and excitement`,
+    'premium': `
+PREMIUM STYLE DIRECTION:
+- Luxurious, sophisticated aesthetic
+- Rich metallic accents (gold, silver, rose gold)
+- Deep, rich colors with elegant gradients
+- Dramatic lighting with rim lights and highlights
+- High-end textures (silk, velvet, leather suggestions)
+- Refined, elegant typography
+- Exclusive, aspirational mood`,
+    'festivo': `
+FESTIVE STYLE DIRECTION:
+- Vibrant celebration atmosphere
+- Colorful, joyful palette
+- Party elements (confetti, balloons, sparkles)
+- Warm, inviting lighting
+- Fun, playful typography
+- Celebratory decorations
+- Happy, energetic mood`,
+  };
+  
+  return styles[style || 'dinamico'] || styles['dinamico'];
 };
 
 serve(async (req) => {
@@ -138,6 +198,8 @@ serve(async (req) => {
       variationsCount = 1,
       logoUrl,
       brandIdentity,
+      visualStyle,
+      campaignTemplate,
     } = await req.json();
 
     // Validate required fields
@@ -177,6 +239,8 @@ serve(async (req) => {
     console.log("[generate-creative-v2] Context:", context);
     console.log("[generate-creative-v2] Headline:", headline);
     console.log("[generate-creative-v2] Format:", format);
+    console.log("[generate-creative-v2] Visual Style:", visualStyle || "dinamico");
+    console.log("[generate-creative-v2] Campaign Template:", campaignTemplate || "none");
     console.log("[generate-creative-v2] Has Logo for overlay:", !!logoUrl);
 
     // ============ STEP 1: Art Director - More Creative ============
@@ -246,8 +310,11 @@ IMPORTANTE: Seja CRIATIVO! Sugira elementos visuais RICOS e IMPACTANTES que faç
       ? sanitizedBrandIdentity.colors.join(", ") 
       : "professional blue and purple palette";
 
-    // Get contextual creative elements
-    const contextualElements = getContextualElements(context);
+    // Get contextual creative elements based on template or context
+    const contextualElements = getContextualElements(context, campaignTemplate);
+    
+    // Get visual style instructions
+    const visualStyleInstructions = getVisualStyleInstructions(visualStyle);
 
     // Generate requested number of variations
     const validCounts = [1, 2, 4];
@@ -269,9 +336,12 @@ IMPORTANTE: Seja CRIATIVO! Sugira elementos visuais RICOS e IMPACTANTES que faç
       // Creative professional prompt - NO LOGO (will be added via overlay)
       const imagePrompt = `=== PROFESSIONAL ADVERTISING CREATIVE - VARIATION ${i + 1} ===
 
+${visualStyleInstructions}
+
 === CREATIVE DIRECTION (BREAK THE MOLD) ===
 This is NOT a generic stock photo. Create something VISUALLY STRIKING and MEMORABLE.
 VARIATION STYLE: ${variationInstruction}
+${campaignTemplate ? `CAMPAIGN: ${campaignTemplate.toUpperCase()} themed creative` : ''}
 
 CREATIVE ELEMENTS FOR THIS CONTEXT:
 ${contextualElements}
