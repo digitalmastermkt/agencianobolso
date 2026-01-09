@@ -50,6 +50,7 @@ import {
   ImagePlus,
   Package,
   FileText,
+  Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +61,10 @@ import { BannerComposite, BANNER_FORMATS, type BannerFormat } from "@/components
 import { BrandProfileSelector } from "@/components/banner/BrandProfileSelector";
 import { InstagramAnalyzer } from "@/components/banner/InstagramAnalyzer";
 import { BrandPersonPhotosManager, PersonPhoto } from "@/components/banner/BrandPersonPhotosManager";
+import { GenerationsGallery } from "@/components/banner/GenerationsGallery";
+import { ArtFavoriteButton } from "@/components/banner/ArtFavoriteButton";
+import { ArtFavoritesGallery } from "@/components/banner/ArtFavoritesGallery";
+import { BannerTextPreview } from "@/components/banner/BannerTextPreview";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -1313,10 +1318,32 @@ export default function AgenteDiretorArte() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Projetos</CardTitle>
-                <CardDescription>
-                  Crie projetos e organize os banners gerados por cliente ou campanha.
-                </CardDescription>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle>Projetos</CardTitle>
+                    <CardDescription>
+                      Crie projetos e organize os banners gerados por cliente ou campanha.
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <ArtFavoritesGallery 
+                      onReuse={(bannerText, ctaText, format) => {
+                        setHeadline(bannerText);
+                        setCta(ctaText);
+                        setSelectedFormat(format as BannerFormat);
+                      }}
+                    />
+                    {currentProjectId && (
+                      <GenerationsGallery
+                        projectId={currentProjectId}
+                        projectName={currentProject?.name}
+                        onFavorite={(imageUrl, data) => {
+                          // The favorite button inside gallery handles this
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -1773,6 +1800,16 @@ export default function AgenteDiretorArte() {
                   </p>
                 </div>
 
+                {/* Real-time Text Preview */}
+                {headline.trim().length > 0 && (
+                  <BannerTextPreview
+                    format={selectedFormat}
+                    headline={headline}
+                    subheadline={subheadline}
+                    cta={cta}
+                    brandColors={brandColors}
+                  />
+                )}
                 {/* Logo Toggle */}
                 {brandProfile?.logo_url && (
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -1975,8 +2012,16 @@ export default function AgenteDiretorArte() {
                 {/* Selected Variation Preview */}
                 {selectedVariation && decision && (
                   <Card>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between pb-3">
                       <CardTitle className="text-lg">Pré-visualização</CardTitle>
+                      <ArtFavoriteButton
+                        imageUrl={selectedVariation.imageUrl}
+                        bannerText={headline}
+                        cta={cta}
+                        format={selectedFormat}
+                        projectId={currentProjectId || undefined}
+                        showLabel
+                      />
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex justify-center">
