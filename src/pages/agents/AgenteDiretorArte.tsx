@@ -237,50 +237,92 @@ export default function AgenteDiretorArte() {
   
   const limitReached = totalBanners >= MAX_BANNERS_BETA;
 
-  // Load projects from localStorage
+  // Load projects from Supabase (with localStorage fallback)
   useEffect(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as ProjectItem[];
-        setProjects(parsed);
-        if (parsed.length > 0) {
-          setCurrentProjectId(parsed[0].id);
-          currentProjectRef.current = parsed[0].id;
+    const loadProjects = async () => {
+      if (!user?.id) {
+        // Fallback to localStorage for anonymous users
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as ProjectItem[];
+            setProjects(parsed);
+            if (parsed.length > 0) {
+              setCurrentProjectId(parsed[0].id);
+              currentProjectRef.current = parsed[0].id;
+            }
+          } catch {
+            setProjects([]);
+          }
         }
-      } catch {
-        setProjects([]);
+        return;
       }
-    }
-  }, [storageKey]);
 
-  // Save projects to localStorage (with error handling for quota)
-  useEffect(() => {
-    try {
-      // Don't save banner image data to localStorage - only save metadata
-      const projectsToSave = projects.map(project => ({
-        ...project,
-        banners: project.banners.map(banner => ({
-          ...banner,
-          backgroundImageUrl: '', // Don't save large base64 images
-          personPhotoUrl: undefined,
-          personCutoutUrl: undefined,
-        }))
-      }));
-      localStorage.setItem(storageKey, JSON.stringify(projectsToSave));
-    } catch (error) {
-      // Handle QuotaExceededError - clear old data
-      console.warn('localStorage quota exceeded, clearing old project data');
-      try {
-        localStorage.removeItem(storageKey);
-        // Save minimal project structure
-        const minimalProjects = projects.map(p => ({ id: p.id, name: p.name, banners: [] }));
-        localStorage.setItem(storageKey, JSON.stringify(minimalProjects));
-      } catch {
-        console.error('Failed to save projects to localStorage');
+      // Load from Supabase for authenticated users
+      const { data, error } = await supabase
+        .from('brand_projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        const loadedProjects: ProjectItem[] = data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          banners: [], // Banners will be loaded from project_generations
+        }));
+        setProjects(loadedProjects);
+        if (loadedProjects.length > 0) {
+          setCurrentProjectId(loadedProjects[0].id);
+          currentProjectRef.current = loadedProjects[0].id;
+        }
       }
-    }
-  }, [projects, storageKey]);
+    };
+
+    loadProjects();
+  }, [user?.id, storageKey]);
+
+  // Save project to Supabase when created
+  const saveProjectToSupabase = async (project: ProjectItem) => {
+    if (!user?.id) return;
+
+    await supabase.from('brand_projects').insert({
+      id: project.id,
+      user_id: user.id,
+      brand_profile_id: selectedBrandProfileId || null,
+      name: project.name,
+    });
+  };
+
+  // Delete project from Supabase
+  const deleteProjectFromSupabase = async (projectId: string) => {
+    if (!user?.id) return;
+
+    // Delete generations first (cascade)
+    await supabase
+      .from('project_generations')
+      .delete()
+      .eq('project_id', projectId);
+
+    await supabase
+      .from('brand_projects')
+      .delete()
+      .eq('id', projectId);
+  };
+
+  // Save generation to Supabase
+  const saveGenerationToSupabase = async (projectId: string, imageUrls: string[]) => {
+    if (!user?.id) return;
+
+    await supabase.from('project_generations').insert({
+      project_id: projectId,
+      user_id: user.id,
+      images: imageUrls.map(url => ({ url, style: selectedFormat })),
+      banner_text: headline.trim(),
+      cta: cta.trim() || null,
+      formats: [selectedFormat],
+    });
+  };
 
   // Load brand profile when selected
   useEffect(() => {
@@ -589,6 +631,11 @@ export default function AgenteDiretorArte() {
         setGeneratedVariations(variations);
         setSelectedVariationId(variations[0].id);
         setGeneratedImageUrl(variations[0].imageUrl);
+
+        // Save generation to Supabase
+        if (currentProjectId) {
+          await saveGenerationToSupabase(currentProjectId, data.images);
+        }
       } else if (data.imageUrl) {
         // Fallback for single image
         const variation: GeneratedVariation = {
@@ -600,6 +647,11 @@ export default function AgenteDiretorArte() {
         setGeneratedVariations([variation]);
         setSelectedVariationId(variation.id);
         setGeneratedImageUrl(data.imageUrl);
+
+        // Save generation to Supabase
+        if (currentProjectId) {
+          await saveGenerationToSupabase(currentProjectId, [data.imageUrl]);
+        }
       }
 
       // Auto advance to result step
@@ -721,7 +773,7 @@ export default function AgenteDiretorArte() {
     return labels[style] || style;
   };
 
-  const handleCreateProject = () => {
+  const handleCreateProject = async () => {
     const trimmedName = projectName.trim();
     if (!trimmedName) {
       toast({
@@ -738,6 +790,9 @@ export default function AgenteDiretorArte() {
       banners: [],
     };
 
+    // Save to Supabase
+    await saveProjectToSupabase(newProject);
+
     setProjects((prev) => [newProject, ...prev]);
     setCurrentProjectId(newProject.id);
     currentProjectRef.current = newProject.id;
@@ -753,8 +808,11 @@ export default function AgenteDiretorArte() {
     setProjectToDelete(project);
   };
 
-  const confirmDeleteProject = () => {
+  const confirmDeleteProject = async () => {
     if (!projectToDelete) return;
+    
+    // Delete from Supabase
+    await deleteProjectFromSupabase(projectToDelete.id);
     
     setProjects((prev) => prev.filter((p) => p.id !== projectToDelete.id));
     
@@ -1058,7 +1116,11 @@ export default function AgenteDiretorArte() {
       case 3:
         return !!currentProjectId;
       case 4:
-        return images.length > 0 && headline.trim().length > 0 && contextDescription.trim().length > 0;
+        // Context is now optional - only headline and appropriate image are required
+        const hasRequiredImage = generationMode === 'text-only' || 
+          (generationMode === 'person' && images.length > 0) ||
+          (generationMode === 'product' && productImage);
+        return hasRequiredImage && headline.trim().length > 0;
       default:
         return true;
     }
@@ -1635,10 +1697,9 @@ export default function AgenteDiretorArte() {
                   </div>
                 )}
 
-                {/* Context - For AI scene understanding */}
                 <div>
                   <Label htmlFor="context" className="font-medium">
-                    Contexto da Arte
+                    Contexto da Arte <span className="text-muted-foreground font-normal">(opcional)</span>
                   </Label>
                   <Textarea
                     id="context"
@@ -1650,7 +1711,7 @@ export default function AgenteDiretorArte() {
                   />
                   <div className="flex justify-between mt-1">
                     <p className="text-xs text-muted-foreground">
-                      A IA usará isso para criar o cenário apropriado (festivo, comercial, etc)
+                      A IA usará isso para criar o cenário apropriado. Se vazio, usa o headline como referência.
                     </p>
                     <span className="text-xs text-muted-foreground">
                       {contextDescription.length}/300
