@@ -379,9 +379,10 @@ serve(async (req) => {
       return respond({ success: false, error: "O campo headline é obrigatório." }, 400);
     }
 
-    if (!context || typeof context !== "string" || context.trim().length === 0) {
-      return respond({ success: false, error: "O campo context é obrigatório." }, 400);
-    }
+    // Context is now OPTIONAL - use headline as fallback
+    const effectiveContext = (context && typeof context === "string" && context.trim().length > 0) 
+      ? context.trim() 
+      : headline.trim();
 
     if (!format || typeof format !== "string") {
       return respond({ success: false, error: "O campo format é obrigatório." }, 400);
@@ -396,7 +397,9 @@ serve(async (req) => {
       return respond({ success: false, error: "A foto do produto é obrigatória para o modo 'produto'." }, 400);
     }
 
+    // text-only mode doesn't require any image
     console.log("[generate-creative-v2] Generation mode:", generationMode);
+    console.log("[generate-creative-v2] Effective context:", effectiveContext);
 
     // Sanitize inputs
     const sanitizedBrandProfile = {
@@ -415,17 +418,17 @@ serve(async (req) => {
     };
 
     // Auto-detect style from context
-    const detectedStyle = detectStyleFromContext(context);
+    const detectedStyle = detectStyleFromContext(effectiveContext);
     console.log("[generate-creative-v2] Auto-detected style from context:", detectedStyle);
 
     console.log("[generate-creative-v2] Starting PROFESSIONAL BRAND generation...");
-    console.log("[generate-creative-v2] Context:", context);
+    console.log("[generate-creative-v2] Context:", effectiveContext);
     console.log("[generate-creative-v2] Headline:", headline);
     console.log("[generate-creative-v2] Format:", format);
     console.log("[generate-creative-v2] Has Logo for overlay:", !!logoUrl);
 
     // ============ STEP 1: Art Director - PROFESSIONAL BRAND PHILOSOPHY ============
-    const userPrompt = `Contexto da arte: ${context.slice(0, 300)}
+    const userPrompt = `Contexto da arte: ${effectiveContext.slice(0, 300)}
 
 ESTILO DETECTADO AUTOMATICAMENTE: ${detectedStyle}
 (baseado nas palavras-chave do contexto)
@@ -506,7 +509,7 @@ IMPORTANTE:
       : "professional blue and purple palette";
 
     // Get contextual creative elements - AUTO-DETECTED from context
-    const contextualElements = getContextualElements(context);
+    const contextualElements = getContextualElements(effectiveContext);
     
     // Get layout instructions based on AI decision
     const layoutInstructions = getLayoutInstructions(decision.layout_style, positionText);
@@ -625,20 +628,27 @@ SUBHEADLINE: "${subheadline}"
 - COPY EXACTLY - NO CHANGES
 ` : ""}
 
-${cta ? `
-CTA ELEMENT: "${cta}"
-Choose the BEST format for this context (NOT ALWAYS A BUTTON!):
-- BUTTON: Pill shape with solid background (for promotions, urgency, flash sales)
-- HIGHLIGHTED TEXT: Bold text with subtle underline or glow (for institutional, premium)
-- BADGE/TAG: Small floating element with accent color (for launches, novelty)
-- INTEGRATED: Text seamlessly integrated with design, arrow pointing (for premium, minimalist)
-- TEXT WITH ARROW: Bold CTA text with arrow icon "→" (for actions like "Saiba Mais →")
+${cta && cta.trim() ? `
+CTA ELEMENT (CRITICAL - READ CAREFULLY):
+The CTA text must be EXACTLY: "${cta}"
 
-Background: ${textColors.cta_bg}
-Text: ${textColors.cta_text}, bold
-Make it look CLICKABLE if button format
-- COPY EXACTLY - NO CHANGES
-` : ""}
+Format options (choose the best for this context):
+- BUTTON: Pill shape with solid colored background
+- HIGHLIGHTED TEXT: Bold text with subtle underline or glow
+- BADGE/TAG: Small floating element with accent color
+- TEXT WITH ARROW: Bold CTA text with arrow icon "→"
+
+IMPORTANT RULES FOR CTA:
+1. ONLY render the text "${cta}" - nothing else
+2. NEVER render color codes, hex values, or technical information as visible text
+3. Make it look CLICKABLE and professional
+4. Use brand colors for styling (apply colors visually, don't write them as text)
+` : `
+NO CTA ELEMENT:
+Do NOT include any call-to-action button or text.
+Do NOT add any placeholder CTA.
+The design should be complete without a CTA element.
+`}
 
 ${generationMode === 'person' ? `
 === INTEGRAÇÃO HUMANA (PESSOA COMO ELEMENTO ESTRUTURAL) ===
@@ -697,6 +707,25 @@ ${generationMode === 'text-only' ? '6. ✓ Tipografia como elemento visual princ
 
       console.log(`[generate-creative-v2] Using layout style: ${variationLayout}, protagonist: ${decision.protagonist}`);
 
+      // Build message content based on generation mode
+      const messageContent: Array<{type: string; text?: string; image_url?: {url: string}}> = [
+        { type: "text", text: imagePrompt }
+      ];
+      
+      // Only include image reference for person and product modes
+      if (generationMode === 'person' && personImageBase64) {
+        messageContent.push({ 
+          type: "image_url", 
+          image_url: { url: personImageBase64 }
+        });
+      } else if (generationMode === 'product' && productImageBase64) {
+        messageContent.push({ 
+          type: "image_url", 
+          image_url: { url: productImageBase64 }
+        });
+      }
+      // text-only mode: no image reference, pure text-to-image generation
+
       const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -704,17 +733,11 @@ ${generationMode === 'text-only' ? '6. ✓ Tipografia como elemento visual princ
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-pro-image-preview",
+          model: "google/gemini-2.5-flash-image-preview",
           messages: [
             {
               role: "user",
-              content: [
-                { type: "text", text: imagePrompt },
-                { 
-                  type: "image_url", 
-                  image_url: { url: personImageBase64 }
-                }
-              ]
+              content: messageContent
             }
           ],
           modalities: ["image", "text"]

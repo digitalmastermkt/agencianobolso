@@ -502,14 +502,7 @@ export default function AgenteDiretorArte() {
       return;
     }
     
-    if (!contextText) {
-      toast({
-        title: "Contexto necessário",
-        description: "Descreva o contexto da arte (ex: promoção, lançamento, campanha comercial).",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Context is now optional - headline will be used as fallback in the edge function
 
     // Validate image based on mode
     if (generationMode === 'person' && !images[0]) {
