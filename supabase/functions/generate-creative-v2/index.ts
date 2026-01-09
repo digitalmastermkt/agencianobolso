@@ -1,9 +1,59 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Helper to upload base64 image to Supabase Storage
+async function uploadToStorage(
+  supabaseClient: ReturnType<typeof createClient>,
+  userId: string,
+  base64Image: string,
+  index: number
+): Promise<string | null> {
+  try {
+    // Extract base64 data (remove data:image/... prefix if present)
+    const base64Data = base64Image.includes(',') 
+      ? base64Image.split(',')[1] 
+      : base64Image;
+    
+    // Decode base64 to binary
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Generate unique filename
+    const timestamp = Date.now();
+    const filename = `${userId}/${timestamp}-${index}.png`;
+    
+    // Upload to storage
+    const { error } = await supabaseClient.storage
+      .from('generated-creatives')
+      .upload(filename, bytes, {
+        contentType: 'image/png',
+        upsert: false
+      });
+    
+    if (error) {
+      console.error('[generate-creative-v2] Storage upload error:', error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabaseClient.storage
+      .from('generated-creatives')
+      .getPublicUrl(filename);
+    
+    return urlData?.publicUrl || null;
+  } catch (err) {
+    console.error('[generate-creative-v2] Error uploading to storage:', err);
+    return null;
+  }
+}
 
 interface ArtDirectorDecision {
   scene_prompt: string;
@@ -354,9 +404,33 @@ serve(async (req) => {
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
     if (!LOVABLE_API_KEY) {
       console.error("[generate-creative-v2] LOVABLE_API_KEY not configured");
       return respond({ success: false, error: "LOVABLE_API_KEY não configurada" }, 500);
+    }
+
+    // Create Supabase client for storage operations (optional - will use base64 fallback if not configured)
+    let supabaseClient: ReturnType<typeof createClient> | null = null;
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    }
+
+    // Get user ID from auth header for storage path
+    const authHeader = req.headers.get("Authorization");
+    let userId = "anonymous";
+    if (authHeader && supabaseClient) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await supabaseClient.auth.getUser(token);
+        if (user?.id) {
+          userId = user.id;
+        }
+      } catch (e) {
+        console.log("[generate-creative-v2] Could not get user from token, using anonymous");
+      }
     }
 
     const { 
@@ -765,11 +839,28 @@ ${generationMode === 'text-only' ? '6. ✓ Tipografia como elemento visual princ
       }
 
       const imageData = await imageResponse.json();
-      const generatedImageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      const generatedImageBase64 = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
       
-      if (generatedImageUrl) {
-        generatedImages.push(generatedImageUrl);
+      if (generatedImageBase64) {
+        // Try to upload to storage, fallback to base64 if storage is not configured
+        if (supabaseClient && userId !== "anonymous") {
+          const storageUrl = await uploadToStorage(supabaseClient, userId, generatedImageBase64, i);
+          if (storageUrl) {
+            generatedImages.push(storageUrl);
+            console.log(`[generate-creative-v2] Variation ${i + 1} uploaded to storage: ${storageUrl}`);
+          } else {
+            // Fallback to base64 if upload fails
+            generatedImages.push(generatedImageBase64);
+            console.log(`[generate-creative-v2] Variation ${i + 1} storage upload failed, using base64`);
+          }
+        } else {
+          // No storage configured, use base64
+          generatedImages.push(generatedImageBase64);
+          console.log(`[generate-creative-v2] Variation ${i + 1} generated (no storage configured)`);
+        }
         console.log(`[generate-creative-v2] Variation ${i + 1} generated successfully with layout: ${variationLayout}, protagonist: ${decision.protagonist}`);
+      } else {
+        console.warn(`[generate-creative-v2] Variation ${i + 1} returned no image`);
       }
     }
 
