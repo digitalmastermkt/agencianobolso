@@ -41,6 +41,8 @@ const AdminAuditLogs = lazy(() => import("./pages/admin/AdminAuditLogs"));
 const Vendas = lazy(() => import("./pages/Vendas"));
 const CapturaEvento = lazy(() => import("./pages/CapturaEvento"));
 const Obrigado = lazy(() => import("./pages/Obrigado"));
+const ListaEspera = lazy(() => import("./pages/ListaEspera"));
+const ObrigadoListaEspera = lazy(() => import("./pages/ObrigadoListaEspera"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentCanceled = lazy(() => import("./pages/PaymentCanceled"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -72,6 +74,8 @@ const App = () => (
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/evento" element={<CapturaEvento />} />
           <Route path="/obrigado" element={<Obrigado />} />
+          <Route path="/lista-espera" element={<ListaEspera />} />
+          <Route path="/obrigado-lista" element={<ObrigadoListaEspera />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/agentes" element={
