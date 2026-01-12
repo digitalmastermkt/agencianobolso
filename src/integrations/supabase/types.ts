@@ -557,6 +557,63 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          campanha: string
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          origem: string | null
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          campanha?: string
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          origem?: string | null
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          campanha?: string
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          origem?: string | null
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      leads_rate_limit: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: unknown
+          last_submission: string
+          submission_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: unknown
+          last_submission?: string
+          submission_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          last_submission?: string
+          submission_count?: number
+        }
+        Relationships: []
+      }
       lesson_progress: {
         Row: {
           completed: boolean | null
@@ -1289,6 +1346,10 @@ export type Database = {
       check_event_registration_rate_limit: { Args: never; Returns: boolean }
       check_form_rate_limit: {
         Args: { form_name: string; max_per_hour?: number }
+        Returns: boolean
+      }
+      check_leads_rate_limit: {
+        Args: { max_per_hour?: number }
         Returns: boolean
       }
       decrypt_pii: { Args: { encrypted_data: string }; Returns: string }
