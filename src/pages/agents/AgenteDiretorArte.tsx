@@ -1447,46 +1447,8 @@ export default function AgenteDiretorArte() {
               </CardContent>
             </Card>
 
-            {currentProject && currentProject.banners.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Banners do projeto</CardTitle>
-                  <CardDescription>
-                    {currentProject.banners.length} banner(s) gerado(s)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {currentProject.banners.map((banner) => (
-                      <div key={banner.id} className="space-y-2">
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(banner.createdAt).toLocaleString()}
-                        </div>
-                        <div className="overflow-hidden rounded-lg border">
-                          <BannerComposite
-                            format={banner.format}
-                            backgroundImageUrl={banner.backgroundImageUrl}
-                            personPhotoUrl={banner.personPhotoUrl}
-                            personCutoutUrl={banner.personCutoutUrl}
-                            personPosition={banner.personPosition}
-                            headline={banner.headline}
-                            subheadline={banner.subheadline}
-                            cta={banner.cta}
-                            colors={banner.colors}
-                            brandColors={banner.brandColors}
-                            showDecorations={(banner.brandColors?.length ?? 0) > 0}
-                            decorationStyle={banner.decorationStyle}
-                            highlightKeyword={(banner.brandColors?.length ?? 0) > 0}
-                            style={banner.style}
-                            previewScale={0.15}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Banner preview is now handled by GenerationsGallery component */}
+            {/* The banners array is just a placeholder for counting */}
           </div>
         );
 
