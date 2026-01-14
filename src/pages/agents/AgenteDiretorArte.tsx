@@ -221,6 +221,11 @@ export default function AgenteDiretorArte() {
   const [exporting, setExporting] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   
+  // Generation progress state
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationStep, setGenerationStep] = useState<string>("");
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
   // Projects
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -576,6 +581,28 @@ export default function AgenteDiretorArte() {
     setGeneratedImageUrl(null);
     setGeneratedVariations([]);
     setSelectedVariationId(null);
+    
+    // Start progress simulation
+    setGenerationProgress(0);
+    setGenerationStep("Otimizando foto profissional...");
+    
+    const progressSteps = [
+      { progress: 15, step: "Otimizando foto profissional...", delay: 2000 },
+      { progress: 30, step: "Definindo direção artística...", delay: 3000 },
+      { progress: 45, step: `Gerando variação 1 de ${variationsCount}...`, delay: 5000 },
+      { progress: 60, step: variationsCount >= 2 ? `Gerando variação 2 de ${variationsCount}...` : "Finalizando...", delay: 6000 },
+      { progress: 75, step: variationsCount >= 4 ? `Gerando variações 3-4 de ${variationsCount}...` : "Finalizando...", delay: 8000 },
+      { progress: 90, step: "Salvando e otimizando...", delay: 3000 },
+    ];
+    
+    let stepIndex = 0;
+    progressIntervalRef.current = setInterval(() => {
+      if (stepIndex < progressSteps.length) {
+        setGenerationProgress(progressSteps[stepIndex].progress);
+        setGenerationStep(progressSteps[stepIndex].step);
+        stepIndex++;
+      }
+    }, 3000);
 
     try {
       // Determine which image to send based on mode
@@ -676,6 +703,13 @@ export default function AgenteDiretorArte() {
         variant: "destructive",
       });
     } finally {
+      // Clear progress interval
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      setGenerationProgress(100);
+      setGenerationStep("Concluído!");
       setLoading(false);
     }
   };
@@ -1860,15 +1894,24 @@ export default function AgenteDiretorArte() {
 
                 <Button 
                   type="submit" 
-                  className={`w-full ${buttonMinHeight}`} 
+                  className={`w-full ${buttonMinHeight} ${loading ? 'h-auto py-3' : ''}`} 
                   variant="gradient" 
                   disabled={loading || images.length === 0 || limitReached}
                 >
                   {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Gerando...
-                    </>
+                    <div className="flex flex-col items-center gap-2 w-full">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm font-medium">{generationStep}</span>
+                      </div>
+                      <div className="w-full bg-primary-foreground/20 rounded-full h-1.5">
+                        <div 
+                          className="bg-primary-foreground h-1.5 rounded-full transition-all duration-500 ease-out"
+                          style={{ width: `${generationProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs opacity-80">{generationProgress}%</span>
+                    </div>
                   ) : (
                     <>
                       <Palette className="w-5 h-5 mr-2" />
@@ -1915,21 +1958,49 @@ export default function AgenteDiretorArte() {
             {loading ? (
               <Card>
                 <CardContent className="py-12">
-                  <div className="text-center space-y-4">
-                    <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+                  <div className="text-center space-y-6">
+                    {/* Animated icon */}
+                    <div className="relative w-20 h-20 mx-auto">
+                      <Loader2 className="w-20 h-20 animate-spin text-primary/30" />
+                      <Sparkles className="w-8 h-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary animate-pulse" />
+                    </div>
+                    
+                    {/* Current step */}
                     <div>
-                      <p className="font-medium">Recriando você no cenário...</p>
+                      <p className="font-medium text-lg">{generationStep}</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        A IA está gerando {variationsCount} variação(ões) com preservação de identidade facial
+                        Gerando {variationsCount} variação(ões) com preservação de identidade
                       </p>
                     </div>
-                    <div className="flex justify-center gap-1 mt-4">
-                      {[1, 2, 3].map((i) => (
-                        <div 
-                          key={i} 
-                          className="w-2 h-2 rounded-full bg-primary animate-pulse"
-                          style={{ animationDelay: `${i * 200}ms` }}
-                        />
+                    
+                    {/* Progress bar */}
+                    <div className="max-w-xs mx-auto space-y-2">
+                      <Progress value={generationProgress} className="h-2" />
+                      <p className="text-sm font-medium text-primary">{generationProgress}%</p>
+                    </div>
+                    
+                    {/* Step indicators */}
+                    <div className="flex justify-center gap-2 flex-wrap">
+                      {[
+                        { label: 'Foto', threshold: 15 },
+                        { label: 'Direção', threshold: 30 },
+                        { label: 'Geração', threshold: 45 },
+                        { label: 'Upload', threshold: 90 },
+                      ].map((step) => (
+                        <Badge 
+                          key={step.label}
+                          variant={generationProgress >= step.threshold ? "default" : "outline"}
+                          className={`transition-all duration-300 ${
+                            generationProgress >= step.threshold && generationProgress < (step.threshold + 15)
+                              ? 'animate-pulse ring-2 ring-primary/50'
+                              : ''
+                          }`}
+                        >
+                          {generationProgress >= step.threshold && (
+                            <Check className="w-3 h-3 mr-1" />
+                          )}
+                          {step.label}
+                        </Badge>
                       ))}
                     </div>
                   </div>
