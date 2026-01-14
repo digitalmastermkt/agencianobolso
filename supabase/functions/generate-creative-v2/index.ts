@@ -837,7 +837,15 @@ REGRA: Usar no mínimo 2 destas cores na arte!
 
 === TYPOGRAPHY WITH BRAND COLORS ===
 
-HEADLINE: "${headline}"
+=== CRITICAL: EXACT TEXT RENDERING - DO NOT MODIFY ===
+The following text was written by the user. You MUST render it EXACTLY as provided.
+DO NOT fix spelling, DO NOT change words, DO NOT add/remove punctuation.
+DO NOT translate, DO NOT interpret, DO NOT paraphrase.
+Copy the text CHARACTER BY CHARACTER, LETTER BY LETTER.
+
+HEADLINE TEXT TO RENDER (COPY EXACTLY - NO MODIFICATIONS):
+>>> ${headline} <<<
+
 TYPOGRAPHY STYLE (choose based on context):
 - IMPACT: Very bold, condensed, maximum attention (for sales, urgency)
 - ELEGANT: Light weight, generous letter spacing (for premium, institutional)
@@ -854,7 +862,7 @@ TEXT ORIENTATION (vary for creativity):
 - Size: ${generationMode === 'text-only' ? 'ENORMOUS, dominates the frame as the main visual element' : decision.protagonist === 'text' ? 'ENORMOUS, dominates the frame' : decision.protagonist === 'person' ? 'Medium, elegant, not dominant' : 'Large but balanced'}
 - Color: ${textColors.headline}
 - Strong shadow for contrast and legibility
-- COPY EXACTLY - NO CHANGES
+- RENDER THE EXACT TEXT ABOVE - DO NOT CHANGE EVEN A SINGLE LETTER
 
 COLOR CONTRAST RULE (CRITICAL FOR READABILITY):
 - If background is DARK → headline should be LIGHT (white, cream, or bright brand color)
@@ -863,12 +871,13 @@ COLOR CONTRAST RULE (CRITICAL FOR READABILITY):
 - Add text shadow or outline when needed for contrast
 
 ${subheadline ? `
-SUBHEADLINE: "${subheadline}"
+SUBHEADLINE TEXT TO RENDER (COPY EXACTLY - NO MODIFICATIONS):
+>>> ${subheadline} <<<
 - Font: Light/Regular weight
 - Size: 40-50% of headline
 - Color: ${textColors.subheadline}
 - Position: Based on layout style
-- COPY EXACTLY - NO CHANGES
+- RENDER THE EXACT TEXT ABOVE - DO NOT CHANGE EVEN A SINGLE LETTER
 ` : ""}
 
 ${cta && cta.trim() ? `
