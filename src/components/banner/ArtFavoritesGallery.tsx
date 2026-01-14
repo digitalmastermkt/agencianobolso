@@ -100,16 +100,23 @@ export function ArtFavoritesGallery({ onReuse }: ArtFavoritesGalleryProps) {
     }
   };
 
-  const handleDownload = (imageUrl: string, index: number) => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `favorito-${Date.now()}-${index + 1}.png`;
-    link.click();
+  const handleDownload = async (imageUrl: string, index: number) => {
+    const { downloadImage } = await import('@/lib/downloadImage');
+    const filename = `favorito-${Date.now()}-${index + 1}.png`;
+    const success = await downloadImage(imageUrl, filename);
     
-    toast({
-      title: "Download iniciado!",
-      description: "Sua imagem está sendo baixada.",
-    });
+    if (success) {
+      toast({
+        title: "Download iniciado!",
+        description: "Sua imagem está sendo baixada.",
+      });
+    } else {
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível baixar a imagem",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReuse = (favorite: FavoriteArt) => {

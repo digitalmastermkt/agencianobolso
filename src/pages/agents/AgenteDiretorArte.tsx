@@ -771,16 +771,23 @@ export default function AgenteDiretorArte() {
   };
 
   // Download selected variation
-  const handleDownloadVariation = (imageUrl: string, filename?: string) => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = filename || `criativo-${selectedFormat}-${Date.now()}.png`;
-    link.click();
+  const handleDownloadVariation = async (imageUrl: string, filename?: string) => {
+    const { downloadImage } = await import('@/lib/downloadImage');
+    const finalFilename = filename || `criativo-${selectedFormat}-${Date.now()}.png`;
+    const success = await downloadImage(imageUrl, finalFilename);
     
-    toast({
-      title: "Download iniciado!",
-      description: "Sua imagem está sendo baixada.",
-    });
+    if (success) {
+      toast({
+        title: "Download iniciado!",
+        description: "Sua imagem está sendo baixada.",
+      });
+    } else {
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível baixar a imagem",
+        variant: "destructive",
+      });
+    }
   };
 
   const copyJson = () => {
