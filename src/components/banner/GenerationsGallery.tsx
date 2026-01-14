@@ -110,16 +110,23 @@ export function GenerationsGallery({ projectId, projectName, onFavorite }: Gener
     }
   };
 
-  const handleDownload = (imageUrl: string, index: number, format?: string) => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `criativo-${format || 'banner'}-${Date.now()}-${index + 1}.png`;
-    link.click();
+  const handleDownload = async (imageUrl: string, index: number, format?: string) => {
+    const { downloadImage } = await import('@/lib/downloadImage');
+    const filename = `criativo-${format || 'banner'}-${Date.now()}-${index + 1}.png`;
+    const success = await downloadImage(imageUrl, filename);
     
-    toast({
-      title: "Download iniciado!",
-      description: "Sua imagem está sendo baixada.",
-    });
+    if (success) {
+      toast({
+        title: "Download iniciado!",
+        description: "Sua imagem está sendo baixada.",
+      });
+    } else {
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível baixar a imagem",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFavorite = (imageUrl: string, generation: ProjectGeneration) => {
