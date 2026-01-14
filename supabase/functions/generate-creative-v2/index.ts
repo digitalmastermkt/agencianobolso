@@ -86,6 +86,151 @@ interface BrandIdentity {
 }
 
 // ==========================================
+// BIBLIOTECA DE PROMPTS PROFISSIONAIS POR CONTEXTO
+// ==========================================
+const PROFESSIONAL_PHOTO_PROMPTS: Record<string, string> = {
+  executivo: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em estúdio profissional, com sorriso sutil e postura de liderança. Cabelo polido e alinhado, mantendo a cor natural. Vestuário: terno/blazer escuro com camisa clara; gravata opcional. Acessórios/insígnias: relógio discreto ou bloco de notas genérico (sem marcas). Cenário ao fundo: sala de reuniões moderna desfocada com bokeh. Iluminação: janela lateral suave com preenchimento discreto e luz de recorte sutil no cabelo. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  marketing: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em estúdio profissional, com sorriso criativo e olhar estratégico. Cabelo alinhado e estilizado de forma discreta, mantendo a cor natural. Vestuário: blazer casual com camisa básica. Acessórios/insígnias: tablet exibindo gráfico genérico sem texto legível (sem marcas). Cenário ao fundo: espaço criativo com post-its e telas desfocados com bokeh. Iluminação: mista (janela + letreiros suaves) balanceada, com luz de recorte sutil no cabelo. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  saude: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em estúdio profissional, com postura segura e acolhedora. Cabelo bem penteado, mechas controladas; manter a cor natural. Vestuário: jaleco branco impecável. Acessórios/insígnias: estetoscópio genérico no pescoço, sem marcas. Cenário ao fundo: sala clínica contemporânea desfocada com bokeh. Iluminação: janela lateral suave com preenchimento discreto e luz de recorte sutil no cabelo. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  tech: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em ambiente tech moderno, com olhar visionário e postura inovadora. Cabelo estilizado moderno, mantendo a cor natural. Vestuário: suéter premium ou hoodie sofisticado em tons neutros escuros. Acessórios: laptop ou smartphone com tela genérica sem marcas. Cenário ao fundo: ambiente futurista com luzes neon suaves, HUD elements desfocados, estética tech com bokeh. Iluminação: luzes RGB sutis combinadas com luz natural, efeito dramático moderno. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  educacao: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em ambiente educacional, com expressão acolhedora e sorriso de mentor. Cabelo arrumado e profissional, mantendo a cor natural. Vestuário: blazer casual com camisa ou suéter elegante. Acessórios: livros empilhados ou óculos discretos (opcionais). Cenário ao fundo: biblioteca ou sala de aula moderna desfocada com bokeh, prateleiras de livros. Iluminação: janela lateral suave, ambiente acolhedor e convidativo. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  vendas: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em ambiente comercial dinâmico, com sorriso confiante e energia persuasiva. Cabelo impecável e estilizado, mantendo a cor natural. Vestuário: terno moderno bem cortado ou blazer ajustado com camisa sem gravata. Acessórios: smartphone em mãos (opcional), postura de ação. Cenário ao fundo: ambiente comercial moderno, escritório dinâmico desfocado com bokeh. Iluminação: luz forte e vibrante, energia alta, atmosfera de sucesso. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  juridico: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em escritório elegante, com expressão séria e confiante, postura de autoridade. Cabelo formal e polido, mantendo a cor natural. Vestuário: terno formal escuro impecável com camisa branca, gravata opcional clássica. Acessórios: caneta ou pasta de documentos em couro (sem marcas). Cenário ao fundo: escritório jurídico elegante, estantes de livros de direito desfocadas com bokeh. Iluminação: clássica de estúdio, sofisticada e imponente. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  fitness: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em ambiente fitness/academia, com expressão motivadora e energia atlética. Cabelo dinâmico e esportivo, mantendo a cor natural. Vestuário: roupa esportiva profissional (camiseta técnica ou regata de qualidade). Acessórios: cronômetro ou garrafa de água (opcionais, sem marcas). Cenário ao fundo: academia moderna ou espaço fitness desfocado com bokeh, equipamentos sutis. Iluminação: luz energética, contraste dramático, atmosfera de motivação. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  imobiliario: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em ambiente sofisticado, com sorriso acolhedor e postura de consultor. Cabelo elegante e bem cuidado, mantendo a cor natural. Vestuário: visual business casual elegante, blazer moderno. Acessórios: prancheta ou chaves decorativas (sem marcas). Cenário ao fundo: imóvel moderno, sala ampla ou vista de cidade desfocada com bokeh. Iluminação: luz natural abundante, atmosfera de sucesso e aspiração. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  gastronomia: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em ambiente de cozinha profissional, com expressão apaixonada e sorriso caloroso. Cabelo arrumado com touca de chef ou penteado limpo, mantendo a cor natural. Vestuário: dólmã de chef branco impecável. Acessórios: utensílios de cozinha genéricos (sem marcas). Cenário ao fundo: cozinha profissional moderna desfocada com bokeh, ambiente gastronômico. Iluminação: luz quente e acolhedora, atmosfera de restaurante premium. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  beleza: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em ambiente de beleza/salão, com expressão sofisticada e sorriso elegante. Cabelo perfeito e estilizado profissionalmente, mantendo a cor natural. Vestuário: roupa elegante e moderna, visual fashion. Acessórios: pincéis de maquiagem ou tesoura estilista (opcionais, sem marcas). Cenário ao fundo: salão de beleza moderno ou estúdio fashion desfocado com bokeh. Iluminação: ring light suave, beleza cinematográfica, pele impecável. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`,
+  
+  geral: `Use a imagem enviada como base e preserve a identidade (traços, proporções e tom de pele). Gere um retrato meio corpo em estúdio profissional neutro, com expressão confiante e sorriso natural. Cabelo bem cuidado e arrumado, mantendo a cor natural. Vestuário: business casual elegante (blazer ou camisa de qualidade). Cenário ao fundo: estúdio fotográfico com fundo gradiente suave em tons neutros com bokeh. Iluminação: setup profissional de estúdio com janela lateral suave, preenchimento discreto e luz de recorte sutil no cabelo. Lente 85mm f/1.8, nitidez natural, pele realista sem 'plástico'. Evitar: distorções, mãos extras, texto legível/logos de marcas, artefatos. Foto profissional.`
+};
+
+// Detectar contexto profissional baseado no texto
+function detectProfessionalContext(context: string, headline: string): string {
+  const text = `${context} ${headline}`.toLowerCase();
+  
+  // Executivo/Corporativo
+  if (text.match(/ceo|diretor|executivo|liderança|negócio|empresário|gestão|board|c-level|presidente|fundador|sócio/)) {
+    return 'executivo';
+  }
+  
+  // Marketing/Criativo
+  if (text.match(/marketing|digital|criativo|agência|redes sociais|conteúdo|branding|social media|tráfego|growth|copywriter/)) {
+    return 'marketing';
+  }
+  
+  // Saúde
+  if (text.match(/médico|médica|saúde|clínica|hospital|dentista|enfermeiro|nutrição|fisio|psicólogo|terapeuta|wellness|bem-estar/)) {
+    return 'saude';
+  }
+  
+  // Tech
+  if (text.match(/tech|tecnologia|ia|inteligência artificial|programação|software|startup|dev|developer|código|programador|dados|data/)) {
+    return 'tech';
+  }
+  
+  // Educação
+  if (text.match(/professor|educação|curso|mentor|treinamento|ensino|aula|coach|mentoria|capacitação|formação|workshop/)) {
+    return 'educacao';
+  }
+  
+  // Vendas
+  if (text.match(/vendas|comercial|representante|closer|prospecção|cliente|negociação|corretor|consultor de vendas|inside sales/)) {
+    return 'vendas';
+  }
+  
+  // Jurídico
+  if (text.match(/advogado|advocacia|jurídico|direito|justiça|tribunal|lei|contrato|compliance|legal/)) {
+    return 'juridico';
+  }
+  
+  // Fitness
+  if (text.match(/fitness|personal|academia|treino|esporte|atleta|musculação|crossfit|yoga|pilates|corrida/)) {
+    return 'fitness';
+  }
+  
+  // Imobiliário
+  if (text.match(/imobiliário|corretor|imóvel|apartamento|casa|venda de imóvel|locação|construtora|incorporadora/)) {
+    return 'imobiliario';
+  }
+  
+  // Gastronomia
+  if (text.match(/chef|cozinha|restaurante|gastronomia|culinária|comida|food|confeitaria|padaria/)) {
+    return 'gastronomia';
+  }
+  
+  // Beleza
+  if (text.match(/beleza|estética|maquiagem|cabelo|salão|beauty|skincare|spa|nail|manicure|cabeleireiro/)) {
+    return 'beleza';
+  }
+  
+  return 'geral'; // Business casual neutro
+}
+
+// Gerar foto profissional otimizada
+async function generateProfessionalPhoto(
+  originalPhotoBase64: string,
+  professionalContext: string,
+  apiKey: string
+): Promise<string | null> {
+  try {
+    const prompt = PROFESSIONAL_PHOTO_PROMPTS[professionalContext] || PROFESSIONAL_PHOTO_PROMPTS.geral;
+    
+    console.log(`[generate-creative-v2] Generating professional photo with context: ${professionalContext}`);
+    
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image-preview",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: originalPhotoBase64 } }
+            ]
+          }
+        ],
+        modalities: ["image", "text"]
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("[generate-creative-v2] Professional photo generation error:", errText);
+      return null;
+    }
+
+    const data = await response.json();
+    const enhancedPhotoBase64 = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    if (enhancedPhotoBase64) {
+      console.log("[generate-creative-v2] Professional photo generated successfully");
+      return enhancedPhotoBase64;
+    }
+    
+    console.warn("[generate-creative-v2] Professional photo generation returned no image");
+    return null;
+  } catch (err) {
+    console.error("[generate-creative-v2] Error generating professional photo:", err);
+    return null;
+  }
+}
+
+// ==========================================
 // DIRETOR DE ARTE SÊNIOR - FILOSOFIA PROFISSIONAL
 // ==========================================
 const artDirectorSystemPrompt = `Você é um DIRETOR DE ARTE SÊNIOR com mais de 20 anos de experiência em branding, publicidade e criação de criativos para empresas de tecnologia, estratégia e educação premium.
@@ -495,11 +640,35 @@ serve(async (req) => {
     const detectedStyle = detectStyleFromContext(effectiveContext);
     console.log("[generate-creative-v2] Auto-detected style from context:", detectedStyle);
 
+    // Auto-detect professional context for photo optimization
+    const professionalContext = detectProfessionalContext(effectiveContext, headline);
+    console.log("[generate-creative-v2] Detected professional context:", professionalContext);
+
     console.log("[generate-creative-v2] Starting PROFESSIONAL BRAND generation...");
     console.log("[generate-creative-v2] Context:", effectiveContext);
     console.log("[generate-creative-v2] Headline:", headline);
     console.log("[generate-creative-v2] Format:", format);
     console.log("[generate-creative-v2] Has Logo for overlay:", !!logoUrl);
+
+    // ============ PRE-STEP: PROFESSIONAL PHOTO OPTIMIZATION ============
+    let optimizedPersonImage = personImageBase64;
+    
+    if (generationMode === 'person' && personImageBase64) {
+      console.log("[generate-creative-v2] Starting professional photo optimization...");
+      
+      const enhancedPhoto = await generateProfessionalPhoto(
+        personImageBase64,
+        professionalContext,
+        LOVABLE_API_KEY
+      );
+      
+      if (enhancedPhoto) {
+        optimizedPersonImage = enhancedPhoto;
+        console.log("[generate-creative-v2] Using professionally optimized photo");
+      } else {
+        console.log("[generate-creative-v2] Photo optimization failed, using original photo");
+      }
+    }
 
     // ============ STEP 1: Art Director - PROFESSIONAL BRAND PHILOSOPHY ============
     const userPrompt = `Contexto da arte: ${effectiveContext.slice(0, 300)}
@@ -787,10 +956,11 @@ ${generationMode === 'text-only' ? '6. ✓ Tipografia como elemento visual princ
       ];
       
       // Only include image reference for person and product modes
-      if (generationMode === 'person' && personImageBase64) {
+      // Use optimizedPersonImage (professionally enhanced) instead of original
+      if (generationMode === 'person' && optimizedPersonImage) {
         messageContent.push({ 
           type: "image_url", 
-          image_url: { url: personImageBase64 }
+          image_url: { url: optimizedPersonImage }
         });
       } else if (generationMode === 'product' && productImageBase64) {
         messageContent.push({ 
@@ -897,6 +1067,8 @@ ${generationMode === 'text-only' ? '6. ✓ Tipografia como elemento visual princ
         secondaryColor,
         hasLogo: !!logoUrl,
         detectedStyle: detectedStyle,
+        professionalContext: professionalContext,
+        photoOptimized: optimizedPersonImage !== personImageBase64,
       },
     });
 
