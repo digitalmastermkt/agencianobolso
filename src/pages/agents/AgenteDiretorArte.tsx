@@ -268,19 +268,23 @@ export default function AgenteDiretorArte() {
         return;
       }
 
-      // Load from Supabase for authenticated users
+      // Load from Supabase for authenticated users - include generation count
       const { data, error } = await supabase
         .from('brand_projects')
-        .select('*')
+        .select('*, project_generations(count)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        const loadedProjects: ProjectItem[] = data.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          banners: [], // Banners will be loaded from project_generations
-        }));
+        const loadedProjects: ProjectItem[] = data.map((p: any) => {
+          // Extract count from nested aggregation
+          const generationCount = p.project_generations?.[0]?.count || 0;
+          return {
+            id: p.id,
+            name: p.name,
+            banners: Array(generationCount).fill({}), // Placeholder to show correct count
+          };
+        });
         setProjects(loadedProjects);
         if (loadedProjects.length > 0) {
           setCurrentProjectId(loadedProjects[0].id);
