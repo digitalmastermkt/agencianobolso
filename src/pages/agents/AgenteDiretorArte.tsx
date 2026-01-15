@@ -241,7 +241,7 @@ export default function AgenteDiretorArte() {
   );
   
   const totalBanners = useMemo(
-    () => projects.reduce((sum, project) => sum + project.banners.length, 0),
+    () => projects.reduce((sum, project) => sum + (project.banners?.length || 0), 0),
     [projects]
   );
   
@@ -255,11 +255,19 @@ export default function AgenteDiretorArte() {
         const stored = localStorage.getItem(storageKey);
         if (stored) {
           try {
-            const parsed = JSON.parse(stored) as ProjectItem[];
-            setProjects(parsed);
-            if (parsed.length > 0) {
-              setCurrentProjectId(parsed[0].id);
-              currentProjectRef.current = parsed[0].id;
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+              // Validar e garantir que cada projeto tenha a propriedade banners
+              const validProjects: ProjectItem[] = parsed.map((p: any) => ({
+                id: p.id || crypto.randomUUID(),
+                name: p.name || 'Projeto sem nome',
+                banners: Array.isArray(p.banners) ? p.banners : [],
+              }));
+              setProjects(validProjects);
+              if (validProjects.length > 0) {
+                setCurrentProjectId(validProjects[0].id);
+                currentProjectRef.current = validProjects[0].id;
+              }
             }
           } catch {
             setProjects([]);
@@ -1420,7 +1428,7 @@ export default function AgenteDiretorArte() {
                         >
                           <span className="font-medium">{project.name}</span>
                           <span className="text-sm text-muted-foreground ml-2">
-                            ({project.banners.length} banner{project.banners.length !== 1 ? 's' : ''})
+                            ({project.banners?.length || 0} banner{(project.banners?.length || 0) !== 1 ? 's' : ''})
                           </span>
                         </button>
                         <Button
