@@ -58,6 +58,7 @@ import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackgroundRemoval, loadImageFromUrl, blobToDataUrl } from "@/hooks/useBackgroundRemoval";
 import { BannerComposite, BANNER_FORMATS, type BannerFormat } from "@/components/banner/BannerComposite";
+import { BannerWithTextOverlay } from "@/components/banner/BannerWithTextOverlay";
 import { BrandProfileSelector } from "@/components/banner/BrandProfileSelector";
 import { InstagramAnalyzer } from "@/components/banner/InstagramAnalyzer";
 import { BrandPersonPhotosManager, PersonPhoto } from "@/components/banner/BrandPersonPhotosManager";
@@ -65,6 +66,7 @@ import { GenerationsGallery } from "@/components/banner/GenerationsGallery";
 import { ArtFavoriteButton } from "@/components/banner/ArtFavoriteButton";
 import { ArtFavoritesGallery } from "@/components/banner/ArtFavoritesGallery";
 import { BannerTextPreview } from "@/components/banner/BannerTextPreview";
+import { toPng } from 'html-to-image';
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -83,6 +85,18 @@ interface GeneratedVariation {
   isRegenerating?: boolean;
   logoUrl?: string | null;
   logoPosition?: string;
+  // Text overlay data (when renderTextOnImage is false)
+  textOverlay?: {
+    headline: string;
+    subheadline?: string;
+    cta?: string;
+    textColors: {
+      headline: string;
+      subheadline: string;
+      cta_bg: string;
+      cta_text: string;
+    };
+  };
 }
 
 interface ProjectBanner {
@@ -622,19 +636,21 @@ export default function AgenteDiretorArte() {
 
       // Use new V2 edge function for AI-powered creative generation
       // Pass user's exact texts separately from context
+      // renderTextOnImage = false means AI generates image WITHOUT text, and we overlay it via HTML
       const { data, error } = await supabase.functions.invoke("generate-creative-v2", {
         body: { 
           context: contextText, // For AI to understand scene
-          headline: headlineText, // Exact text - passed directly to image
-          subheadline: subheadline.trim() || undefined, // Exact text
-          cta: cta.trim() || undefined, // Exact text
+          headline: headlineText, // Exact text - will be overlaid via HTML
+          subheadline: subheadline.trim() || undefined, // Exact text - will be overlaid
+          cta: cta.trim() || undefined, // Exact text - will be overlaid
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
           personImageBase64: generationMode === 'person' ? imageToSend : undefined,
           productImageBase64: generationMode === 'product' ? imageToSend : undefined,
-          generationMode, // NEW: 'person' | 'product' | 'text-only'
+          generationMode, // 'person' | 'product' | 'text-only'
           variationsCount, // User selected: 1, 2, or 4
-          // NEW: Logo and brand identity for professional design
+          renderTextOnImage: false, // NEW: Don't render text on image - use HTML overlay for 100% accuracy
+          // Logo and brand identity for professional design
           logoUrl: includeLogo && brandProfile?.logo_url ? brandProfile.logo_url : null,
           brandIdentity: {
             colors: brandColors.length > 0 ? brandColors : brandProfile?.colors || [],
@@ -662,8 +678,21 @@ export default function AgenteDiretorArte() {
       setDecision(newDecision);
       
       // Handle multiple variations from V2 API
-      // Include logo info for overlay
+      // Include logo info and text overlay data
       const returnedLogoUrl = includeLogo && brandProfile?.logo_url ? brandProfile.logo_url : null;
+      
+      // Text overlay data (used when renderTextOnImage is false)
+      const textOverlayData = !data.renderTextOnImage ? {
+        headline: headlineText,
+        subheadline: subheadline.trim() || undefined,
+        cta: cta.trim() || undefined,
+        textColors: data.text_colors || {
+          headline: "#FFFFFF",
+          subheadline: "#F1F5F9",
+          cta_bg: data.brandApplied?.primaryColor || "#3B82F6",
+          cta_text: "#FFFFFF"
+        },
+      } : undefined;
       
       if (data.images && Array.isArray(data.images) && data.images.length > 0) {
         const variations: GeneratedVariation[] = data.images.map((imageUrl: string, index: number) => ({
@@ -671,6 +700,7 @@ export default function AgenteDiretorArte() {
           imageUrl,
           logoUrl: returnedLogoUrl,
           logoPosition: data.logoPosition || "bottom-right",
+          textOverlay: textOverlayData,
         }));
         setGeneratedVariations(variations);
         setSelectedVariationId(variations[0].id);
@@ -687,6 +717,7 @@ export default function AgenteDiretorArte() {
           imageUrl: data.imageUrl,
           logoUrl: returnedLogoUrl,
           logoPosition: data.logoPosition || "bottom-right",
+          textOverlay: textOverlayData,
         };
         setGeneratedVariations([variation]);
         setSelectedVariationId(variation.id);
@@ -782,23 +813,99 @@ export default function AgenteDiretorArte() {
     }
   };
 
-  // Download selected variation
-  const handleDownloadVariation = async (imageUrl: string, filename?: string) => {
-    const { downloadImage } = await import('@/lib/downloadImage');
+  // Download selected variation - with text overlay support
+  const handleDownloadVariation = async (variation: GeneratedVariation, filename?: string) => {
     const finalFilename = filename || `criativo-${selectedFormat}-${Date.now()}.png`;
-    const success = await downloadImage(imageUrl, finalFilename);
     
-    if (success) {
-      toast({
-        title: "Download iniciado!",
-        description: "Sua imagem está sendo baixada.",
-      });
+    // If variation has textOverlay, we need to render the component and capture it
+    if (variation.textOverlay) {
+      try {
+        // Create a temporary container for the full-resolution banner
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.top = '-9999px';
+        document.body.appendChild(container);
+        
+        // Import ReactDOM to render the component
+        const ReactDOM = await import('react-dom/client');
+        const React = await import('react');
+        const { BannerWithTextOverlay } = await import('@/components/banner/BannerWithTextOverlay');
+        
+        // Create the banner element at full resolution (scale = 1)
+        const bannerElement = React.createElement(BannerWithTextOverlay, {
+          format: selectedFormat,
+          backgroundImageUrl: variation.imageUrl,
+          textOverlay: variation.textOverlay,
+          logoUrl: variation.logoUrl,
+          logoPosition: 'bottom-right',
+          brandColors: brandColors,
+          previewScale: 1, // Full resolution
+        });
+        
+        // Render to the container
+        const root = ReactDOM.createRoot(container);
+        root.render(bannerElement);
+        
+        // Wait for render and images to load
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Find the rendered banner div
+        const bannerDiv = container.querySelector('.banner-with-text-overlay') as HTMLElement;
+        
+        if (bannerDiv) {
+          // Use html-to-image to capture
+          const dataUrl = await toPng(bannerDiv, {
+            quality: 1,
+            pixelRatio: 1,
+            cacheBust: true,
+          });
+          
+          // Download the image
+          const link = document.createElement('a');
+          link.download = finalFilename;
+          link.href = dataUrl;
+          link.click();
+          
+          toast({
+            title: "Download concluído!",
+            description: "Banner com texto exportado em alta resolução.",
+          });
+        } else {
+          throw new Error('Could not find banner element');
+        }
+        
+        // Cleanup
+        root.unmount();
+        document.body.removeChild(container);
+        
+      } catch (error) {
+        console.error('Error exporting banner with text overlay:', error);
+        // Fallback to direct image download
+        const { downloadImage } = await import('@/lib/downloadImage');
+        await downloadImage(variation.imageUrl, finalFilename);
+        toast({
+          title: "Download iniciado",
+          description: "Imagem baixada (sem overlay de texto).",
+        });
+      }
     } else {
-      toast({
-        title: "Erro no download",
-        description: "Não foi possível baixar a imagem",
-        variant: "destructive",
-      });
+      // Direct download for images with text baked in
+      const { downloadImage } = await import('@/lib/downloadImage');
+      const success = await downloadImage(variation.imageUrl, finalFilename);
+      
+      if (success) {
+        toast({
+          title: "Download iniciado!",
+          description: "Sua imagem está sendo baixada.",
+        });
+      } else {
+        toast({
+          title: "Erro no download",
+          description: "Não foi possível baixar a imagem",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -2049,7 +2156,7 @@ export default function AgenteDiretorArte() {
                           className="w-full"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDownloadVariation(variation.imageUrl, `criativo-${index + 1}-${Date.now()}.png`);
+                            handleDownloadVariation(variation, `criativo-${index + 1}-${Date.now()}.png`);
                           }}
                           disabled={variation.isRegenerating}
                         >
@@ -2098,7 +2205,7 @@ export default function AgenteDiretorArte() {
                       {/* Download full res */}
                       <Button
                         type="button"
-                        onClick={() => handleDownloadVariation(selectedVariation.imageUrl)}
+                        onClick={() => handleDownloadVariation(selectedVariation)}
                         className="w-full"
                         variant="gradient"
                       >
