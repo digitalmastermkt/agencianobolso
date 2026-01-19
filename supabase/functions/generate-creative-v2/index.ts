@@ -789,6 +789,25 @@ IMPORTANTE:
       // Professional brand prompt with philosophy - adapted for generation mode
       const imagePrompt = `=== DIRETOR DE ARTE SÊNIOR - CRIATIVO PROFISSIONAL - VARIAÇÃO ${i + 1} ===
 
+${generationMode === 'person' ? `
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> ALERTA MÁXIMO: PRESERVAÇÃO DE IDENTIDADE FACIAL <<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+A FOTO DE REFERÊNCIA CONTÉM UMA PESSOA REAL.
+VOCÊ DEVE PRESERVAR A IDENTIDADE FACIAL EXATAMENTE COMO NA FOTO.
+
+NÃO CRIE UMA PESSOA DIFERENTE. 
+NÃO IDEALIZE. 
+NÃO MELHORE TRAÇOS.
+USE A MESMA FACE, OS MESMOS TRAÇOS, A MESMA PELE.
+
+ESSA É A REGRA MAIS IMPORTANTE DESTA GERAÇÃO.
+QUALQUER ALTERAÇÃO NA FACE É CONSIDERADA FALHA CRÍTICA.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+` : ''}
+
 === MODO DE GERAÇÃO: ${generationMode.toUpperCase()} ===
 ${modeInstructions.focus}
 
@@ -903,14 +922,41 @@ The design should be complete without a CTA element.
 `}
 
 ${generationMode === 'person' ? `
-=== INTEGRAÇÃO HUMANA (PESSOA COMO ELEMENTO ESTRUTURAL) ===
+=== IDENTIDADE DA PESSOA - REGRA ABSOLUTAMENTE INVIOLÁVEL ===
+LEIA COM ATENÇÃO MÁXIMA:
+
+A FACE DA PESSOA NA IMAGEM DE REFERÊNCIA NÃO PODE SER MODIFICADA EM HIPÓTESE ALGUMA.
+
+COPIE EXATAMENTE DA FOTO ORIGINAL:
+- Formato do rosto (redondo, oval, quadrado) - NÃO MUDAR
+- Traços faciais (nariz, boca, olhos, sobrancelhas) - NÃO MUDAR
+- Tom de pele EXATO - NÃO CLAREAR, NÃO ESCURECER
+- Textura do cabelo e cor - NÃO MUDAR
+- Proporções do rosto - NÃO MUDAR
+- Expressão pode ser levemente ajustada, mas MANTENHA A IDENTIDADE
+
+SE A PESSOA TEM:
+- Rosto redondo → gere rosto redondo
+- Nariz largo → gere nariz largo
+- Olhos pequenos → gere olhos pequenos
+- Pele escura → gere pele escura
+- Cabelo crespo → gere cabelo crespo
+
+VOCÊ ESTÁ SENDO AVALIADO PELA FIDELIDADE À FOTO ORIGINAL.
+UMA PESSOA QUE CONHECE O INDIVÍDUO DEVE RECONHECÊ-LO INSTANTANEAMENTE.
+
+NÃO IDEALIZE, NÃO MELHORE, NÃO ALTERE. COPIE A FACE FIELMENTE.
+
+=== INTEGRAÇÃO HUMANA (COM IDENTIDADE PRESERVADA) ===
 Position: ${positionText}
 Pose: ${decision.pose_suggestion}
 Prominence: ${decision.protagonist === 'person' ? 'DOMINANT - 60-70% of frame, pessoa é o herói' : decision.protagonist === 'text' ? 'SUBTLE - smaller, background support, semi-transparent feel' : 'BALANCED - good presence but not overwhelming'}
-CRITICAL: Keep IDENTICAL face and features from input photo
-Postura profissional, expressão natural
-Integração cromática com o fundo (NÃO parecer "colado" ou recortado)
-A pessoa deve parecer PARTE DO SISTEMA VISUAL, não um adesivo
+
+REGRAS DE INTEGRAÇÃO:
+- Postura profissional, expressão natural
+- Integração cromática com o fundo (NÃO parecer "colado" ou recortado)
+- A pessoa deve parecer PARTE DO SISTEMA VISUAL, não um adesivo
+- MAS A FACE DEVE SER IDÊNTICA À DA FOTO ORIGINAL
 ` : ''}
 
 ${generationMode === 'product' ? `
@@ -944,16 +990,18 @@ ${decision.creative_elements || contextualElements}
 - Agency-level output
 
 === CHECKLIST FINAL (ANTES DE GERAR) ===
+${generationMode === 'person' ? '0. ✓ FACE DA PESSOA É IDÊNTICA À FOTO ORIGINAL (VERIFICAÇÃO OBRIGATÓRIA - PRIORIDADE MÁXIMA)' : ''}
 1. ✓ Identidade visual respeitada (mínimo 2 cores da marca USADAS)
 2. ✓ Fundo coerente com o contexto (sustenta, não compete)
 3. ✓ Texto legível em 1 segundo
 4. ✓ MODO: ${generationMode.toUpperCase()}
 5. ✓ Arte parece parte de uma SÉRIE, não isolada
-${generationMode === 'person' ? '6. ✓ Pessoa integrada naturalmente (não parece recortada/colada)' : ''}
+${generationMode === 'person' ? '6. ✓ Pessoa COM MESMA FACE DA FOTO ORIGINAL integrada naturalmente' : ''}
 ${generationMode === 'product' ? '6. ✓ Produto em destaque com iluminação profissional' : ''}
 ${generationMode === 'text-only' ? '6. ✓ Tipografia como elemento visual principal' : ''}
 7. ✓ CTA proeminente e clicável
 8. ✓ LAYOUT = ${variationLayout}
+${generationMode === 'person' ? '9. ✓ ÚLTIMA VERIFICAÇÃO: A pessoa na arte é RECONHECÍVEL como a pessoa da foto?' : ''}
 
 "Consistência é reconhecimento, não repetição."`;
 
