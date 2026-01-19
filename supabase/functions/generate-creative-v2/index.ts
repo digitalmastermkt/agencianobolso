@@ -653,25 +653,11 @@ serve(async (req) => {
     console.log("[generate-creative-v2] Format:", format);
     console.log("[generate-creative-v2] Has Logo for overlay:", !!logoUrl);
 
-    // ============ PRE-STEP: PROFESSIONAL PHOTO OPTIMIZATION ============
-    let optimizedPersonImage = personImageBase64;
-    
-    if (generationMode === 'person' && personImageBase64) {
-      console.log("[generate-creative-v2] Starting professional photo optimization...");
-      
-      const enhancedPhoto = await generateProfessionalPhoto(
-        personImageBase64,
-        professionalContext,
-        LOVABLE_API_KEY
-      );
-      
-      if (enhancedPhoto) {
-        optimizedPersonImage = enhancedPhoto;
-        console.log("[generate-creative-v2] Using professionally optimized photo");
-      } else {
-        console.log("[generate-creative-v2] Photo optimization failed, using original photo");
-      }
-    }
+    // ============ PHOTO OPTIMIZATION DISABLED FOR PERFORMANCE ============
+    // The professional photo optimization step was adding ~25 seconds to generation time
+    // and causing timeout issues with the edge function limit (~150s).
+    // We now use the original photo directly to keep generation under the timeout limit.
+    const optimizedPersonImage = personImageBase64;
 
     // ============ STEP 1: Art Director - PROFESSIONAL BRAND PHILOSOPHY ============
     const userPrompt = `Contexto da arte: ${effectiveContext.slice(0, 300)}
@@ -775,7 +761,8 @@ IMPORTANTE:
     };
 
     // Generate requested number of variations
-    const validCounts = [1, 2, 4];
+    // LIMITED TO 2 MAX to avoid edge function timeout (was hitting 150s limit with 4 variations)
+    const validCounts = [1, 2];
     const actualVariations = validCounts.includes(variationsCount) ? variationsCount : 1;
     const generatedImages: string[] = [];
 
