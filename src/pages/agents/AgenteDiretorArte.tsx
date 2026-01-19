@@ -2111,11 +2111,20 @@ export default function AgenteDiretorArte() {
                         setGeneratedImageUrl(variation.imageUrl);
                       }}
                     >
-                      <div className="relative aspect-square bg-muted">
+                      <div className="relative aspect-square bg-muted overflow-hidden">
                         {variation.isRegenerating ? (
                           <div className="absolute inset-0 flex items-center justify-center bg-background/80">
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
                           </div>
+                        ) : variation.textOverlay ? (
+                          <BannerWithTextOverlay
+                            format={selectedFormat}
+                            backgroundImageUrl={variation.imageUrl}
+                            textOverlay={variation.textOverlay}
+                            logoUrl={variation.logoUrl}
+                            brandColors={brandColors}
+                            previewScale={0.2}
+                          />
                         ) : (
                           <>
                             <img 
@@ -2123,7 +2132,6 @@ export default function AgenteDiretorArte() {
                               alt={`Variação ${index + 1}`}
                               className="w-full h-full object-cover"
                             />
-                            {/* Logo Overlay - Real logo on top */}
                             {variation.logoUrl && (
                               <img 
                                 src={variation.logoUrl} 
@@ -2184,20 +2192,32 @@ export default function AgenteDiretorArte() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex justify-center">
-                        <div className="overflow-hidden rounded-lg border shadow-lg max-w-md relative">
-                          <img 
-                            src={selectedVariation.imageUrl} 
-                            alt="Preview selecionado"
-                            className="w-full h-auto"
-                          />
-                          {/* Logo Overlay in Preview */}
-                          {selectedVariation.logoUrl && (
-                            <img 
-                              src={selectedVariation.logoUrl} 
-                              alt="Logo"
-                              className="absolute bottom-4 right-4 w-16 h-16 object-contain drop-shadow-lg"
-                              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+                        <div className="overflow-hidden rounded-lg border shadow-lg max-w-md">
+                          {selectedVariation.textOverlay ? (
+                            <BannerWithTextOverlay
+                              format={selectedFormat}
+                              backgroundImageUrl={selectedVariation.imageUrl}
+                              textOverlay={selectedVariation.textOverlay}
+                              logoUrl={selectedVariation.logoUrl}
+                              brandColors={brandColors}
+                              previewScale={0.35}
                             />
+                          ) : (
+                            <div className="relative">
+                              <img 
+                                src={selectedVariation.imageUrl} 
+                                alt="Preview selecionado"
+                                className="w-full h-auto"
+                              />
+                              {selectedVariation.logoUrl && (
+                                <img 
+                                  src={selectedVariation.logoUrl} 
+                                  alt="Logo"
+                                  className="absolute bottom-4 right-4 w-16 h-16 object-contain drop-shadow-lg"
+                                  style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+                                />
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
