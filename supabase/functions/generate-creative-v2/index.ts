@@ -194,7 +194,7 @@ async function generateProfessionalPhoto(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
+        model: "google/gemini-3-pro-image-preview",
         messages: [
           {
             role: "user",
@@ -858,71 +858,42 @@ FULL PALETTE: ${brandColorsString}
 REGRA: Usar no mínimo 2 destas cores na arte!
 
 ${renderTextOnImage ? `
-=== TYPOGRAPHY WITH BRAND COLORS ===
+=== TEXTO A RENDERIZAR ===
 
-=== CRITICAL: EXACT TEXT RENDERING - DO NOT MODIFY ===
-The following text was written by the user. You MUST render it EXACTLY as provided.
-DO NOT fix spelling, DO NOT change words, DO NOT add/remove punctuation.
-DO NOT translate, DO NOT interpret, DO NOT paraphrase.
-Copy the text CHARACTER BY CHARACTER, LETTER BY LETTER.
+HEADLINE (copie EXATAMENTE - letra por letra):
+"${headline}"
+Soletração: ${headline.split('').join('-')}
 
-HEADLINE TEXT TO RENDER (COPY EXACTLY - NO MODIFICATIONS):
->>> ${headline} <<<
+REGRAS DE TIPOGRAFIA:
+1. Renderize EXATAMENTE o texto entre aspas, sem alterações
+2. Fonte: Bold sans-serif moderna (Impact, Bebas, Montserrat Bold)
+3. Tamanho: ${generationMode === 'text-only' ? 'ENORME - elemento visual principal' : decision.protagonist === 'text' ? 'GRANDE - domina o frame' : 'Médio - elegante'}
+4. Cor: ${textColors.headline} com sombra forte para contraste
+5. Posição: conforme layout ${decision.layout_style}
 
-TYPOGRAPHY STYLE (choose based on context):
-- IMPACT: Very bold, condensed, maximum attention (for sales, urgency)
-- ELEGANT: Light weight, generous letter spacing (for premium, institutional)
-- PLAYFUL: Rounded, friendly letterforms (for celebration, festive)
-- CORPORATE: Clean, balanced weight (for business, professional)
-
-TEXT ORIENTATION (vary for creativity):
-- Horizontal (classic, reliable)
-- Diagonal 15-20° (dynamic, energetic)
-- Curved following a path (creative, unique)
-- Stacked vertically (modern, impactful)
-
-- Font: Bold modern sans-serif appropriate to style
-- Size: ${generationMode === 'text-only' ? 'ENORMOUS, dominates the frame as the main visual element' : decision.protagonist === 'text' ? 'ENORMOUS, dominates the frame' : decision.protagonist === 'person' ? 'Medium, elegant, not dominant' : 'Large but balanced'}
-- Color: ${textColors.headline}
-- Strong shadow for contrast and legibility
-- RENDER THE EXACT TEXT ABOVE - DO NOT CHANGE EVEN A SINGLE LETTER
-
-COLOR CONTRAST RULE (CRITICAL FOR READABILITY):
-- If background is DARK → headline should be LIGHT (white, cream, or bright brand color)
-- If background is LIGHT → headline should be DARK or saturated brand color
-- NEVER use similar tones that reduce readability
-- Add text shadow or outline when needed for contrast
+REGRA DE CONTRASTE (CRÍTICO):
+- Fundo ESCURO → texto CLARO (branco ou cor clara da marca)
+- Fundo CLARO → texto ESCURO ou cor saturada da marca
+- SEMPRE adicione sombra ou contorno para legibilidade
 
 ${subheadline ? `
-SUBHEADLINE TEXT TO RENDER (COPY EXACTLY - NO MODIFICATIONS):
->>> ${subheadline} <<<
-- Font: Light/Regular weight
-- Size: 40-50% of headline
-- Color: ${textColors.subheadline}
-- Position: Based on layout style
-- RENDER THE EXACT TEXT ABOVE - DO NOT CHANGE EVEN A SINGLE LETTER
+SUBHEADLINE (copie EXATAMENTE - letra por letra):
+"${subheadline}"
+Soletração: ${subheadline.split('').join('-')}
+Fonte: Regular, 50% do tamanho do headline
+Cor: ${textColors.subheadline}
 ` : ""}
 
 ${cta && cta.trim() ? `
-CTA ELEMENT (CRITICAL - READ CAREFULLY):
-The CTA text must be EXACTLY: "${cta}"
-
-Format options (choose the best for this context):
-- BUTTON: Pill shape with solid colored background
-- HIGHLIGHTED TEXT: Bold text with subtle underline or glow
-- BADGE/TAG: Small floating element with accent color
-- TEXT WITH ARROW: Bold CTA text with arrow icon "→"
-
-IMPORTANT RULES FOR CTA:
-1. ONLY render the text "${cta}" - nothing else
-2. NEVER render color codes, hex values, or technical information as visible text
-3. Make it look CLICKABLE and professional
-4. Use brand colors for styling (apply colors visually, don't write them as text)
+CTA (copie EXATAMENTE - letra por letra):
+"${cta}"
+Soletração: ${cta.split('').join('-')}
+Formato: Botão pill com background ${textColors.cta_bg}
+Texto: ${textColors.cta_text}
+RENDERIZE APENAS o texto "${cta}" - nada mais
 ` : `
-NO CTA ELEMENT:
-Do NOT include any call-to-action button or text.
-Do NOT add any placeholder CTA.
-The design should be complete without a CTA element.
+SEM CTA:
+NÃO inclua nenhum botão ou call-to-action.
 `}
 ` : `
 === SEM TEXTO NA IMAGEM - TEXTO SERÁ ADICIONADO VIA OVERLAY ===
@@ -1073,7 +1044,7 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image-preview",
+          model: "google/gemini-3-pro-image-preview",
           messages: [
             {
               role: "user",

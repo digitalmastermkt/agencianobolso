@@ -636,20 +636,20 @@ export default function AgenteDiretorArte() {
 
       // Use new V2 edge function for AI-powered creative generation
       // Pass user's exact texts separately from context
-      // renderTextOnImage = false means AI generates image WITHOUT text, and we overlay it via HTML
+      // renderTextOnImage = true means AI renders text directly on image using gemini-3-pro
       const { data, error } = await supabase.functions.invoke("generate-creative-v2", {
         body: { 
           context: contextText, // For AI to understand scene
-          headline: headlineText, // Exact text - will be overlaid via HTML
-          subheadline: subheadline.trim() || undefined, // Exact text - will be overlaid
-          cta: cta.trim() || undefined, // Exact text - will be overlaid
+          headline: headlineText.substring(0, 50), // Limit to 50 chars for better rendering
+          subheadline: subheadline.trim().substring(0, 80) || undefined, // Limit subheadline
+          cta: cta.trim().substring(0, 20) || undefined, // Limit CTA
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
           personImageBase64: generationMode === 'person' ? imageToSend : undefined,
           productImageBase64: generationMode === 'product' ? imageToSend : undefined,
           generationMode, // 'person' | 'product' | 'text-only'
           variationsCount, // User selected: 1, 2, or 4
-          renderTextOnImage: false, // NEW: Don't render text on image - use HTML overlay for 100% accuracy
+          renderTextOnImage: true, // AI renders text directly - using gemini-3-pro for better text quality
           // Logo and brand identity for professional design
           logoUrl: includeLogo && brandProfile?.logo_url ? brandProfile.logo_url : null,
           brandIdentity: {
