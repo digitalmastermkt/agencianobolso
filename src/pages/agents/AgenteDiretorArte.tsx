@@ -207,7 +207,7 @@ export default function AgenteDiretorArte() {
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [generationMode, setGenerationMode] = useState<'person' | 'product' | 'text-only'>('person');
-  const [variationsCount, setVariationsCount] = useState<1 | 2 | 4>(1);
+  const [variationsCount, setVariationsCount] = useState<1 | 2>(1);
   const [includeLogo, setIncludeLogo] = useState(true);
   const [productImage, setProductImage] = useState<string | null>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
@@ -613,12 +613,11 @@ export default function AgenteDiretorArte() {
     setGenerationStep("Otimizando foto profissional...");
     
     const progressSteps = [
-      { progress: 15, step: "Otimizando foto profissional...", delay: 2000 },
-      { progress: 30, step: "Definindo direção artística...", delay: 3000 },
-      { progress: 45, step: `Gerando variação 1 de ${variationsCount}...`, delay: 5000 },
-      { progress: 60, step: variationsCount >= 2 ? `Gerando variação 2 de ${variationsCount}...` : "Finalizando...", delay: 6000 },
-      { progress: 75, step: variationsCount >= 4 ? `Gerando variações 3-4 de ${variationsCount}...` : "Finalizando...", delay: 8000 },
-      { progress: 90, step: "Salvando e otimizando...", delay: 3000 },
+      { progress: 20, step: "Analisando contexto...", delay: 2000 },
+      { progress: 40, step: "Definindo direção artística...", delay: 3000 },
+      { progress: 60, step: `Gerando variação 1 de ${variationsCount}...`, delay: 8000 },
+      { progress: 80, step: variationsCount >= 2 ? `Gerando variação 2 de ${variationsCount}...` : "Finalizando...", delay: 10000 },
+      { progress: 95, step: "Salvando...", delay: 3000 },
     ];
     
     let stepIndex = 0;
@@ -740,9 +739,13 @@ export default function AgenteDiretorArte() {
       });
     } catch (error: unknown) {
       console.error("Erro na geração:", error);
+      const errorMsg = error instanceof Error ? error.message : "Ocorreu um erro ao processar sua solicitação.";
+      const isTimeout = errorMsg.includes('timeout') || errorMsg.includes('546') || errorMsg.includes('non-2xx');
       toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Ocorreu um erro ao processar sua solicitação.",
+        title: isTimeout ? "Tempo limite excedido" : "Erro",
+        description: isTimeout 
+          ? "A geração demorou muito. Tente novamente com 1 variação."
+          : errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -1958,8 +1961,8 @@ export default function AgenteDiretorArte() {
                 {/* Variations Count Selector */}
                 <div>
                   <Label className="font-medium mb-3 block">Quantidade de Variações</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {([1, 2, 4] as const).map((count) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    {([1, 2] as const).map((count) => (
                       <Button
                         key={count}
                         type="button"
@@ -1970,13 +1973,13 @@ export default function AgenteDiretorArte() {
                         <ImagePlus className="w-4 h-4" />
                         <span className="text-sm font-medium">{count}</span>
                         <span className="text-[10px] text-muted-foreground">
-                          {count === 1 ? 'Mais barato' : count === 2 ? 'Equilibrado' : 'Mais opções'}
+                          {count === 1 ? 'Mais rápido' : 'Recomendado'}
                         </span>
                       </Button>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Cada variação consome créditos. Escolha 1 para testar, 4 para mais opções.
+                    Cada variação consome créditos. 2 variações dão mais opções de escolha.
                   </p>
                 </div>
 
