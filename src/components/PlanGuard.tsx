@@ -8,6 +8,8 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
+import { useAuth } from "@/hooks/useAuth";
+import { isMasterUser } from "@/lib/constants";
 
 interface PlanGuardProps {
   requiredPlan?: "Essencial" | "Premium" | "Elite";
@@ -18,12 +20,17 @@ interface PlanGuardProps {
 
 export function PlanGuard({ requiredPlan, agentKey, courseId, children }: PlanGuardProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { loading: subLoading, subscribed, hasAccess, refresh: refreshSub } = useSubscription();
   const { loading: rulesLoading, canAccessAgent, canAccessCourse, refresh: refreshRules, isTrialActive } = usePlanAccess();
   const { isAdmin } = useUserRole();
   const { remainingDailyCredits, daysRemaining, refresh: refreshTrial } = useTrialStatus();
 
+  // Master user bypass - never blocked
+  const isMaster = isMasterUser(user?.email);
+
   const blocked = (() => {
+    if (isMaster) return false; // Master user never blocked
     if (isAdmin) return false;
     if (subLoading || rulesLoading) return false; // avoid flicker
     
@@ -57,7 +64,8 @@ export function PlanGuard({ requiredPlan, agentKey, courseId, children }: PlanGu
     refreshTrial();
   }, [refreshSub, refreshRules, refreshTrial]);
 
-  if (isAdmin) {
+  // Master user and admin always have full access
+  if (isMaster || isAdmin) {
     return <>{children}</>;
   }
 

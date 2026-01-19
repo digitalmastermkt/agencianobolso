@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { isMasterUser } from "@/lib/constants";
 
 export type TrialInfo = {
   isTrialActive: boolean;
@@ -82,8 +83,12 @@ export function useTrialStatus() {
     if (user) refresh();
   }, [user, refresh]);
 
-  const hasCreditsAvailable = info.remainingDailyCredits > 0;
+  // Master user always has unlimited credits
+  const isMaster = isMasterUser(user?.email);
+  const hasCreditsAvailable = isMaster || info.remainingDailyCredits > 0;
+  
   const canUseAgent = (agentKey: string) => {
+    if (isMaster) return true; // Master has unlimited access
     if (info.isTrialActive) return hasCreditsAvailable;
     return agentKey === "vendas" && hasCreditsAvailable;
   };
@@ -93,6 +98,9 @@ export function useTrialStatus() {
     loading, 
     refresh, 
     hasCreditsAvailable,
-    canUseAgent
+    canUseAgent,
+    isMaster,
+    // Override for master user
+    remainingDailyCredits: isMaster ? 999999 : info.remainingDailyCredits,
   };
 }
