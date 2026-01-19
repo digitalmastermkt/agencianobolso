@@ -1022,15 +1022,25 @@ ${decision.creative_elements || contextualElements}
 ${generationMode === 'person' ? '0. ✓ FACE DA PESSOA É IDÊNTICA À FOTO ORIGINAL (VERIFICAÇÃO OBRIGATÓRIA - PRIORIDADE MÁXIMA)' : ''}
 1. ✓ Identidade visual respeitada (mínimo 2 cores da marca USADAS)
 2. ✓ Fundo coerente com o contexto (sustenta, não compete)
-3. ✓ Texto legível em 1 segundo
+${renderTextOnImage ? '3. ✓ Texto legível em 1 segundo' : '3. ✓ NENHUM TEXTO NA IMAGEM - áreas limpas para overlay HTML'}
 4. ✓ MODO: ${generationMode.toUpperCase()}
 5. ✓ Arte parece parte de uma SÉRIE, não isolada
 ${generationMode === 'person' ? '6. ✓ Pessoa COM MESMA FACE DA FOTO ORIGINAL integrada naturalmente' : ''}
 ${generationMode === 'product' ? '6. ✓ Produto em destaque com iluminação profissional' : ''}
 ${generationMode === 'text-only' ? '6. ✓ Tipografia como elemento visual principal' : ''}
-7. ✓ CTA proeminente e clicável
+${renderTextOnImage ? '7. ✓ CTA proeminente e clicável' : '7. ✓ SEM CTA - será adicionado via overlay HTML'}
 8. ✓ LAYOUT = ${variationLayout}
 ${generationMode === 'person' ? '9. ✓ ÚLTIMA VERIFICAÇÃO: A pessoa na arte é RECONHECÍVEL como a pessoa da foto?' : ''}
+${!renderTextOnImage ? `
+=== VERIFICAÇÃO FINAL OBRIGATÓRIA ===
+ANTES DE FINALIZAR, VERIFIQUE:
+- [ ] A imagem contém ZERO texto renderizado?
+- [ ] NÃO há palavras, letras ou números visíveis?
+- [ ] NÃO há placeholders como "HEADLINE" ou "SUBHEADLINE"?
+- [ ] As áreas para texto overlay estão LIMPAS e com bom contraste?
+
+SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
+` : ''}
 
 "Consistência é reconhecimento, não repetição."`;
 
