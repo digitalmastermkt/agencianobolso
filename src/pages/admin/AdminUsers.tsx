@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, AlertCircle, Sparkles, MessageSquare, Edit, UserCheck, UserX, TrendingUp } from "lucide-react";
+import { Users, AlertCircle, Sparkles, MessageSquare, Edit, UserCheck, UserX, TrendingUp, Crown } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { MASTER_USER_EMAIL, isMasterUser } from "@/lib/constants";
 import { SendNotificationDialog } from "@/components/admin/SendNotificationDialog";
 import { EditUserStatusDialog } from "@/components/admin/EditUserStatusDialog";
 import {
@@ -113,17 +114,23 @@ export default function AdminUsers() {
       const processedUsers = (usersRes.data || []).map((user: any) => {
         console.log("🔄 Processando usuário:", user);
         const subscription = subscriptionsByUser[user.user_id];
+        const userEmail = subscription?.email || user.display_name || `user${user.id.slice(0, 8)}@exemplo.com`;
+        
+        // Master user override - always show as Elite with unlimited access
+        const isMaster = isMasterUser(userEmail);
+        
         return {
           ...user,
-          subscription_tier: subscription?.subscribed ? (subscription.subscription_tier || 'Gratuito') : 'Gratuito',
-          subscribed: subscription?.subscribed || false,
-          subscription_end: subscription?.subscription_end,
-          email: subscription?.email || user.display_name || `user${user.id.slice(0, 8)}@exemplo.com`,
+          subscription_tier: isMaster ? 'Master' : (subscription?.subscribed ? (subscription.subscription_tier || 'Gratuito') : 'Gratuito'),
+          subscribed: isMaster ? true : (subscription?.subscribed || false),
+          subscription_end: isMaster ? null : subscription?.subscription_end,
+          email: userEmail,
           whatsapp: user.whatsapp || `(${Math.floor(Math.random() * 90 + 10)}) ${Math.floor(Math.random() * 90000 + 10000)}-${Math.floor(Math.random() * 9000 + 1000)}`,
           code: `GE${Math.floor(Math.random() * 900000 + 100000)}`,
           status: user.status || 'ativo',
-          credits_used: creditsByUser[user.user_id] || 0,
+          credits_used: isMaster ? '∞' : (creditsByUser[user.user_id] || 0),
           online: Math.random() > 0.5,
+          isMaster,
         };
       });
 
@@ -335,7 +342,11 @@ export default function AdminUsers() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.subscribed ? "default" : "secondary"}>
+                        <Badge 
+                          variant={user.isMaster ? "default" : (user.subscribed ? "default" : "secondary")}
+                          className={user.isMaster ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-white" : ""}
+                        >
+                          {user.isMaster && <Crown className="h-3 w-3 mr-1" />}
                           {user.subscription_tier}
                         </Badge>
                       </TableCell>

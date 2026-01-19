@@ -14,6 +14,9 @@ const PRICE_TO_TIER: Record<string, "Essencial" | "Premium" | "Elite"> = {
   "price_1RtCyUL0y5sMsrd4j7Bgl4xT": "Elite",
 };
 
+// Master user email - has unlimited access to everything
+const MASTER_USER_EMAIL = "digitalmastermkt@gmail.com";
+
 const log = (step: string, details?: unknown) =>
   console.log(`[CHECK-SUBSCRIPTION] ${step}`, details ?? "");
 
@@ -43,6 +46,19 @@ serve(async (req) => {
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User email not available");
+
+    // Master user bypass - always return Elite subscription
+    if (user.email.toLowerCase() === MASTER_USER_EMAIL.toLowerCase()) {
+      log("Master user detected, granting Elite access");
+      return new Response(
+        JSON.stringify({ 
+          subscribed: true, 
+          subscription_tier: "Elite", 
+          subscription_end: null // Never expires
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
