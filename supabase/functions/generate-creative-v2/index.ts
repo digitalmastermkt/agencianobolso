@@ -591,7 +591,10 @@ serve(async (req) => {
       variationsCount = 1,
       logoUrl,
       brandIdentity,
+      renderTextOnImage = false, // NEW: false = don't render text (use HTML overlay), true = render text on image
     } = await req.json();
+    
+    console.log("[generate-creative-v2] renderTextOnImage:", renderTextOnImage);
 
     // Validate required fields
     if (!headline || typeof headline !== "string" || headline.trim().length === 0) {
@@ -854,6 +857,7 @@ SECONDARY COLOR: ${secondaryColor}
 FULL PALETTE: ${brandColorsString}
 REGRA: Usar no mínimo 2 destas cores na arte!
 
+${renderTextOnImage ? `
 === TYPOGRAPHY WITH BRAND COLORS ===
 
 === CRITICAL: EXACT TEXT RENDERING - DO NOT MODIFY ===
@@ -919,6 +923,31 @@ NO CTA ELEMENT:
 Do NOT include any call-to-action button or text.
 Do NOT add any placeholder CTA.
 The design should be complete without a CTA element.
+`}
+` : `
+=== SEM TEXTO NA IMAGEM - TEXTO SERÁ ADICIONADO VIA OVERLAY ===
+
+ATENÇÃO CRÍTICA: NÃO RENDERIZE NENHUM TEXTO NA IMAGEM!
+
+PROIBIDO INCLUIR:
+- NÃO inclua headline, título ou texto principal
+- NÃO inclua subheadline ou texto secundário
+- NÃO inclua CTA, botões ou call-to-action
+- NÃO inclua letras, palavras, números, símbolos ou qualquer texto
+- NÃO inclua logos com texto legível
+
+ÁREAS RESERVADAS PARA TEXTO (deixe espaço limpo):
+- Área superior: Reservada para headline (deixe limpa, sem elementos que bloqueiem)
+- Área média-superior: Reservada para subheadline
+- Área inferior: Reservada para CTA/botão
+
+COMPOSIÇÃO:
+- Crie uma composição visual COMPLETA e bonita, mas SEM texto
+- O fundo, pessoa/produto e elementos gráficos devem ter respiro visual
+- Deixe áreas com contraste adequado para texto ser sobreposto depois
+- A imagem deve parecer um "template" onde texto será adicionado
+
+REGRA ABSOLUTA: Se qualquer texto aparecer na imagem, a geração é considerada FALHA.
 `}
 
 ${generationMode === 'person' ? `
@@ -1115,7 +1144,14 @@ ${generationMode === 'person' ? '9. ✓ ÚLTIMA VERIFICAÇÃO: A pessoa na arte 
       pose_suggestion: decision.pose_suggestion,
       creative_elements: decision.creative_elements,
       atmosphere: decision.atmosphere,
-      text_colors: decision.text_colors,
+      text_colors: decision.text_colors || {
+        headline: "#FFFFFF",
+        subheadline: "#F1F5F9",
+        cta_bg: primaryColor,
+        cta_text: "#FFFFFF"
+      },
+      // Return for text overlay mode
+      renderTextOnImage: renderTextOnImage,
       // Return logo info for frontend overlay
       logoUrl: logoUrl || null,
       logoPosition: "bottom-right",
