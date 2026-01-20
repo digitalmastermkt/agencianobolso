@@ -1152,6 +1152,81 @@ export type Database = {
           },
         ]
       }
+      user_credits_balance: {
+        Row: {
+          created_at: string | null
+          credits_balance: number
+          credits_extra: number
+          credits_monthly_limit: number
+          current_billing_period_end: string | null
+          current_billing_period_start: string | null
+          id: string
+          last_reset_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credits_balance?: number
+          credits_extra?: number
+          credits_monthly_limit?: number
+          current_billing_period_end?: string | null
+          current_billing_period_start?: string | null
+          id?: string
+          last_reset_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credits_balance?: number
+          credits_extra?: number
+          credits_monthly_limit?: number
+          current_billing_period_end?: string | null
+          current_billing_period_start?: string | null
+          id?: string
+          last_reset_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_credits_transactions: {
+        Row: {
+          action_type: string | null
+          amount: number
+          balance_after: number
+          created_at: string | null
+          description: string | null
+          id: string
+          reference_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          action_type?: string | null
+          amount: number
+          balance_after: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string | null
+          amount?: number
+          balance_after?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_credits_usage: {
         Row: {
           agent_type: string
@@ -1334,6 +1409,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_extra_credits: {
+        Args: { p_amount: number; p_description?: string; p_user_id: string }
+        Returns: Json
+      }
       check_auth_rate_limit: {
         Args: {
           p_email?: string
@@ -1351,6 +1430,16 @@ export type Database = {
       check_leads_rate_limit: {
         Args: { max_per_hour?: number }
         Returns: boolean
+      }
+      debit_user_credits: {
+        Args: {
+          p_action_type: string
+          p_amount: number
+          p_description?: string
+          p_reference_id?: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       decrypt_pii: { Args: { encrypted_data: string }; Returns: string }
       detect_suspicious_auth_activity: {
@@ -1418,6 +1507,17 @@ export type Database = {
           unique_ips: number
         }[]
       }
+      get_user_credits_balance: {
+        Args: { p_user_id: string }
+        Returns: {
+          credits_balance: number
+          credits_extra: number
+          credits_monthly_limit: number
+          credits_total: number
+          period_end: string
+          period_start: string
+        }[]
+      }
       get_user_daily_credits_usage: {
         Args: { p_date?: string; p_user_id: string }
         Returns: number
@@ -1471,6 +1571,24 @@ export type Database = {
           p_table_name: string
         }
         Returns: undefined
+      }
+      refund_user_credits: {
+        Args: {
+          p_amount: number
+          p_original_transaction_id?: string
+          p_reason?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      reset_monthly_credits: {
+        Args: {
+          p_monthly_limit: number
+          p_period_end?: string
+          p_period_start?: string
+          p_user_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {

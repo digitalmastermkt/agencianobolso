@@ -535,6 +535,9 @@ COMPOSIÇÃO COM PESSOA:
   }
 };
 
+// Master user emails that bypass credit checks
+const MASTER_USER_EMAILS = ["digitalmasters@gmail.com"];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -547,6 +550,13 @@ serve(async (req) => {
     });
   };
 
+  // Credit cost for art generation
+  const CREDITS_COST = 1;
+  let transactionId: string | null = null;
+  let userId = "anonymous";
+  let userEmail: string | null = null;
+  let isMasterUser = false;
+
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -557,25 +567,65 @@ serve(async (req) => {
       return respond({ success: false, error: "LOVABLE_API_KEY não configurada" }, 500);
     }
 
-    // Create Supabase client for storage operations (optional - will use base64 fallback if not configured)
+    // Create Supabase client for storage and credits operations
     let supabaseClient: ReturnType<typeof createClient> | null = null;
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     }
 
-    // Get user ID from auth header for storage path
+    // Get user ID and email from auth header
     const authHeader = req.headers.get("Authorization");
-    let userId = "anonymous";
     if (authHeader && supabaseClient) {
       try {
         const token = authHeader.replace("Bearer ", "");
         const { data: { user } } = await supabaseClient.auth.getUser(token);
         if (user?.id) {
           userId = user.id;
+          userEmail = user.email || null;
+          isMasterUser = MASTER_USER_EMAILS.includes(userEmail || "");
         }
       } catch (e) {
         console.log("[generate-creative-v2] Could not get user from token, using anonymous");
       }
+    }
+
+    // ============ CREDIT VERIFICATION AND DEBIT ============
+    // Skip credit check for master users and anonymous users
+    if (userId !== "anonymous" && !isMasterUser && supabaseClient) {
+      console.log(`[generate-creative-v2] Checking credits for user ${userId}, cost: ${CREDITS_COST}`);
+      
+      const { data: debitResult, error: debitError } = await supabaseClient
+        .rpc('debit_user_credits', {
+          p_user_id: userId,
+          p_amount: CREDITS_COST,
+          p_action_type: 'generate_art',
+          p_description: 'Geração de arte criativa'
+        });
+
+      if (debitError) {
+        console.error("[generate-creative-v2] Credit debit error:", debitError);
+        return respond({
+          success: false,
+          error: "Erro ao verificar créditos. Tente novamente.",
+          credits_error: true
+        }, 500);
+      }
+
+      if (!debitResult?.success) {
+        console.log("[generate-creative-v2] Insufficient credits:", debitResult);
+        return respond({
+          success: false,
+          error: debitResult?.error || "Créditos insuficientes. Adquira mais créditos para continuar.",
+          credits_required: CREDITS_COST,
+          credits_available: debitResult?.balance || 0,
+          insufficient_credits: true
+        }, 402);
+      }
+
+      transactionId = debitResult.transaction_id;
+      console.log(`[generate-creative-v2] Credits debited successfully. Transaction: ${transactionId}, Balance after: ${debitResult.balance_after}`);
+    } else if (isMasterUser) {
+      console.log("[generate-creative-v2] Master user detected - bypassing credit check");
     }
 
     const { 
@@ -1136,6 +1186,35 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
 
   } catch (error: unknown) {
     console.error("[generate-creative-v2] Unexpected error:", error);
+    
+    // ============ REFUND CREDITS ON TECHNICAL FAILURE ============
+    if (transactionId && userId !== "anonymous" && !isMasterUser) {
+      try {
+        const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+        const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        
+        if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+          const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+          
+          const { data: refundResult, error: refundError } = await supabaseClient
+            .rpc('refund_user_credits', {
+              p_user_id: userId,
+              p_amount: CREDITS_COST,
+              p_original_transaction_id: transactionId,
+              p_reason: 'Falha técnica na geração de arte'
+            });
+          
+          if (refundError) {
+            console.error("[generate-creative-v2] Refund error:", refundError);
+          } else {
+            console.log(`[generate-creative-v2] Credits refunded successfully. Balance after: ${refundResult?.balance_after}`);
+          }
+        }
+      } catch (refundErr) {
+        console.error("[generate-creative-v2] Error during refund:", refundErr);
+      }
+    }
+    
     const message = error instanceof Error ? error.message : "Erro desconhecido";
     return respond({ success: false, error: message }, 500);
   }

@@ -57,6 +57,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useCreditsBalance } from "@/hooks/useCreditsBalance";
 import { useBackgroundRemoval, loadImageFromUrl, blobToDataUrl } from "@/hooks/useBackgroundRemoval";
 import { BannerComposite, BANNER_FORMATS, type BannerFormat } from "@/components/banner/BannerComposite";
 import { BannerWithTextOverlay } from "@/components/banner/BannerWithTextOverlay";
@@ -67,6 +68,8 @@ import { GenerationsGallery } from "@/components/banner/GenerationsGallery";
 import { ArtFavoriteButton } from "@/components/banner/ArtFavoriteButton";
 import { ArtFavoritesGallery } from "@/components/banner/ArtFavoritesGallery";
 import { BannerTextPreview } from "@/components/banner/BannerTextPreview";
+import { CreditsBalanceDisplay } from "@/components/CreditsBalanceDisplay";
+import { CREDIT_COSTS } from "@/lib/credits-config";
 import { toPng } from 'html-to-image';
 
 interface ArtDirectorDecision {
@@ -181,6 +184,7 @@ export default function AgenteDiretorArte() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { subscribed, isMaster } = useSubscription();
+  const { availableCredits, hasEnoughCredits, refresh: refreshCredits, isMaster: isMasterCredits } = useCreditsBalance();
   const bannerRef = useRef<HTMLDivElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   
@@ -673,6 +677,15 @@ export default function AgenteDiretorArte() {
       });
 
       if (error) throw error;
+      if (data?.insufficient_credits) {
+        toast({
+          title: "Créditos insuficientes",
+          description: `Você precisa de ${data.credits_required} crédito(s) mas tem ${data.credits_available}. Adquira mais créditos.`,
+          variant: "destructive",
+        });
+        refreshCredits();
+        return;
+      }
       if (data?.error) throw new Error(data.error);
 
       const newDecision: ArtDirectorDecision = {

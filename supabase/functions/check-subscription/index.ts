@@ -97,10 +97,12 @@ serve(async (req) => {
     const hasActive = subscriptions.data.length > 0;
     let tier: "Essencial" | "Premium" | "Elite" | null = null;
     let endIso: string | null = null;
+    let periodStart: string | null = null;
 
     if (hasActive) {
       const sub = subscriptions.data[0];
       endIso = new Date(sub.current_period_end * 1000).toISOString();
+      periodStart = new Date(sub.current_period_start * 1000).toISOString();
       const priceId = sub.items.data[0].price.id;
       tier = PRICE_TO_TIER[priceId] ?? null;
     }
@@ -118,6 +120,42 @@ serve(async (req) => {
       },
       { onConflict: "email" }
     );
+
+    // ============ CREDIT PROVISIONING ============
+    // If user has active subscription, reset their monthly credits
+    if (hasActive && tier) {
+      // Get monthly credits limit from plan_settings
+      const { data: planSettings } = await supabaseClient
+        .from("plan_settings")
+        .select("monthly_credits")
+        .eq("plan", tier)
+        .single();
+
+      const monthlyCredits = planSettings?.monthly_credits || 10;
+
+      // Check if we need to reset credits (new billing period)
+      const { data: currentBalance } = await supabaseClient
+        .from("user_credits_balance")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      // Reset if: no record exists OR new billing period started
+      const needsReset = !currentBalance || 
+        (periodStart && (!currentBalance.current_billing_period_start || 
+          new Date(periodStart) > new Date(currentBalance.current_billing_period_start)));
+
+      if (needsReset) {
+        log("Resetting monthly credits for user", { tier, monthlyCredits, periodStart });
+        
+        await supabaseClient.rpc("reset_monthly_credits", {
+          p_user_id: user.id,
+          p_monthly_limit: monthlyCredits,
+          p_period_start: periodStart,
+          p_period_end: endIso,
+        });
+      }
+    }
 
     return new Response(
       JSON.stringify({ subscribed: hasActive, subscription_tier: tier, subscription_end: endIso }),
