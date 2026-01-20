@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionPanel } from "@/components/subscriptions/SubscriptionPanel";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
+import { CreditsBalanceDisplay } from "@/components/CreditsBalanceDisplay";
 import { useAgentAvailability } from "@/hooks/useAgentAvailability";
 
 interface AgentStats {
@@ -152,6 +153,11 @@ export default function Dashboard() {
             <p className="text-muted-foreground">
               Bem-vindo de volta, {user?.email}
             </p>
+          </div>
+
+          {/* Credits Balance */}
+          <div className="mb-6">
+            <CreditsBalanceDisplay showTransactions={true} />
           </div>
 
           <div className={highlightSubscription ? "ring-2 ring-primary rounded-lg p-1 mb-4" : ""}>
