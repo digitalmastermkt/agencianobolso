@@ -207,7 +207,14 @@ export default function AgenteDiretorArte() {
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [generationMode, setGenerationMode] = useState<'person' | 'product' | 'text-only'>('person');
-  const [variationsCount, setVariationsCount] = useState<1 | 2>(1);
+  const [variationsCount, setVariationsCount] = useState<1 | 2>(2);
+  
+  // Migrate old state values (e.g., 4) to max allowed (2)
+  useEffect(() => {
+    if ((variationsCount as number) > 2) {
+      setVariationsCount(2);
+    }
+  }, []);
   const [includeLogo, setIncludeLogo] = useState(true);
   const [productImage, setProductImage] = useState<string | null>(null);
   const productInputRef = useRef<HTMLInputElement>(null);

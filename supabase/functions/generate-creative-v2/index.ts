@@ -762,8 +762,9 @@ IMPORTANTE:
 
     // Generate requested number of variations
     // LIMITED TO 2 MAX to avoid edge function timeout (was hitting 150s limit with 4 variations)
-    const validCounts = [1, 2];
-    const actualVariations = validCounts.includes(variationsCount) ? variationsCount : 1;
+    // Smart fallback: if user had old value (e.g., 4), use max instead of defaulting to 1
+    const MAX_VARIATIONS = 2;
+    const actualVariations = Math.min(Math.max(variationsCount || 1, 1), MAX_VARIATIONS);
     const generatedImages: string[] = [];
 
     // Different layout styles for each variation
