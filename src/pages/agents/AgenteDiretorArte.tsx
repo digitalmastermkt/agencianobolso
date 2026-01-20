@@ -2381,6 +2381,11 @@ export default function AgenteDiretorArte() {
             )}
           </div>
 
+          {/* Credits Balance - Compact version in header */}
+          <div className="flex justify-center mb-6">
+            <CreditsBalanceDisplay compact />
+          </div>
+
           <div className="mb-6 max-w-md mx-auto">
             <TrialStatusCard />
             <SubscriptionStatusCard />
