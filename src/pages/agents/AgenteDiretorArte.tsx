@@ -2352,15 +2352,18 @@ export default function AgenteDiretorArte() {
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Gera criativos profissionais com IA, preservando sua identidade visual.
             </p>
-            <div className="mt-4 flex flex-col items-center gap-2">
-              <Badge variant="secondary">Beta</Badge>
-              <p className="text-sm text-muted-foreground">
-                {totalBanners}/{MAX_BANNERS_BETA} artes do beta
-              </p>
-            </div>
-            {limitReached && (
-              <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                Você atingiu o limite de 10 artes do beta. Obrigado por testar!
+            {/* Only show beta counter for non-subscribers */}
+            {!subscribed && !isMaster && (
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <Badge variant="secondary">Beta</Badge>
+                <p className="text-sm text-muted-foreground">
+                  {totalBanners}/{MAX_BANNERS_BETA} artes do beta
+                </p>
+                {limitReached && (
+                  <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                    Você atingiu o limite de 10 artes do beta. Obrigado por testar!
+                  </div>
+                )}
               </div>
             )}
           </div>
