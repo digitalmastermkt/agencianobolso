@@ -56,6 +56,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useBackgroundRemoval, loadImageFromUrl, blobToDataUrl } from "@/hooks/useBackgroundRemoval";
 import { BannerComposite, BANNER_FORMATS, type BannerFormat } from "@/components/banner/BannerComposite";
 import { BannerWithTextOverlay } from "@/components/banner/BannerWithTextOverlay";
@@ -179,6 +180,7 @@ export default function AgenteDiretorArte() {
   const { isMobile, buttonMinHeight, inputHeight } = useMobileOptimization();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const { subscribed, isMaster } = useSubscription();
   const bannerRef = useRef<HTMLDivElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   
@@ -266,7 +268,9 @@ export default function AgenteDiretorArte() {
     [projects]
   );
   
-  const limitReached = totalBanners >= MAX_BANNERS_BETA;
+  // Beta limit only applies to non-subscribers (free/trial users)
+  // Subscribers (Essencial, Premium, Elite) and master users have unlimited access
+  const limitReached = !subscribed && !isMaster && totalBanners >= MAX_BANNERS_BETA;
 
   // Load projects from Supabase (with localStorage fallback)
   useEffect(() => {
