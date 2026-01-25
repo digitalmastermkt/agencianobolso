@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Master user emails that bypass credit checks
-const MASTER_USER_EMAILS = ["digitalmasters@gmail.com"];
+const MASTER_USER_EMAILS = ["digitalmastermkt@gmail.com"];
 
 // Credit costs
 const CREDITS_CREATE_BRAND = 2;
