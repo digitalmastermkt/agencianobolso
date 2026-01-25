@@ -536,7 +536,7 @@ COMPOSIÇÃO COM PESSOA:
 };
 
 // Master user emails that bypass credit checks
-const MASTER_USER_EMAILS = ["digitalmasters@gmail.com"];
+const MASTER_USER_EMAILS = ["digitalmastermkt@gmail.com"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
