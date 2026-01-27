@@ -74,10 +74,10 @@ export default function AdminUsers() {
           .order("created_at", { ascending: false })
       ]);
 
-      // Buscar dados de subscription separadamente
+      // Buscar dados de subscription separadamente (excluding sensitive stripe_customer_id)
       const { data: subscribersData, error: subscribersError } = await supabase
         .from("subscribers")
-        .select("user_id, subscribed, subscription_tier, subscription_end, email, stripe_customer_id");
+        .select("user_id, subscribed, subscription_tier, subscription_end, email");
 
       console.log("📊 Resultado das queries:");
       console.log("Total users count:", totalRes.count);
