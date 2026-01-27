@@ -441,8 +441,7 @@ const AdminUsers = () => {
               subscribed, 
               subscription_tier, 
               subscription_end, 
-              email,
-              stripe_customer_id
+              email
             )
           `)
           .order("created_at", { ascending: false })
