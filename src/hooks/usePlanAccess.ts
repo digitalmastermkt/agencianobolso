@@ -63,8 +63,10 @@ export function usePlanAccess() {
         return canUseAgentTrial(agentKey);
       }
       
-      // Free users: allow only the "vendas" agent
-      if (!subscribed || !tier) return agentKey === "vendas";
+      // Free users: NO access to any agents (must have subscription)
+      if (!subscribed || !tier) return false;
+      
+      // Subscribed users: check plan-specific access rules
       return agents.some((r) => r.plan === tier && r.agent_key === agentKey);
     },
     [agents, subscribed, tier, isAdmin, isTrialActive, canUseAgentTrial, isMaster]
