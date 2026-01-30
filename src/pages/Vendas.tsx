@@ -14,6 +14,7 @@ import {
   Timer,
   CheckCircle2,
   MessageCircle,
+  TrendingUp,
 } from "lucide-react";
 
 const canonicalUrl = () => `${window.location.origin}/vendas`;
@@ -23,7 +24,7 @@ const Vendas = () => {
   useEffect(() => {
     const title = "Planos Agência no Bolso AI – Essencial, Premium e Elite";
     const description =
-      "Conheça os planos Essencial, Premium e Elite da Agência no Bolso AI. Veja tudo incluso e assine agora para liberar agentes de IA, treinamentos e comunidade.";
+      "Conheça os planos Essencial (R$67), Premium (R$147) e Elite (R$297) da Agência no Bolso AI. Crie artes com IA, gerencie perfis de marca e muito mais.";
 
     document.title = title;
 
@@ -60,11 +61,11 @@ const Vendas = () => {
           "@type": "Product",
           name: "Plano Essencial",
           description:
-            "Agente Vendas + acesso à plataforma e recursos fundamentais de IA.",
+            "15 artes por mês, 1 perfil de marca, suporte por email.",
           offers: {
             "@type": "Offer",
             priceCurrency: "BRL",
-            price: "29.00",
+            price: "67.00",
             availability: "https://schema.org/InStock",
           },
         },
@@ -72,11 +73,11 @@ const Vendas = () => {
           "@type": "Product",
           name: "Plano Premium",
           description:
-            "Tudo do Essencial + agentes adicionais e recursos premium de IA para crescimento.",
+            "35 artes por mês, 3 perfis de marca, suporte prioritário, acesso antecipado.",
           offers: {
             "@type": "Offer",
             priceCurrency: "BRL",
-            price: "59.00",
+            price: "147.00",
             availability: "https://schema.org/InStock",
           },
         },
@@ -84,11 +85,11 @@ const Vendas = () => {
           "@type": "Product",
           name: "Plano Elite",
           description:
-            "Tudo do Premium + todos os agentes premium e acesso prioritário a novos recursos.",
+            "75 artes por mês, perfis ilimitados, suporte VIP, consultoria mensal.",
           offers: {
             "@type": "Offer",
             priceCurrency: "BRL",
-            price: "97.00",
+            price: "297.00",
             availability: "https://schema.org/InStock",
           },
         },
@@ -192,7 +193,7 @@ const Vendas = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold">Escolha o plano ideal</h2>
-              <p className="text-muted-foreground mt-2">Veja tudo que está incluso em cada plano</p>
+              <p className="text-muted-foreground mt-2">Margem de 4x garante qualidade premium em cada arte gerada</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -201,19 +202,20 @@ const Vendas = () => {
                 <CardHeader>
                   <Badge variant="secondary" className="w-fit">Comece agora</Badge>
                   <CardTitle className="mt-2 flex items-center gap-2">
-                    <Star className="w-5 h-5 text-primary" /> Essencial
+                    <TrendingUp className="w-5 h-5 text-primary" /> Essencial
                   </CardTitle>
+                  <div className="text-3xl font-bold mt-2">R$ 67<span className="text-base font-normal text-muted-foreground">/mês</span></div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
                      {[
-                       "Agente Vendas (disponível)",
-                       "Acesso à plataforma",
-                       "Geração de conteúdo com IA",
-                       "Comunidade (visualização)",
+                       "15 artes por mês",
+                       "1 Perfil de Marca",
+                       "Compra de créditos adicionais",
+                       "Suporte por email",
                      ].map((f, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" /> {f}
+                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /> {f}
                       </li>
                     ))}
                   </ul>
@@ -228,20 +230,21 @@ const Vendas = () => {
                 <CardHeader>
                   <Badge variant="secondary" className="w-fit">Cresça com consistência</Badge>
                   <CardTitle className="mt-2 flex items-center gap-2">
-                    <Crown className="w-5 h-5 text-primary" /> Premium
+                    <Star className="w-5 h-5 text-primary" /> Premium
                   </CardTitle>
+                  <div className="text-3xl font-bold mt-2">R$ 147<span className="text-base font-normal text-muted-foreground">/mês</span></div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
                      {[
-                       "Tudo do Essencial",
-                       "Agentes adicionais expandidos",
-                       "Recursos premium de IA",
-                       "Funcionalidades avançadas",
-                       "Comunidade (participação completa)",
+                       "35 artes por mês",
+                       "3 Perfis de Marca",
+                       "Compra de créditos adicionais",
+                       "Suporte prioritário",
+                       "Acesso antecipado a novos recursos",
                      ].map((f, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" /> {f}
+                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /> {f}
                       </li>
                     ))}
                   </ul>
@@ -253,20 +256,22 @@ const Vendas = () => {
                 <CardHeader>
                   <Badge variant="secondary" className="w-fit">Para quem quer liderar</Badge>
                   <CardTitle className="mt-2 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-primary" /> Elite
+                    <Crown className="w-5 h-5 text-primary" /> Elite
                   </CardTitle>
+                  <div className="text-3xl font-bold mt-2">R$ 297<span className="text-base font-normal text-muted-foreground">/mês</span></div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
                      {[
-                       "Tudo do Premium",
-                       "Todos os agentes premium",
-                       "Acesso prioritário a novos recursos",
-                       "Recursos exclusivos de IA",
-                       "Suporte dedicado",
+                       "75 artes por mês",
+                       "Perfis de Marca ilimitados",
+                       "Compra de créditos adicionais",
+                       "Suporte VIP",
+                       "Acesso exclusivo a novos agentes",
+                       "Consultoria mensal (1h)",
                      ].map((f, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" /> {f}
+                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /> {f}
                       </li>
                     ))}
                   </ul>

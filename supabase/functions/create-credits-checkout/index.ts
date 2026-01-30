@@ -7,11 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Credit packages configuration
+// Credit packages configuration - Updated for 4x margin
 const CREDIT_PACKAGES: Record<string, { credits: number; price_cents: number; name: string }> = {
-  "credits_5": { credits: 5, price_cents: 1500, name: "5 Créditos Extras" },
-  "credits_15": { credits: 15, price_cents: 4000, name: "15 Créditos Extras" },
-  "credits_30": { credits: 30, price_cents: 7500, name: "30 Créditos Extras" },
+  "credits_10": { credits: 10, price_cents: 4000, name: "10 Créditos Extras" },
+  "credits_25": { credits: 25, price_cents: 9000, name: "25 Créditos Extras" },
+  "credits_50": { credits: 50, price_cents: 16000, name: "50 Créditos Extras" },
 };
 
 serve(async (req) => {

@@ -821,6 +821,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          max_brand_profiles: number | null
           monthly_credits: number
           plan: string
           updated_at: string
@@ -829,6 +830,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          max_brand_profiles?: number | null
           monthly_credits?: number
           plan: string
           updated_at?: string
@@ -837,6 +839,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          max_brand_profiles?: number | null
           monthly_credits?: number
           plan?: string
           updated_at?: string

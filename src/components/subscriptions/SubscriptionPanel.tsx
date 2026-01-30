@@ -3,13 +3,50 @@ import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Crown, TrendingUp, Star, Sparkles } from "lucide-react";
+import { Crown, TrendingUp, Star, Sparkles, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useStripePriceConfig } from "@/hooks/useStripePriceConfig";
+import { Badge } from "@/components/ui/badge";
 
 type PlanTierLocal = "Essencial" | "Premium" | "Elite";
+
+interface PlanFeatures {
+  credits: string;
+  brandProfiles: string;
+  features: string[];
+}
+
+const PLAN_FEATURES: Record<PlanTierLocal, PlanFeatures> = {
+  Essencial: {
+    credits: "15 artes/mês",
+    brandProfiles: "1 Perfil de Marca",
+    features: [
+      "Compra de créditos adicionais",
+      "Suporte por email",
+    ],
+  },
+  Premium: {
+    credits: "35 artes/mês",
+    brandProfiles: "3 Perfis de Marca",
+    features: [
+      "Compra de créditos adicionais",
+      "Suporte prioritário",
+      "Acesso antecipado a novos recursos",
+    ],
+  },
+  Elite: {
+    credits: "75 artes/mês",
+    brandProfiles: "Perfis de Marca ilimitados",
+    features: [
+      "Compra de créditos adicionais",
+      "Suporte VIP",
+      "Acesso exclusivo a novos agentes",
+      "Consultoria mensal (1h)",
+    ],
+  },
+};
 
 export function SubscriptionPanel() {
   const { subscribed, subscription_tier, subscription_end, loading, refresh } = useSubscription();
@@ -30,26 +67,35 @@ export function SubscriptionPanel() {
     localStorage.setItem("billingCycle", cycle);
   };
 
-  const monthlyDisplay = {
-    Essencial: "R$ 29/mês",
-    Premium: "R$ 59/mês",
-    Elite: "R$ 97/mês",
+  const monthlyPrices = {
+    Essencial: 67,
+    Premium: 147,
+    Elite: 297,
   } as const;
 
-  const annualTotals = {
-    Essencial: 290,
-    Premium: 590,
-    Elite: 970,
+  const annualPrices = {
+    Essencial: 670,
+    Premium: 1470,
+    Elite: 2970,
   } as const;
 
-  const formatBRL = (val: number, minFrac = 2) =>
+  const formatBRL = (val: number, minFrac = 0) =>
     val.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: minFrac });
 
-  const annualDisplay = {
-    Essencial: `${formatBRL(annualTotals.Essencial / 12)}/mês (${formatBRL(annualTotals.Essencial, 0)} cobrados anualmente)`,
-    Premium: `${formatBRL(annualTotals.Premium / 12)}/mês (${formatBRL(annualTotals.Premium, 0)} cobrados anualmente)`,
-    Elite: `${formatBRL(annualTotals.Elite / 12)}/mês (${formatBRL(annualTotals.Elite, 0)} cobrados anualmente)`,
-  } as const;
+  const getDisplayPrice = (tier: PlanTierLocal) => {
+    if (billingCycle === "monthly") {
+      return formatBRL(monthlyPrices[tier]) + "/mês";
+    }
+    const monthlyEquivalent = annualPrices[tier] / 12;
+    return `${formatBRL(monthlyEquivalent)}/mês`;
+  };
+
+  const getAnnualNote = (tier: PlanTierLocal) => {
+    if (billingCycle === "annual") {
+      return `(${formatBRL(annualPrices[tier])} cobrados anualmente)`;
+    }
+    return null;
+  };
 
   const handleSubscribe = async (priceId: string) => {
     if (!user) {
@@ -153,7 +199,7 @@ export function SubscriptionPanel() {
         
         {showPlans && (
           <div>
-            <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex items-center justify-between gap-4 mb-6">
               <p className="text-sm text-muted-foreground">Escolha o ciclo de cobrança</p>
               <div className="flex gap-2">
                 <Button
@@ -174,27 +220,17 @@ export function SubscriptionPanel() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <PlanCard
-                icon={<TrendingUp className="w-5 h-5" />}
-                title="Essencial"
-                price={billingCycle === "monthly" ? monthlyDisplay.Essencial : annualDisplay.Essencial}
-                features={["Agentes: Conexão, Interação, Banner"]}
-                onSelect={() => handleSubscribe(configPriceIds[billingCycle]["Essencial"])}
-              />
-              <PlanCard
-                icon={<Star className="w-5 h-5" />}
-                title="Premium"
-                price={billingCycle === "monthly" ? monthlyDisplay.Premium : annualDisplay.Premium}
-                features={["Tudo do Essencial + Vendas, Storytelling"]}
-                onSelect={() => handleSubscribe(configPriceIds[billingCycle]["Premium"])}
-              />
-              <PlanCard
-                icon={<Crown className="w-5 h-5" />}
-                title="Elite"
-                price={billingCycle === "monthly" ? monthlyDisplay.Elite : annualDisplay.Elite}
-                features={["Tudo do Premium + Viral", "Acesso a agentes futuros"]}
-                onSelect={() => handleSubscribe(configPriceIds[billingCycle]["Elite"])}
-              />
+              {(["Essencial", "Premium", "Elite"] as PlanTierLocal[]).map((tier) => (
+                <PlanCard
+                  key={tier}
+                  tier={tier}
+                  price={getDisplayPrice(tier)}
+                  annualNote={getAnnualNote(tier)}
+                  features={PLAN_FEATURES[tier]}
+                  isPopular={tier === "Premium"}
+                  onSelect={() => handleSubscribe(configPriceIds[billingCycle][tier])}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -203,21 +239,60 @@ export function SubscriptionPanel() {
   );
 }
 
-function PlanCard({ icon, title, price, features, onSelect, ctaLabel }: { icon: React.ReactNode; title: string; price: string; features: string[]; onSelect: () => void; ctaLabel?: string; }) {
+interface PlanCardProps {
+  tier: PlanTierLocal;
+  price: string;
+  annualNote: string | null;
+  features: PlanFeatures;
+  isPopular?: boolean;
+  onSelect: () => void;
+}
+
+function PlanCard({ tier, price, annualNote, features, isPopular, onSelect }: PlanCardProps) {
+  const icons = {
+    Essencial: <TrendingUp className="w-5 h-5" />,
+    Premium: <Star className="w-5 h-5" />,
+    Elite: <Crown className="w-5 h-5" />,
+  };
+
   return (
-    <div className="border rounded-lg p-5">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="text-primary">{icon}</div>
-        <h3 className="font-semibold">{title}</h3>
+    <div className={`relative border rounded-lg p-5 ${isPopular ? "ring-2 ring-primary" : ""}`}>
+      {isPopular && (
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
+          Mais Popular
+        </Badge>
+      )}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="text-primary">{icons[tier]}</div>
+        <h3 className="font-semibold text-lg">{tier}</h3>
       </div>
-      <div className="text-2xl font-bold mb-2">{price}</div>
-      <ul className="text-sm text-muted-foreground mb-4 list-disc pl-5 space-y-1">
-        {features.map((f, idx) => (
-          <li key={idx}>{f}</li>
+      
+      <div className="mb-4">
+        <div className="text-2xl font-bold">{price}</div>
+        {annualNote && (
+          <p className="text-xs text-muted-foreground mt-1">{annualNote}</p>
+        )}
+      </div>
+
+      <ul className="space-y-2 mb-6 text-sm">
+        <li className="flex items-center gap-2">
+          <Check className="w-4 h-4 text-primary flex-shrink-0" />
+          <span className="font-medium">{features.credits}</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <Check className="w-4 h-4 text-primary flex-shrink-0" />
+          <span className="font-medium">{features.brandProfiles}</span>
+        </li>
+        {features.features.map((f, idx) => (
+          <li key={idx} className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-primary flex-shrink-0" />
+            <span>{f}</span>
+          </li>
         ))}
       </ul>
-      <Button variant="gradient" className="w-full" onClick={onSelect}>
-        {ctaLabel ?? `Assinar ${title}`}
+
+      <Button variant={isPopular ? "gradient" : "outline"} className="w-full" onClick={onSelect}>
+        Assinar {tier}
       </Button>
     </div>
   );
