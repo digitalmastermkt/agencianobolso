@@ -24,9 +24,9 @@ interface CreditPackage {
 }
 
 const CREDIT_PACKAGES: CreditPackage[] = [
-  { id: "credits_5", credits: 5, price: "R$ 15", priceValue: 15 },
-  { id: "credits_15", credits: 15, price: "R$ 40", priceValue: 40, popular: true, savings: "11%" },
-  { id: "credits_30", credits: 30, price: "R$ 75", priceValue: 75, savings: "17%" },
+  { id: "credits_10", credits: 10, price: "R$ 40", priceValue: 40 },
+  { id: "credits_25", credits: 25, price: "R$ 90", priceValue: 90, popular: true, savings: "10%" },
+  { id: "credits_50", credits: 50, price: "R$ 160", priceValue: 160, savings: "20%" },
 ];
 
 interface CreditsPackagesDialogProps {
