@@ -8,12 +8,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PRICE_TO_TIER: Record<string, "Essencial" | "Premium" | "Elite"> = {
-  "price_1RtCJlL0y5sMsrd4ZJHcvV3A": "Essencial",
-  "price_1RtCTGL0y5sMsrd4yRno549V": "Premium",
-  "price_1RtCyUL0y5sMsrd4j7Bgl4xT": "Elite",
-};
-
 // Master user email - has unlimited access to everything
 const MASTER_USER_EMAIL = "digitalmastermkt@gmail.com";
 
@@ -25,7 +19,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Use service role to bypass RLS for upsert
+  // Use service role to bypass RLS for upsert and read stripe_price_config
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -59,6 +53,24 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
+
+    // Fetch all price configs from database to build mapping
+    const { data: priceConfigs, error: configError } = await supabaseClient
+      .from("stripe_price_config")
+      .select("price_id, plan_tier");
+
+    if (configError) {
+      log("Error fetching price configs", configError);
+      throw new Error("Failed to fetch price configuration");
+    }
+
+    // Build price-to-tier mapping dynamically
+    const priceToTier: Record<string, "Essencial" | "Premium" | "Elite"> = {};
+    priceConfigs?.forEach((config) => {
+      priceToTier[config.price_id] = config.plan_tier as "Essencial" | "Premium" | "Elite";
+    });
+
+    log("Price mapping loaded", { count: Object.keys(priceToTier).length });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
@@ -104,7 +116,11 @@ serve(async (req) => {
       endIso = new Date(sub.current_period_end * 1000).toISOString();
       periodStart = new Date(sub.current_period_start * 1000).toISOString();
       const priceId = sub.items.data[0].price.id;
-      tier = PRICE_TO_TIER[priceId] ?? null;
+      tier = priceToTier[priceId] ?? null;
+      
+      if (!tier) {
+        log("Warning: Price ID not found in config", priceId);
+      }
     }
 
     // Upsert subscriber state

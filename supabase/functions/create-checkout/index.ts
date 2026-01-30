@@ -8,19 +8,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PRICE_MAP: Record<string, { tier: "Essencial" | "Premium" | "Elite" }> = {
-  "price_1RtCJlL0y5sMsrd4ZJHcvV3A": { tier: "Essencial" },
-  "price_1RtCTGL0y5sMsrd4yRno549V": { tier: "Premium" },
-  "price_1RtCyUL0y5sMsrd4j7Bgl4xT": { tier: "Elite" },
-};
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Initialize Supabase with anon key (only reading auth user)
+  // Use service role to read stripe_price_config
   const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
+  // Use anon key for auth user validation
+  const supabaseAnon = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_ANON_KEY") ?? ""
   );
@@ -29,12 +30,29 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "http://localhost:5173";
     const { price_id } = await req.json();
 
-    if (!price_id || !PRICE_MAP[price_id]) {
+    if (!price_id) {
       return new Response(
-        JSON.stringify({ error: "Preço inválido" }),
+        JSON.stringify({ error: "Price ID é obrigatório" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
+
+    // Fetch tier from database using price_id
+    const { data: priceConfig, error: priceError } = await supabaseClient
+      .from("stripe_price_config")
+      .select("plan_tier, billing_cycle")
+      .eq("price_id", price_id)
+      .single();
+
+    if (priceError || !priceConfig) {
+      console.error("[CREATE-CHECKOUT] Price not found in config:", price_id, priceError);
+      return new Response(
+        JSON.stringify({ error: "Preço inválido ou não configurado" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    const tier = priceConfig.plan_tier as "Essencial" | "Premium" | "Elite";
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -45,7 +63,7 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await supabaseAnon.auth.getUser(token);
     if (userError || !userData.user?.email) {
       return new Response(
         JSON.stringify({ error: "Usuário não autenticado" }),
@@ -83,10 +101,13 @@ serve(async (req) => {
       success_url: `${origin}/success`,
       cancel_url: `${origin}/cancel`,
       metadata: {
-        tier: PRICE_MAP[price_id].tier,
+        tier,
+        billing_cycle: priceConfig.billing_cycle,
         email,
       },
     });
+
+    console.log("[CREATE-CHECKOUT] Session created:", { tier, billing_cycle: priceConfig.billing_cycle, email });
 
     return new Response(
       JSON.stringify({ url: session.url }),
