@@ -1,131 +1,98 @@
 
-# Plano de Reestruturação dos Planos de Assinatura
+# Plano de Configuração dos Pagamentos Stripe
 
-## Resumo Executivo
-Reestruturar os planos de assinatura para garantir margem de 4x sobre o custo operacional, implementar limites de perfis de marca escalonados e atualizar toda a UI/UX para refletir a nova estrutura competitiva.
+## Situacao Atual
 
----
+### O que ja esta funcionando:
+- **Tabela `stripe_price_config`**: Contem 6 registros com Price IDs configurados (3 mensais + 3 anuais)
+- **Frontend `SubscriptionPanel.tsx`**: Busca os Price IDs do banco via `useStripePriceConfig`
+- **Admin `StripePriceUpdater.tsx`**: Interface para atualizar Price IDs pelo painel admin
+- **Edge Functions**: `create-checkout`, `check-subscription`, `stripe-webhook` ja implementadas
 
-## Nova Estrutura de Planos
-
-### Tabela de Preços Proposta
-
-| Plano | Preço Mensal | Preço Anual | Créditos/mês | Artes/mês | Perfis de Marca | Custo/arte | Margem |
-|-------|-------------|-------------|--------------|-----------|-----------------|------------|--------|
-| **Essencial** | R$ 67/mês | R$ 670/ano | 15 | ~15 | 1 | R$ 4,47 | ~4x |
-| **Premium** | R$ 147/mês | R$ 1.470/ano | 35 | ~35 | 3 | R$ 4,20 | ~4x |
-| **Elite** | R$ 297/mês | R$ 2.970/ano | 75 | ~75 | Ilimitado | R$ 3,96 | ~4x |
-
-> **Nota:** Considerando custo médio de R$ 1,00-1,20 por arte, a margem de 4x é garantida em todos os planos.
-
-### Pacotes de Créditos Extras (Ajustados)
-
-| Pacote | Créditos | Preço | Preço/Crédito | Economia |
-|--------|----------|-------|---------------|----------|
-| Básico | 10 | R$ 40 | R$ 4,00 | - |
-| Popular | 25 | R$ 90 | R$ 3,60 | 10% |
-| Pro | 50 | R$ 160 | R$ 3,20 | 20% |
+### O que falta configurar:
+1. **STRIPE_SECRET_KEY**: Nao esta nos secrets do projeto
+2. **STRIPE_WEBHOOK_SECRET**: Opcional mas recomendado para producao
+3. **Edge Functions com Price IDs hardcoded**: `create-checkout` e `check-subscription` tem mapeamentos fixos que nao leem do banco
 
 ---
 
-## Arquivos a Serem Modificados
+## Passo a Passo
 
-### 1. Banco de Dados (Supabase)
-- **`plan_settings`**: Atualizar `monthly_credits` para os novos valores (15, 35, 75)
-- **`profiles`**: Adicionar coluna `max_brand_profiles` ou criar tabela de limites
-- **Nova RPC/Policy**: Verificar limite de perfis por plano
+### 1. Adicionar STRIPE_SECRET_KEY
 
-### 2. Frontend - Componentes de Assinatura
-- **`src/components/subscriptions/SubscriptionPanel.tsx`**
-  - Atualizar preços: R$ 67, R$ 147, R$ 297
-  - Atualizar anuais: R$ 670, R$ 1.470, R$ 2.970
-  - Adicionar features: "15 artes/mês", "35 artes/mês", "75 artes/mês"
-  - Adicionar limites de perfis: "1 perfil", "3 perfis", "Perfis ilimitados"
+Voce precisa adicionar a chave secreta do Stripe nos secrets do projeto:
 
-### 3. Página de Vendas
-- **`src/pages/Vendas.tsx`**
-  - Atualizar structured data (SEO) com novos preços
-  - Atualizar cards comparativos com novas features
-  - Destacar quantidade de artes por mês
+1. Acesse o Stripe Dashboard: https://dashboard.stripe.com/apikeys
+2. Copie a **Secret key** (comeca com `sk_live_` ou `sk_test_`)
+3. Vou solicitar para voce adicionar como secret
 
-### 4. Dialog de Créditos Extras
-- **`src/components/CreditsPackagesDialog.tsx`**
-  - Atualizar pacotes: 10 (R$ 40), 25 (R$ 90), 50 (R$ 160)
-  - Recalcular percentuais de economia
+### 2. Criar Produtos e Precos no Stripe
 
-### 5. Edge Function de Checkout
-- **`supabase/functions/create-credits-checkout/index.ts`**
-  - Atualizar mapeamento de pacotes com novos preços
+No Stripe Dashboard, crie os seguintes produtos com precos recorrentes:
 
-### 6. Configuração de Créditos
-- **`src/lib/credits-config.ts`**
-  - Adicionar constantes de limites de perfis por plano
+**Planos Mensais:**
+| Produto | Preco | Recorrencia |
+|---------|-------|-------------|
+| Essencial | R$ 67,00 | Mensal |
+| Premium | R$ 147,00 | Mensal |
+| Elite | R$ 297,00 | Mensal |
 
----
+**Planos Anuais (10 meses, 2 gratis):**
+| Produto | Preco | Recorrencia |
+|---------|-------|-------------|
+| Essencial Anual | R$ 670,00 | Anual |
+| Premium Anual | R$ 1.470,00 | Anual |
+| Elite Anual | R$ 2.970,00 | Anual |
 
-## Detalhes Técnicos
+### 3. Atualizar Price IDs no Banco
 
-### Migração de Banco de Dados
-```sql
--- Atualizar créditos mensais dos planos
-UPDATE plan_settings SET monthly_credits = 15 WHERE plan = 'Essencial';
-UPDATE plan_settings SET monthly_credits = 35 WHERE plan = 'Premium';
-UPDATE plan_settings SET monthly_credits = 75 WHERE plan = 'Elite';
+Apos criar os produtos no Stripe:
+1. Copie os Price IDs gerados (formato: `price_xxxxx`)
+2. Acesse o painel Admin > Stripe
+3. Atualize os 6 campos com os novos Price IDs
 
--- Adicionar limites de perfis de marca
-ALTER TABLE plan_settings ADD COLUMN max_brand_profiles INTEGER DEFAULT 1;
-UPDATE plan_settings SET max_brand_profiles = 1 WHERE plan = 'Essencial';
-UPDATE plan_settings SET max_brand_profiles = 3 WHERE plan = 'Premium';
-UPDATE plan_settings SET max_brand_profiles = NULL WHERE plan = 'Elite'; -- NULL = ilimitado
-```
+### 4. Configurar Webhook (Producao)
 
-### Atualização do Stripe
-Será necessário criar novos Price IDs no Stripe para os novos valores:
-- Essencial Mensal: R$ 67
-- Essencial Anual: R$ 670
-- Premium Mensal: R$ 147
-- Premium Anual: R$ 1.470
-- Elite Mensal: R$ 297
-- Elite Anual: R$ 2.970
+Para o ambiente de producao:
+
+1. Acesse: https://dashboard.stripe.com/webhooks
+2. Clique em "Add endpoint"
+3. URL: `https://mqzbuctebbyryptmprkc.supabase.co/functions/v1/stripe-webhook`
+4. Selecione os eventos:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.payment_succeeded`
+5. Copie o "Signing secret" e adicione como `STRIPE_WEBHOOK_SECRET`
+
+### 5. Atualizar Edge Functions (Dinamico)
+
+Modificar `create-checkout` e `check-subscription` para buscar Price IDs do banco ao inves de usar mapeamento hardcoded. Isso permite que as alteracoes feitas no admin reflitam automaticamente.
 
 ---
 
-## Lista de Features por Plano (para UI)
+## Alteracoes de Codigo
 
-### Essencial (R$ 67/mês)
-- 15 artes por mês
-- 1 Perfil de Marca
-- Compra de créditos adicionais
-- Créditos não acumulam
-- Suporte por email
+### Edge Function: `create-checkout/index.ts`
+- Remover `PRICE_MAP` hardcoded
+- Buscar tier do banco usando o `price_id` recebido
+- Validar se o price_id existe na tabela `stripe_price_config`
 
-### Premium (R$ 147/mês) - Mais Popular
-- 35 artes por mês
-- 3 Perfis de Marca
-- Compra de créditos adicionais
-- Créditos não acumulam
-- Suporte prioritário
-- Acesso antecipado a novos recursos
-
-### Elite (R$ 297/mês)
-- 75 artes por mês
-- Perfis de Marca ilimitados
-- Compra de créditos adicionais
-- Créditos não acumulam
-- Suporte VIP
-- Acesso exclusivo a novos agentes
-- Consultoria mensal (1h)
+### Edge Function: `check-subscription/index.ts`
+- Remover `PRICE_TO_TIER` hardcoded
+- Buscar todos os Price IDs do banco e construir o mapeamento dinamicamente
+- Suportar tanto precos mensais quanto anuais
 
 ---
 
-## Ordem de Implementação
+## Resumo das Acoes
 
-1. Atualizar banco de dados (plan_settings)
-2. Atualizar SubscriptionPanel.tsx com novos preços e features
-3. Atualizar Vendas.tsx com nova estrutura
-4. Atualizar CreditsPackagesDialog.tsx com novos pacotes
-5. Criar novos produtos/preços no Stripe
-6. Atualizar stripe_price_config no banco
-7. Atualizar Edge Function de créditos extras
-8. Adicionar validação de limite de perfis de marca
-9. Testar fluxo completo de assinatura
+| Acao | Responsavel |
+|------|-------------|
+| Adicionar STRIPE_SECRET_KEY | Voce (via modal) |
+| Criar produtos no Stripe | Voce (Stripe Dashboard) |
+| Atualizar Price IDs no banco | Voce (Admin > Stripe) |
+| Configurar webhook no Stripe | Voce (Stripe Dashboard) |
+| Adicionar STRIPE_WEBHOOK_SECRET | Voce (via modal) |
+| Atualizar edge functions | Lovable (codigo) |
+
