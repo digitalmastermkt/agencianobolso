@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { MoreHorizontal, Edit, Key, MessageCircle, FileBarChart } from "lucide-react";
+import { MoreHorizontal, Edit, Key, MessageCircle, FileBarChart, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { EditUserDialog } from "./EditUserDialog";
 import { UserReportDialog } from "./UserReportDialog";
 import { ResetPasswordDialog } from "./ResetPasswordDialog";
+import { GrantPlanDialog } from "./GrantPlanDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface UserActionsMenuProps {
@@ -31,6 +33,7 @@ export function UserActionsMenu({ user, onUserUpdate }: UserActionsMenuProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [grantPlanOpen, setGrantPlanOpen] = useState(false);
 
   const handleSendWhatsApp = async () => {
     if (user.phone) {
@@ -78,6 +81,11 @@ export function UserActionsMenu({ user, onUserUpdate }: UserActionsMenuProps) {
             <FileBarChart className="mr-2 h-4 w-4" />
             Relatório
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setGrantPlanOpen(true)}>
+            <Shield className="mr-2 h-4 w-4" />
+            Liberar Plano Beta
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -98,6 +106,13 @@ export function UserActionsMenu({ user, onUserUpdate }: UserActionsMenuProps) {
         user={user}
         open={resetPasswordOpen}
         onOpenChange={setResetPasswordOpen}
+      />
+
+      <GrantPlanDialog
+        user={user}
+        open={grantPlanOpen}
+        onOpenChange={setGrantPlanOpen}
+        onUserUpdate={onUserUpdate}
       />
     </>
   );

@@ -74,6 +74,55 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
+    // Check for manual override first (beta/admin-granted plans)
+    const { data: manualOverride } = await supabaseClient
+      .from("subscribers")
+      .select("subscribed, subscription_tier, subscription_end, manual_override")
+      .eq("user_id", user.id)
+      .eq("manual_override", true)
+      .single();
+
+    if (manualOverride && manualOverride.manual_override) {
+      log("Manual override found for user", { tier: manualOverride.subscription_tier });
+      
+      // Provision credits for manual override users too
+      if (manualOverride.subscribed && manualOverride.subscription_tier) {
+        const overrideTier = manualOverride.subscription_tier as "Essencial" | "Premium" | "Elite";
+        const { data: planSettings } = await supabaseClient
+          .from("plan_settings")
+          .select("monthly_credits")
+          .eq("plan", overrideTier)
+          .single();
+
+        const monthlyCredits = planSettings?.monthly_credits || 10;
+
+        const { data: currentBalance } = await supabaseClient
+          .from("user_credits_balance")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!currentBalance) {
+          log("Provisioning credits for manual override user", { tier: overrideTier, monthlyCredits });
+          await supabaseClient.rpc("reset_monthly_credits", {
+            p_user_id: user.id,
+            p_monthly_limit: monthlyCredits,
+            p_period_start: new Date().toISOString(),
+            p_period_end: manualOverride.subscription_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          });
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          subscribed: manualOverride.subscribed,
+          subscription_tier: manualOverride.subscription_tier,
+          subscription_end: manualOverride.subscription_end,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     // Find (or not) a stripe customer for this email
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined = customers.data[0]?.id;
