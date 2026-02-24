@@ -1,72 +1,54 @@
 
 
-## Plano: Modo Escuro por Padrão + Melhorias de UX Mobile
+## Plano: Nova Paleta de Cores para App de Agência de Marketing Digital
 
-### Contexto
-A aplicação usa `next-themes` para gerenciamento de tema, mas o padrão atual e light. O app precisa ser 100% usavel no celular e ha varias oportunidades de melhoria na experiencia mobile.
+### Análise do Problema Atual
+A paleta atual usa cyan elétrico (#00BFFF) + roxo neon + pink — um visual "cyberpunk" que funciona para apps de tecnologia pura, mas não transmite **confiança profissional** que uma agência de marketing precisa. Fica visualmente agressivo e cansativo.
 
-### Mudancas Planejadas
+### Recomendação: Paleta "Premium Agency"
 
----
+A cor ideal para um app de agência de marketing digital é **violeta/índigo profundo** como primária, combinado com **dourado/âmbar** como accent. Essa combinação transmite:
 
-#### 1. Modo Escuro como Padrao
-- **`src/App.tsx`**: Envolver toda a aplicacao com `ThemeProvider` do `next-themes` com `defaultTheme="dark"`.
-- **`src/index.css`**: Ajustar as variaveis CSS do dark mode para ficarem mais polidas e coerentes com o design system tech/cyberpunk ja existente (gradientes, glows, sombras neon).
+- **Criatividade** (violeta) — associado a imaginação e inovação
+- **Profissionalismo** (índigo escuro) — transmite seriedade e competência
+- **Valor/Premium** (dourado) — remete a qualidade e resultados
 
-#### 2. DashboardLayout - Header Mobile Melhorado
-- **`src/components/layout/DashboardLayout.tsx`**: 
-  - Adicionar titulo da pagina atual no header mobile.
-  - Aumentar altura do header para 56px (melhor touch target).
-  - Adicionar `CreditsBalanceDisplay` compacto no header para facil acesso.
-
-#### 3. Sidebar Mobile - Bottom Navigation
-- **`src/components/AppSidebar.tsx`**: No mobile, a sidebar e dificil de acessar. Adicionar uma bottom navigation bar fixa com os itens principais (Dashboard, Agentes, Favoritos, Perfil) para navegacao rapida no celular.
-
-#### 4. Stepper do Diretor de Arte - Otimizacao Mobile
-- **`src/pages/agents/AgenteDiretorArte.tsx`**:
-  - **Stepper**: No mobile, mostrar apenas o step atual com indicador numerico (1/5) em vez de todos os 5 circulos lado a lado que ficam apertados.
-  - **Botoes de navegacao**: Fixar os botoes Voltar/Avancar no bottom da tela no mobile para facil acesso (sticky footer).
-  - **Cards**: Reduzir padding dos cards no mobile para ganhar mais espaco.
-  - **Grid de variacoes**: No step 5, usar `grid-cols-2` no mobile em vez de `grid-cols-1` para ver mais opcoes sem scroll.
-
-#### 5. Formulario Step 4 - UX Mobile
-- **Tipo de Arte**: Reduzir padding dos botoes de selecao de modo no mobile.
-- **Campos de texto**: Garantir que labels e inputs tenham espacamento adequado para toque.
-- **Botao Gerar**: Ja usa `buttonMinHeight` - manter.
-
-#### 6. Melhorias Globais de Dark Mode
-- **Cards e bordas**: Adicionar bordas mais visiveis no dark mode.
-- **Inputs e textareas**: Garantir contraste adequado.
-- **Badges**: Ajustar cores para dark mode.
-- **Upload areas (dashed borders)**: Ajustar cores para dark mode.
-
----
-
-### Detalhes Tecnicos
-
-**ThemeProvider**: Sera adicionado em `App.tsx` envolvendo o `QueryClientProvider`:
-```tsx
-import { ThemeProvider } from "next-themes"
-// ...
-<ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-  // ...existing app content
-</ThemeProvider>
-```
-
-**Bottom Navigation Mobile**: Nova componente `MobileBottomNav.tsx` com 4-5 icones principais, posicionamento `fixed bottom-0`, altura de 64px, `safe-area-inset-bottom` para iPhones com notch.
-
-**Stepper Mobile**: Substituir a row de 5 circulos por um componente compacto:
 ```text
-[ < ] Step 2 de 5 - Configurar [ > ]
+Paleta Proposta:
+
+PRIMARY:     #7C3AED (Violeta vibrante - botões, links, CTAs)
+ACCENT:      #F59E0B (Âmbar/Dourado - destaques, badges, sucesso)
+BACKGROUND:  #0F0D15 (Preto-violeta profundo)
+CARD:        #1A1625 (Elevação sutil violeta)
+MUTED:       #2D2640 (Bordas e áreas secundárias)
+FOREGROUND:  #F0ECF9 (Branco levemente lilás)
+DESTRUCTIVE: #EF4444 (Vermelho padrão)
+
+Gradientes:
+- Primary: Violeta → Índigo (#7C3AED → #4F46E5)
+- Accent:  Violeta → Âmbar (#7C3AED → #F59E0B)  
+- Subtle:  Background escuro com toque violeta
 ```
 
-**Sticky Navigation Buttons**: No mobile, os botoes Voltar/Avancar serao fixos no bottom (acima da bottom nav) com `position: sticky; bottom: 0`.
+### Mudanças Técnicas
+
+1. **`src/index.css`** — Substituir toda a paleta dark mode:
+   - `--primary`: de cyan para violeta `263 84% 58%`
+   - `--background`: preto-violeta `260 20% 7%`
+   - `--card`: elevação violeta `260 25% 12%`
+   - `--accent`: âmbar dourado `43 96% 56%`
+   - `--border`: violeta muted `260 20% 20%`
+   - Gradientes atualizados para violeta→índigo
+   - Sombras/glows com tom violeta em vez de cyan
+
+2. **`src/index.css`** (light mode) — Ajustar para coerência:
+   - Primary violeta mantido
+   - Backgrounds claros com toque lavanda
+
+3. **`tailwind.config.ts`** — Nenhuma mudança estrutural necessária (já usa CSS variables)
+
+4. **`src/components/ui/button.tsx`** — Nenhuma mudança (já usa `bg-primary`)
 
 ### Arquivos Modificados
-1. `src/App.tsx` - Adicionar ThemeProvider
-2. `src/index.css` - Refinar dark mode variables  
-3. `src/components/layout/DashboardLayout.tsx` - Header mobile melhorado
-4. `src/components/layout/MobileBottomNav.tsx` - **NOVO** - Bottom navigation
-5. `src/pages/agents/AgenteDiretorArte.tsx` - Stepper e layout mobile
-6. `src/components/AppSidebar.tsx` - Ajustes para coexistir com bottom nav
+1. `src/index.css` — Nova paleta de cores completa
 
