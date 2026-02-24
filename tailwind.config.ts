@@ -128,14 +128,14 @@ export default {
 						backgroundPosition: '100% 50%'
 					}
 				},
-				'pulse-glow': {
-					'0%, 100%': {
-						boxShadow: '0 0 20px hsl(197 100% 50% / 0.5), 0 0 40px hsl(270 100% 65% / 0.3)'
-					},
-					'50%': {
-						boxShadow: '0 0 40px hsl(197 100% 50% / 0.8), 0 0 80px hsl(270 100% 65% / 0.5)'
-					}
+			'pulse-glow': {
+				'0%, 100%': {
+					boxShadow: '0 0 20px hsl(263 84% 58% / 0.5), 0 0 40px hsl(245 58% 51% / 0.3)'
 				},
+				'50%': {
+					boxShadow: '0 0 40px hsl(263 84% 58% / 0.8), 0 0 80px hsl(245 58% 51% / 0.5)'
+				}
+			},
 				'slide-up': {
 					'0%': {
 						transform: 'translateY(20px)',
