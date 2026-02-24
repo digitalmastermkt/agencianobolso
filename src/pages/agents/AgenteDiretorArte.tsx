@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrialStatusCard } from "@/components/TrialStatusCard";
 import { SubscriptionStatusCard } from "@/components/SubscriptionStatusCard";
@@ -2124,7 +2124,7 @@ export default function AgenteDiretorArte() {
             ) : generatedVariations.length > 0 ? (
               <>
                 {/* Variations Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {generatedVariations.map((variation, index) => (
                     <Card 
                       key={variation.id}
@@ -2352,8 +2352,8 @@ export default function AgenteDiretorArte() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen py-4 sm:py-8">
+        <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-3 mb-4">
@@ -2393,51 +2393,83 @@ export default function AgenteDiretorArte() {
 
           {/* Stepper */}
           <div className="mb-8">
-            <div className="flex items-center justify-between">
-              {STEPS.map((step, index) => {
-                const StepIcon = step.icon;
-                const isActive = currentStep === step.id;
-                const isCompleted = currentStep > step.id;
-                
-                return (
-                  <div key={step.id} className="flex items-center flex-1">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(step.id)}
-                      className={`flex flex-col items-center gap-1 transition-all ${
-                        isActive 
-                          ? 'text-primary' 
-                          : isCompleted 
-                            ? 'text-primary/70' 
-                            : 'text-muted-foreground'
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                        isActive 
-                          ? 'bg-primary text-primary-foreground' 
-                          : isCompleted 
-                            ? 'bg-primary/20 text-primary' 
-                            : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {isCompleted ? (
-                          <Check className="w-5 h-5" />
-                        ) : (
-                          <StepIcon className="w-5 h-5" />
-                        )}
-                      </div>
-                      <span className={`text-xs font-medium hidden sm:block ${isActive ? '' : 'opacity-70'}`}>
-                        {step.title}
-                      </span>
-                    </button>
-                    {index < STEPS.length - 1 && (
-                      <div className={`flex-1 h-0.5 mx-2 ${
-                        currentStep > step.id ? 'bg-primary' : 'bg-muted'
-                      }`} />
-                    )}
+            {isMobile ? (
+              /* Mobile: compact stepper */
+              <div className="flex items-center justify-between bg-card border rounded-xl px-4 py-3">
+                <button
+                  type="button"
+                  onClick={handlePrevStep}
+                  disabled={currentStep === 1}
+                  className="p-2 rounded-lg hover:bg-muted disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                      {React.createElement(STEPS[currentStep - 1].icon, { className: "w-4 h-4" })}
+                    </div>
+                    <span className="font-semibold text-sm">{STEPS[currentStep - 1].title}</span>
                   </div>
-                );
-              })}
-            </div>
+                  <span className="text-xs text-muted-foreground">Passo {currentStep} de {STEPS.length}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  disabled={currentStep === 5 || (currentStep === 4) || !canAdvanceStep()}
+                  className="p-2 rounded-lg hover:bg-muted disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              /* Desktop: full stepper */
+              <div className="flex items-center justify-between">
+                {STEPS.map((step, index) => {
+                  const StepIcon = step.icon;
+                  const isActive = currentStep === step.id;
+                  const isCompleted = currentStep > step.id;
+                  
+                  return (
+                    <div key={step.id} className="flex items-center flex-1">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(step.id)}
+                        className={`flex flex-col items-center gap-1 transition-all ${
+                          isActive 
+                            ? 'text-primary' 
+                            : isCompleted 
+                              ? 'text-primary/70' 
+                              : 'text-muted-foreground'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                          isActive 
+                            ? 'bg-primary text-primary-foreground' 
+                            : isCompleted 
+                              ? 'bg-primary/20 text-primary' 
+                              : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {isCompleted ? (
+                            <Check className="w-5 h-5" />
+                          ) : (
+                            <StepIcon className="w-5 h-5" />
+                          )}
+                        </div>
+                        <span className={`text-xs font-medium ${isActive ? '' : 'opacity-70'}`}>
+                          {step.title}
+                        </span>
+                      </button>
+                      {index < STEPS.length - 1 && (
+                        <div className={`flex-1 h-0.5 mx-2 ${
+                          currentStep > step.id ? 'bg-primary' : 'bg-muted'
+                        }`} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Step Content */}
@@ -2445,29 +2477,31 @@ export default function AgenteDiretorArte() {
             {renderStepContent()}
           </div>
 
-          {/* Navigation */}
-          <div className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handlePrevStep}
-              disabled={currentStep === 1}
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-            
-            {currentStep < 5 && currentStep !== 4 && (
+          {/* Navigation - hidden on mobile (stepper has nav) */}
+          {!isMobile && (
+            <div className="flex justify-between">
               <Button
                 type="button"
-                onClick={handleNextStep}
-                disabled={!canAdvanceStep()}
+                variant="outline"
+                onClick={handlePrevStep}
+                disabled={currentStep === 1}
               >
-                Avançar
-                <ChevronRight className="w-4 h-4 ml-2" />
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Voltar
               </Button>
-            )}
-          </div>
+              
+              {currentStep < 5 && currentStep !== 4 && (
+                <Button
+                  type="button"
+                  onClick={handleNextStep}
+                  disabled={!canAdvanceStep()}
+                >
+                  Avançar
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
