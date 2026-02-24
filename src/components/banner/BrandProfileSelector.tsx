@@ -194,7 +194,7 @@ export function BrandProfileSelector({
             </Button>
           </div>
         ) : (
-          <ScrollArea className="max-h-[200px]">
+          <ScrollArea className="max-h-[280px] overflow-y-auto">
             <div className="space-y-2">
               {profiles.map((profile) => (
                 <div
