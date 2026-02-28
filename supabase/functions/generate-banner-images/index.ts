@@ -46,6 +46,32 @@ serve(async (req) => {
   try {
     const { basePrompt, headline, cta, formato, identidadeVisual } = await req.json();
 
+    // Input validation and sanitization
+    const sanitizeInput = (input: string, maxLength: number): string => {
+      if (typeof input !== 'string') return '';
+      return input
+        .trim()
+        .slice(0, maxLength)
+        .replace(/ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)/gi, '')
+        .replace(/system\s*:/gi, '')
+        .replace(/assistant\s*:/gi, '')
+        .replace(/\bforget\b.*\binstructions?\b/gi, '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/javascript:/gi, '')
+        .replace(/[\r\n]+/g, ' ')
+        .trim();
+    };
+
+    const safeHeadline = sanitizeInput(headline || '', 100);
+    const safeCta = sanitizeInput(cta || '', 50);
+    const safeBasePrompt = sanitizeInput(basePrompt || '', 500);
+    const safeIdentidade = sanitizeInput(identidadeVisual || '', 300);
+    const safeFormato = sanitizeInput(formato || '', 50);
+
+    if (!safeHeadline) {
+      return new Response(JSON.stringify({ error: 'Headline é obrigatório' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+    }
+
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
@@ -58,13 +84,13 @@ serve(async (req) => {
     ];
 
     let size = '1024x1024';
-    if (formato?.toLowerCase().includes('story') || formato?.toLowerCase().includes('vertical')) size = '1024x1792';
-    else if (formato?.toLowerCase().includes('horizontal') || formato?.toLowerCase().includes('landscape')) size = '1792x1024';
+    if (safeFormato.toLowerCase().includes('story') || safeFormato.toLowerCase().includes('vertical')) size = '1024x1792';
+    else if (safeFormato.toLowerCase().includes('horizontal') || safeFormato.toLowerCase().includes('landscape')) size = '1792x1024';
 
     console.log(`[BANNER-IMAGES] Generating 3 variations with size ${size}`);
 
     const imagePromises = styles.map(async (style, index) => {
-      const enhancedPrompt = `Professional social media banner. Headline: "${headline}". CTA: "${cta}". Style: ${style.modifier}. Brand: ${identidadeVisual}. ${basePrompt}. Ultra high resolution, professional marketing layout.`;
+      const enhancedPrompt = `Professional social media banner. Headline: "${safeHeadline}". CTA: "${safeCta}". Style: ${style.modifier}. Brand: ${safeIdentidade}. ${safeBasePrompt}. Ultra high resolution, professional marketing layout.`;
 
       try {
         const response = await fetch('https://api.openai.com/v1/images/generations', {
