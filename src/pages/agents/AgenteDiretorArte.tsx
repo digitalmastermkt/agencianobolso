@@ -1903,44 +1903,59 @@ export default function AgenteDiretorArte() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="headline" className="font-medium text-sm">
-                      Headline (Texto Principal) *
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="headline" className="font-medium text-sm">
+                        Headline (Texto Principal) *
+                      </Label>
+                      <span className={`text-xs ${headline.length > 50 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {headline.length}/50
+                      </span>
+                    </div>
                     <Input
                       id="headline"
                       value={headline}
                       onChange={(e) => setHeadline(e.target.value)}
                       placeholder="Ex: Últimos Dias de Oferta!"
                       className="mt-1"
-                      maxLength={100}
+                      maxLength={50}
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="subheadline" className="font-medium text-sm">
-                      Subheadline (Texto Secundário)
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="subheadline" className="font-medium text-sm">
+                        Subheadline (Texto Secundário)
+                      </Label>
+                      <span className={`text-xs ${subheadline.length > 80 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {subheadline.length}/80
+                      </span>
+                    </div>
                     <Input
                       id="subheadline"
                       value={subheadline}
                       onChange={(e) => setSubheadline(e.target.value)}
                       placeholder="Ex: Essa é sua última chance do ano"
                       className="mt-1"
-                      maxLength={150}
+                      maxLength={80}
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="cta" className="font-medium text-sm">
-                      CTA (Botão)
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="cta" className="font-medium text-sm">
+                        CTA (Botão)
+                      </Label>
+                      <span className={`text-xs ${cta.length > 20 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {cta.length}/20
+                      </span>
+                    </div>
                     <Input
                       id="cta"
                       value={cta}
                       onChange={(e) => setCta(e.target.value)}
                       placeholder="Ex: Clique em Saiba Mais"
                       className="mt-1"
-                      maxLength={50}
+                      maxLength={20}
                     />
                   </div>
                   
