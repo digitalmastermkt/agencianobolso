@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   TrendingUp,
@@ -44,13 +44,20 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileDialog } from "./ProfileDialog";
 
+const artDirectorSubItems = [
+  { title: "Criar Arte", url: "/agentes/diretor-arte" },
+  { title: "Perfis de Marca", url: "/agentes/diretor-arte/perfis" },
+  { title: "Projetos", url: "/agentes/diretor-arte/projetos" },
+];
+
 const agentItems = [
   {
     title: "DIRETOR DE ARTE",
     url: "/agentes/diretor-arte",
     icon: Palette,
     color: "text-violet-600",
-    key: "diretor-arte"
+    key: "diretor-arte",
+    subItems: artDirectorSubItems,
   },
   {
     title: "VENDAS",
@@ -264,21 +271,42 @@ export function AppSidebar() {
               <SidebarMenu>
                 {agentItems.map((item) => {
                   const available = isAvailable(item.key);
+                  const isExpanded = currentPath.startsWith('/agentes/diretor-arte') && item.key === 'diretor-arte';
                   return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <NavLink to={item.url} className={getNavClass}>
-                          <item.icon className={`mr-2 h-5 w-5 ${available ? item.color : 'text-muted-foreground/50'}`} />
-                          <span className={available ? '' : 'text-muted-foreground/70'}>{item.title}</span>
-                          {!available && (
-                            <Clock className="ml-auto h-4 w-4 text-amber-500" />
-                          )}
-                          {available && isActive(item.url) && (
-                            <ChevronRight className="ml-auto h-5 w-5" />
-                          )}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <React.Fragment key={item.title}>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                          <NavLink to={item.url} className={getNavClass}>
+                            <item.icon className={`mr-2 h-5 w-5 ${available ? item.color : 'text-muted-foreground/50'}`} />
+                            <span className={available ? '' : 'text-muted-foreground/70'}>{item.title}</span>
+                            {!available && (
+                              <Clock className="ml-auto h-4 w-4 text-amber-500" />
+                            )}
+                            {available && isActive(item.url) && !('subItems' in item) && (
+                              <ChevronRight className="ml-auto h-5 w-5" />
+                            )}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      {/* Sub-items for Diretor de Arte */}
+                      {'subItems' in item && item.subItems && isExpanded && (
+                        item.subItems.map((sub) => (
+                          <SidebarMenuItem key={sub.url}>
+                            <SidebarMenuButton asChild>
+                              <NavLink 
+                                to={sub.url} 
+                                end
+                                className={({ isActive: active }) => 
+                                  `pl-10 text-sm ${active ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/50 text-muted-foreground'}`
+                                }
+                              >
+                                <span>{sub.title}</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </SidebarMenu>
