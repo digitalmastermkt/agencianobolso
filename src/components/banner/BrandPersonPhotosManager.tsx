@@ -61,54 +61,55 @@ export function BrandPersonPhotosManager({
     setUploadProgress(10);
 
     try {
-      // Read file as base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const imageData = reader.result as string;
-        setUploadProgress(30);
+      const imageData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Falha ao ler o arquivo"));
+        reader.readAsDataURL(file);
+      });
 
-        // Analyze the photo
-        const { data, error } = await supabase.functions.invoke('analyze-person-photo', {
-          body: { image: imageData }
-        });
+      setUploadProgress(30);
 
-        setUploadProgress(70);
+      // Analyze the photo
+      const { data, error } = await supabase.functions.invoke('analyze-person-photo', {
+        body: { image: imageData }
+      });
 
-        if (error) throw error;
-        if (data.error) throw new Error(data.error);
+      setUploadProgress(70);
 
-        // Create new photo entry
-        const newPhoto: PersonPhoto = {
-          id: crypto.randomUUID(),
-          photo_url: imageData,
-          analysis: data.person,
-          name: `Foto ${photos.length + 1}`,
-          created_at: new Date().toISOString()
-        };
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-        const updatedPhotos = [...photos, newPhoto];
-        
-        // Save to database
-        const { error: updateError } = await supabase
-          .from('brand_profiles')
-          .update({
-            person_photos: updatedPhotos as unknown as Record<string, never>[],
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', brandProfileId);
-
-        if (updateError) throw updateError;
-
-        setUploadProgress(100);
-        onPhotosChange(updatedPhotos);
-        setIsDialogOpen(false);
-        
-        toast({
-          title: "Foto adicionada! 📸",
-          description: "A foto foi analisada e salva no perfil",
-        });
+      // Create new photo entry
+      const newPhoto: PersonPhoto = {
+        id: crypto.randomUUID(),
+        photo_url: imageData,
+        analysis: data.person,
+        name: `Foto ${photos.length + 1}`,
+        created_at: new Date().toISOString()
       };
-      reader.readAsDataURL(file);
+
+      const updatedPhotos = [...photos, newPhoto];
+      
+      // Save to database
+      const { error: updateError } = await supabase
+        .from('brand_profiles')
+        .update({
+          person_photos: updatedPhotos as unknown as Record<string, never>[],
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', brandProfileId);
+
+      if (updateError) throw updateError;
+
+      setUploadProgress(100);
+      onPhotosChange(updatedPhotos);
+      setIsDialogOpen(false);
+      
+      toast({
+        title: "Foto adicionada! 📸",
+        description: "A foto foi analisada e salva no perfil",
+      });
     } catch (error: any) {
       console.error('Error uploading photo:', error);
       toast({
@@ -268,7 +269,7 @@ export function BrandPersonPhotosManager({
             <p className="text-xs mt-1">Adicione fotos para usar nos seus designs</p>
           </div>
         ) : (
-          <ScrollArea className="h-auto max-h-[300px]">
+          <ScrollArea className="h-auto max-h-[500px]">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {photos.map((photo) => (
                 <div 
