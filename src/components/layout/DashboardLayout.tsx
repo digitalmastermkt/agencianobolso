@@ -36,9 +36,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <AppSidebar />
         
         <main className="flex-1 overflow-auto">
-          <header className="h-14 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+          <header className="sticky top-0 z-30 h-14 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
             <div className="flex items-center gap-3">
-              <SidebarTrigger />
+              <SidebarTrigger className="shrink-0" />
               {pageTitle && (
                 <h1 className="text-sm font-semibold truncate">{pageTitle}</h1>
               )}

@@ -210,13 +210,13 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar className="w-64" collapsible="icon">
-        <SidebarHeader className="border-b">
-          <div className="flex items-center gap-3 p-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+        <SidebarHeader className="border-b p-4">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-10 h-10 min-w-[2.5rem] bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <h2 className="font-bold text-lg">SparkAgen</h2>
+            <div className="group-data-[collapsible=icon]:hidden">
+              <h2 className="font-bold text-lg leading-tight">SparkAgen</h2>
               <p className="text-xs text-muted-foreground">AI Agents</p>
             </div>
           </div>
