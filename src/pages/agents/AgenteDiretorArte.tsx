@@ -2207,158 +2207,506 @@ export default function AgenteDiretorArte() {
     }
   };
 
+  const selectedVariation = generatedVariations.find(v => v.id === selectedVariationId);
+
   return (
     <DashboardLayout>
-      <div className="min-h-screen py-4 sm:py-8">
-        <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="p-3 rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white">
-                <Palette className="w-8 h-8" />
+      <div className="min-h-screen py-4 sm:py-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          {/* Compact Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white">
+                <Palette className="w-6 h-6" />
               </div>
-              <h1 className="text-3xl font-bold">Diretor de Arte</h1>
+              <div>
+                <h1 className="text-2xl font-bold">Diretor de Arte</h1>
+                <p className="text-sm text-muted-foreground">Crie artes profissionais com IA</p>
+              </div>
             </div>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Gera criativos profissionais com IA, preservando sua identidade visual.
-            </p>
-            {/* Only show beta counter for non-subscribers */}
-            {!subscribed && !isMaster && (
-              <div className="mt-4 flex flex-col items-center gap-2">
-                <Badge variant="secondary">Beta</Badge>
-                <p className="text-sm text-muted-foreground">
-                  {totalBanners}/{MAX_BANNERS_BETA} artes do beta
-                </p>
-                {limitReached && (
-                  <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                    Você atingiu o limite de 10 artes do beta. Obrigado por testar!
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Credits Balance - Compact version in header */}
-          <div className="flex justify-center mb-6">
             <CreditsBalanceDisplay compact />
           </div>
 
-          <div className="mb-6 max-w-md mx-auto">
-            <TrialStatusCard />
-            <SubscriptionStatusCard />
-          </div>
-
-          {/* Stepper */}
-          <div className="mb-8">
-            {isMobile ? (
-              /* Mobile: compact stepper */
-              <div className="flex items-center justify-between bg-card border rounded-xl px-4 py-3">
-                <button
-                  type="button"
-                  onClick={handlePrevStep}
-                  disabled={currentStep === 1}
-                  className="p-2 rounded-lg hover:bg-muted disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                      {React.createElement(STEPS[currentStep - 1].icon, { className: "w-4 h-4" })}
-                    </div>
-                    <span className="font-semibold text-sm">{STEPS[currentStep - 1].title}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Passo {currentStep} de {STEPS.length}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={currentStep === 5 || (currentStep === 4) || !canAdvanceStep()}
-                  className="p-2 rounded-lg hover:bg-muted disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            ) : (
-              /* Desktop: full stepper */
-              <div className="flex items-center justify-between">
-                {STEPS.map((step, index) => {
-                  const StepIcon = step.icon;
-                  const isActive = currentStep === step.id;
-                  const isCompleted = currentStep > step.id;
-                  
-                  return (
-                    <div key={step.id} className="flex items-center flex-1">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(step.id)}
-                        className={`flex flex-col items-center gap-1 transition-all ${
-                          isActive 
-                            ? 'text-primary' 
-                            : isCompleted 
-                              ? 'text-primary/70' 
-                              : 'text-muted-foreground'
-                        }`}
-                      >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                          isActive 
-                            ? 'bg-primary text-primary-foreground' 
-                            : isCompleted 
-                              ? 'bg-primary/20 text-primary' 
-                              : 'bg-muted text-muted-foreground'
-                        }`}>
-                          {isCompleted ? (
-                            <Check className="w-5 h-5" />
-                          ) : (
-                            <StepIcon className="w-5 h-5" />
-                          )}
-                        </div>
-                        <span className={`text-xs font-medium ${isActive ? '' : 'opacity-70'}`}>
-                          {step.title}
-                        </span>
-                      </button>
-                      {index < STEPS.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-2 ${
-                          currentStep > step.id ? 'bg-primary' : 'bg-muted'
-                        }`} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Step Content */}
-          <div className="mb-8">
-            {renderStepContent()}
-          </div>
-
-          {/* Navigation - hidden on mobile (stepper has nav) */}
-          {!isMobile && (
-            <div className="flex justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePrevStep}
-                disabled={currentStep === 1}
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Voltar
-              </Button>
-              
-              {currentStep < 5 && currentStep !== 4 && (
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={!canAdvanceStep()}
-                >
-                  Avançar
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              )}
+          {!subscribed && !isMaster && (
+            <div className="mb-4 max-w-md">
+              <TrialStatusCard />
+              <SubscriptionStatusCard />
             </div>
           )}
+
+          {/* Two-column layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* LEFT COLUMN: Form */}
+            <div className="space-y-4">
+              {/* Art Reference */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Art Text */}
+                  <div>
+                    <Label htmlFor="artText" className="font-medium">Texto da arte *</Label>
+                    <Textarea
+                      id="artText"
+                      value={artText}
+                      onChange={(e) => setArtText(e.target.value)}
+                      placeholder="Descreva o criativo que você quer gerar... Ex: Promoção Black Friday com 50% de desconto em todos os cursos"
+                      className="mt-2 min-h-[100px] resize-none"
+                      maxLength={500}
+                    />
+                    <div className="flex justify-between mt-1">
+                      <p className="text-xs text-muted-foreground">A IA vai criar automaticamente o melhor headline, subtítulo e CTA</p>
+                      <span className="text-xs text-muted-foreground">{artText.length}/500</span>
+                    </div>
+                  </div>
+
+                  {/* Design Orientation */}
+                  <div>
+                    <Label htmlFor="designOrientation" className="font-medium">
+                      Orientação de Design e Cena <span className="text-muted-foreground font-normal">(opcional)</span>
+                    </Label>
+                    <Textarea
+                      id="designOrientation"
+                      value={designOrientation}
+                      onChange={(e) => setDesignOrientation(e.target.value)}
+                      placeholder="Ex: fundo neutro, sem efeitos especiais, pouco brilho, estilo minimalista"
+                      className="mt-2 min-h-[70px] resize-none"
+                      maxLength={300}
+                    />
+                    <div className="flex justify-end mt-1">
+                      <span className="text-xs text-muted-foreground">{designOrientation.length}/300</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Use art as reference */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Creative Style Selector */}
+                  <div>
+                    <Label className="font-medium mb-3 block">Estilo do Criativo</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setCreativeStyle('brand')}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                          creativeStyle === 'brand'
+                            ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                            : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/50'
+                        }`}
+                      >
+                        <Palette className={`w-6 h-6 ${creativeStyle === 'brand' ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className={`text-sm font-medium ${creativeStyle === 'brand' ? 'text-primary' : ''}`}>Marca</span>
+                        <span className="text-[10px] text-muted-foreground text-center leading-tight">Usa identidade visual do perfil</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCreativeStyle('generic')}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                          creativeStyle === 'generic'
+                            ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                            : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/50'
+                        }`}
+                      >
+                        <Sparkles className={`w-6 h-6 ${creativeStyle === 'generic' ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className={`text-sm font-medium ${creativeStyle === 'generic' ? 'text-primary' : ''}`}>Genérico</span>
+                        <span className="text-[10px] text-muted-foreground text-center leading-tight">Cria baseado no contexto</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Reference Photos Grid */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="font-medium">Fotos e Referências</Label>
+                      <span className="text-xs text-muted-foreground">{referenceImages.length}/4</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3">
+                      {[0, 1, 2, 3].map((slotIndex) => {
+                        const img = referenceImages[slotIndex];
+                        return (
+                          <div key={slotIndex} className="relative aspect-square">
+                            {img ? (
+                              <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-primary/30">
+                                <img src={img} alt={`Referência ${slotIndex + 1}`} className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => setReferenceImages(prev => prev.filter((_, i) => i !== slotIndex))}
+                                  className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  ref={(el) => { referenceInputRefs.current[slotIndex] = el; }}
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const reader = new FileReader();
+                                    reader.onload = (ev) => {
+                                      if (ev.target?.result) {
+                                        setReferenceImages(prev => {
+                                          const next = [...prev];
+                                          next.push(ev.target!.result as string);
+                                          return next.slice(0, 4);
+                                        });
+                                      }
+                                    };
+                                    reader.readAsDataURL(file);
+                                    e.target.value = '';
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => referenceInputRefs.current[slotIndex]?.click()}
+                                  disabled={referenceImages.length > slotIndex}
+                                  className="w-full h-full rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-30"
+                                >
+                                  <Plus className="w-5 h-5 text-muted-foreground" />
+                                  <span className="text-[10px] text-muted-foreground">Adicionar</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Adicione pessoas, produtos ou cenários. A IA vai compor a arte com as referências.
+                    </p>
+                  </div>
+
+                  {/* Gallery Photos from Brand Profile */}
+                  {personPhotos.length > 0 && (
+                    <div>
+                      <Label className="font-medium mb-3 block">Fotos da Galeria do Perfil</Label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {personPhotos.map((photo) => (
+                          <button
+                            key={photo.id}
+                            type="button"
+                            disabled={referenceImages.length >= 4 && !referenceImages.includes(photo.photo_url)}
+                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all disabled:opacity-40 ${
+                              referenceImages.includes(photo.photo_url)
+                                ? 'border-primary ring-2 ring-primary/30'
+                                : 'border-transparent hover:border-muted-foreground/30'
+                            }`}
+                            onClick={() => {
+                              if (referenceImages.includes(photo.photo_url)) {
+                                setReferenceImages(prev => prev.filter(u => u !== photo.photo_url));
+                              } else if (referenceImages.length < 4) {
+                                setReferenceImages(prev => [...prev, photo.photo_url]);
+                              }
+                            }}
+                          >
+                            <img src={photo.photo_url} alt={photo.name || 'Foto'} className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Format, Logo, Variations */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Format Selector */}
+                  <div>
+                    <Label className="font-medium mb-3 block">Formato</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(Object.keys(BANNER_FORMATS) as BannerFormat[]).map((format) => (
+                        <Button
+                          key={format}
+                          type="button"
+                          variant={selectedFormat === format ? "default" : "outline"}
+                          className="flex flex-col items-center gap-1 h-auto py-3"
+                          onClick={() => setSelectedFormat(format)}
+                        >
+                          {getFormatIcon(format)}
+                          <span className="text-xs font-medium">{BANNER_FORMATS[format].label}</span>
+                          <span className="text-[10px] text-muted-foreground">{BANNER_FORMATS[format].width}x{BANNER_FORMATS[format].height}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Logo Toggle */}
+                  {brandProfile?.logo_url && (
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <img src={brandProfile.logo_url} alt="Logo" className="w-8 h-8 object-contain rounded" />
+                        <div>
+                          <Label className="font-medium">Incluir Logo</Label>
+                          <p className="text-xs text-muted-foreground">Logo será posicionada sutilmente</p>
+                        </div>
+                      </div>
+                      <Switch checked={includeLogo} onCheckedChange={setIncludeLogo} />
+                    </div>
+                  )}
+
+                  {/* Variations Count */}
+                  <div>
+                    <Label className="font-medium mb-3 block">Variações</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([1, 2] as const).map((count) => (
+                        <Button
+                          key={count}
+                          type="button"
+                          variant={variationsCount === count ? "default" : "outline"}
+                          className="flex flex-col items-center gap-1 h-auto py-3"
+                          onClick={() => setVariationsCount(count)}
+                        >
+                          <ImagePlus className="w-4 h-4" />
+                          <span className="text-sm font-medium">{count}</span>
+                          <span className="text-[10px] text-muted-foreground">{count === 1 ? 'Mais rápido' : 'Recomendado'}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <form onSubmit={handleSubmit}>
+                    <Button
+                      type="submit"
+                      className="w-full min-h-[48px]"
+                      variant="gradient"
+                      size="lg"
+                      disabled={loading || !artText.trim() || limitReached}
+                    >
+                      {loading ? (
+                        <div className="flex flex-col items-center gap-2 w-full">
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span className="text-sm font-medium">{generationStep}</span>
+                          </div>
+                          <div className="w-full bg-primary-foreground/20 rounded-full h-1.5">
+                            <div className="bg-primary-foreground h-1.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${generationProgress}%` }} />
+                          </div>
+                          <span className="text-xs opacity-80">{generationProgress}%</span>
+                        </div>
+                      ) : (
+                        <>
+                          <Palette className="w-5 h-5 mr-2" />
+                          Gerar Arte
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* RIGHT COLUMN: Results */}
+            <div className="space-y-4">
+              {loading ? (
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="text-center space-y-6">
+                      <div className="relative w-20 h-20 mx-auto">
+                        <Loader2 className="w-20 h-20 animate-spin text-primary/30" />
+                        <Sparkles className="w-8 h-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary animate-pulse" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-lg">{generationStep}</p>
+                        <p className="text-sm text-muted-foreground mt-1">Gerando {variationsCount} variação(ões)</p>
+                      </div>
+                      <div className="max-w-xs mx-auto space-y-2">
+                        <Progress value={generationProgress} className="h-2" />
+                        <p className="text-sm font-medium text-primary">{generationProgress}%</p>
+                      </div>
+                      <div className="flex justify-center gap-2 flex-wrap">
+                        {[
+                          { label: 'Foto', threshold: 15 },
+                          { label: 'Direção', threshold: 30 },
+                          { label: 'Geração', threshold: 45 },
+                          { label: 'Upload', threshold: 90 },
+                        ].map((step) => (
+                          <Badge
+                            key={step.label}
+                            variant={generationProgress >= step.threshold ? "default" : "outline"}
+                            className={`transition-all duration-300 ${generationProgress >= step.threshold && generationProgress < step.threshold + 15 ? 'animate-pulse ring-2 ring-primary/50' : ''}`}
+                          >
+                            {generationProgress >= step.threshold && <Check className="w-3 h-3 mr-1" />}
+                            {step.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : generatedVariations.length > 0 ? (
+                <>
+                  {/* Variations Grid */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-primary" />
+                          Suas Variações
+                        </CardTitle>
+                        {decision && (
+                          <Button variant="ghost" size="sm" onClick={copyJson}>
+                            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          </Button>
+                        )}
+                      </div>
+                      <CardDescription>{generatedVariations.length} variação(ões) geradas</CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {generatedVariations.map((variation, index) => (
+                      <Card
+                        key={variation.id}
+                        className={`cursor-pointer transition-all overflow-hidden ${
+                          selectedVariationId === variation.id ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'
+                        }`}
+                        onClick={() => { setSelectedVariationId(variation.id); setGeneratedImageUrl(variation.imageUrl); }}
+                      >
+                        <div className="relative aspect-square bg-muted overflow-hidden">
+                          {variation.isRegenerating ? (
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                            </div>
+                          ) : variation.textOverlay ? (
+                            <BannerWithTextOverlay
+                              format={selectedFormat}
+                              backgroundImageUrl={variation.imageUrl}
+                              textOverlay={variation.textOverlay}
+                              logoUrl={variation.logoUrl}
+                              brandColors={brandColors}
+                              previewScale={0.2}
+                            />
+                          ) : (
+                            <>
+                              <img src={variation.imageUrl} alt={`Variação ${index + 1}`} className="w-full h-full object-cover" />
+                              {variation.logoUrl && (
+                                <img src={variation.logoUrl} alt="Logo" className="absolute bottom-3 right-3 w-12 h-12 object-contain drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                              )}
+                            </>
+                          )}
+                          {selectedVariationId === variation.id && (
+                            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                              <Check className="w-4 h-4" />
+                            </div>
+                          )}
+                          <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 text-white text-xs font-medium">#{index + 1}</div>
+                        </div>
+                        <CardContent className="p-3">
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            className="w-full"
+                            onClick={(e) => { e.stopPropagation(); handleDownloadVariation(variation, `criativo-${index + 1}-${Date.now()}.png`); }}
+                            disabled={variation.isRegenerating}
+                          >
+                            <Download className="w-3 h-3 mr-1" /> Baixar
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Selected Variation Preview */}
+                  {selectedVariation && decision && (
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between pb-3">
+                        <CardTitle className="text-lg">Pré-visualização</CardTitle>
+                        <ArtFavoriteButton
+                          imageUrl={selectedVariation.imageUrl}
+                          bannerText={headline}
+                          cta={cta}
+                          format={selectedFormat}
+                          projectId={currentProjectId || undefined}
+                          showLabel
+                        />
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-center">
+                          <div className="overflow-hidden rounded-lg border shadow-lg max-w-full">
+                            {selectedVariation.textOverlay ? (
+                              <BannerWithTextOverlay
+                                format={selectedFormat}
+                                backgroundImageUrl={selectedVariation.imageUrl}
+                                textOverlay={selectedVariation.textOverlay}
+                                logoUrl={selectedVariation.logoUrl}
+                                brandColors={brandColors}
+                                previewScale={0.35}
+                              />
+                            ) : (
+                              <div className="relative">
+                                <img src={selectedVariation.imageUrl} alt="Preview" className="w-full h-auto" />
+                                {selectedVariation.logoUrl && (
+                                  <img src={selectedVariation.logoUrl} alt="Logo" className="absolute bottom-4 right-4 w-16 h-16 object-contain drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Button type="button" onClick={() => handleDownloadVariation(selectedVariation)} className="w-full" variant="gradient">
+                          <Download className="w-4 h-4 mr-2" /> Baixar em Alta Resolução
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Decision Details */}
+                  {decision && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Direção Artística</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                            <LayoutTemplate className="w-5 h-5 text-primary" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Template</p>
+                              <p className="font-medium text-sm">{getTemplateLabel(decision.template)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                            <Paintbrush className="w-5 h-5 text-primary" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Estilo</p>
+                              <Badge variant="secondary">{getStyleLabel(decision.style)}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                          <Type className="w-5 h-5 text-primary mt-0.5" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Textos</p>
+                            <p className="font-bold">{decision.headline}</p>
+                            {decision.subheadline && <p className="text-sm text-muted-foreground mt-1">{decision.subheadline}</p>}
+                            {decision.cta && <Badge className="mt-2">{decision.cta}</Badge>}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              ) : (
+                <Card className="border-dashed">
+                  <CardContent className="py-16 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                      <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
+                    </div>
+                    <h3 className="text-lg font-semibold">Nenhuma imagem ainda</h3>
+                    <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+                      Preencha o formulário ao lado e clique em Gerar para criar seus primeiros criativos.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2368,17 +2716,13 @@ export default function AgenteDiretorArte() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir projeto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O projeto "{projectToDelete?.name}" e todos os seus {projectToDelete?.banners.length || 0} banner(s) serão excluídos permanentemente.
+              Esta ação não pode ser desfeita. O projeto "{projectToDelete?.name}" será excluído permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteProject}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Excluir
+            <AlertDialogAction onClick={confirmDeleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 className="w-4 h-4 mr-2" /> Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
