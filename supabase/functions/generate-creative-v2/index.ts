@@ -311,6 +311,9 @@ Escolha o fundo de acordo com o contexto do conteúdo:
 RESPONDA APENAS com JSON válido:
 {
   "scene_prompt": "descrição DETALHADA do cenário comercial em INGLÊS - focado em VENDER",
+  "headline": "texto principal CURTO e IMPACTANTE deduzido do contexto (máx 50 chars)",
+  "subheadline": "texto secundário que complementa o headline (máx 80 chars)",
+  "cta": "chamada para ação clara e curta (máx 20 chars)",
   "style": "clean" | "dynamic" | "premium" | "festive",
   "template": "pessoa_centro" | "pessoa_direita" | "pessoa_esquerda",
   "layout_style": "classic" | "diagonal" | "centered_bold" | "inverted" | "side_text",
@@ -633,6 +636,12 @@ serve(async (req) => {
       headline,
       subheadline,
       cta,
+      // New fields
+      artText,
+      designOrientation,
+      creativeStyle = 'brand', // 'brand' | 'generic'
+      referenceImages: rawReferenceImages,
+      // Legacy fields
       brandProfile, 
       personImageBase64, 
       productImageBase64,
@@ -641,36 +650,54 @@ serve(async (req) => {
       variationsCount = 1,
       logoUrl,
       brandIdentity,
-      renderTextOnImage = false, // NEW: false = don't render text (use HTML overlay), true = render text on image
+      renderTextOnImage = false,
     } = await req.json();
     
     console.log("[generate-creative-v2] renderTextOnImage:", renderTextOnImage);
+    console.log("[generate-creative-v2] creativeStyle:", creativeStyle);
+    console.log("[generate-creative-v2] artText:", artText?.substring(0, 100));
 
-    // Validate required fields
-    if (!headline || typeof headline !== "string" || headline.trim().length === 0) {
-      return respond({ success: false, error: "O campo headline é obrigatório." }, 400);
+    // Reference images (up to 4)
+    const referenceImages: string[] = Array.isArray(rawReferenceImages) 
+      ? rawReferenceImages.filter((img: unknown) => typeof img === 'string').slice(0, 4)
+      : [];
+    console.log("[generate-creative-v2] Reference images count:", referenceImages.length);
+
+    // Use artText as primary, fallback to headline, then context
+    const effectiveArtText = (artText && typeof artText === 'string' && artText.trim().length > 0) 
+      ? artText.trim() 
+      : (headline && typeof headline === 'string' && headline.trim().length > 0)
+        ? headline.trim()
+        : '';
+
+    if (!effectiveArtText) {
+      return respond({ success: false, error: "O texto da arte é obrigatório." }, 400);
     }
 
-    // Context is now OPTIONAL - use headline as fallback
-    const effectiveContext = (context && typeof context === "string" && context.trim().length > 0) 
+    // Effective headline: use provided headline or extract from artText (will be done by AI)
+    const effectiveHeadline = (headline && typeof headline === 'string' && headline.trim().length > 0)
+      ? headline.trim()
+      : effectiveArtText.substring(0, 50);
+
+    // Context for scene understanding
+    const effectiveContext = (context && typeof context === 'string' && context.trim().length > 0) 
       ? context.trim() 
-      : headline.trim();
+      : effectiveArtText;
 
     if (!format || typeof format !== "string") {
       return respond({ success: false, error: "O campo format é obrigatório." }, 400);
     }
 
-    // Validate image based on mode
-    if (generationMode === 'person' && (!personImageBase64 || typeof personImageBase64 !== "string")) {
-      return respond({ success: false, error: "A foto da pessoa é obrigatória para o modo 'pessoa'." }, 400);
+    // Determine effective mode based on reference images
+    let effectiveMode = generationMode;
+    if (referenceImages.length > 0 && generationMode === 'text-only') {
+      effectiveMode = 'person'; // Has reference images, use person mode
+    }
+    if (referenceImages.length === 0 && !personImageBase64 && !productImageBase64) {
+      effectiveMode = 'text-only'; // No images at all
     }
 
-    if (generationMode === 'product' && (!productImageBase64 || typeof productImageBase64 !== "string")) {
-      return respond({ success: false, error: "A foto do produto é obrigatória para o modo 'produto'." }, 400);
-    }
-
-    // text-only mode doesn't require any image
-    console.log("[generate-creative-v2] Generation mode:", generationMode);
+    console.log("[generate-creative-v2] Effective mode:", effectiveMode);
     console.log("[generate-creative-v2] Effective context:", effectiveContext);
 
     // Sanitize inputs
@@ -694,12 +721,16 @@ serve(async (req) => {
     console.log("[generate-creative-v2] Auto-detected style from context:", detectedStyle);
 
     // Auto-detect professional context for photo optimization
-    const professionalContext = detectProfessionalContext(effectiveContext, headline);
+    const professionalContext = detectProfessionalContext(effectiveContext, effectiveHeadline);
     console.log("[generate-creative-v2] Detected professional context:", professionalContext);
 
-    console.log("[generate-creative-v2] Starting PROFESSIONAL BRAND generation...");
-    console.log("[generate-creative-v2] Context:", effectiveContext);
-    console.log("[generate-creative-v2] Headline:", headline);
+    // Determine if brand identity should be used
+    const useBrandIdentity = creativeStyle === 'brand';
+    console.log("[generate-creative-v2] Using brand identity:", useBrandIdentity);
+
+    console.log("[generate-creative-v2] Starting generation...");
+    console.log("[generate-creative-v2] Art Text:", effectiveArtText.substring(0, 100));
+    console.log("[generate-creative-v2] Design Orientation:", designOrientation?.substring(0, 100) || 'none');
     console.log("[generate-creative-v2] Format:", format);
     console.log("[generate-creative-v2] Has Logo for overlay:", !!logoUrl);
 
@@ -710,24 +741,38 @@ serve(async (req) => {
     const optimizedPersonImage = personImageBase64;
 
     // ============ STEP 1: Art Director - PROFESSIONAL BRAND PHILOSOPHY ============
-    const userPrompt = `Contexto da arte: ${effectiveContext.slice(0, 300)}
+    const userPrompt = `TEXTO DA ARTE (o usuário quer este conteúdo na arte):
+"${effectiveArtText.slice(0, 500)}"
+
+${designOrientation ? `ORIENTAÇÃO DE DESIGN E CENA: ${designOrientation.slice(0, 300)}` : ''}
+
+MODO DE REFERÊNCIAS: ${referenceImages.length} imagem(ns) de referência fornecida(s)
+${referenceImages.length > 0 ? 'A IA deve usar essas imagens como referência visual (podem ser pessoas, produtos, cenários)' : 'Sem imagens de referência - gerar arte baseada apenas no texto'}
+
+ESTILO DO CRIATIVO: ${creativeStyle === 'brand' ? 'MARCA (usar identidade visual abaixo)' : 'GENÉRICO (criar baseado no contexto, sem prender à marca)'}
 
 ESTILO DETECTADO AUTOMATICAMENTE: ${detectedStyle}
 (baseado nas palavras-chave do contexto)
 
+${useBrandIdentity ? `
 Perfil da marca: ${JSON.stringify(sanitizedBrandProfile)}
 Cores da marca: ${sanitizedBrandIdentity.colors?.join(', ') || 'não definidas'}
 Mood: ${sanitizedBrandIdentity.mood || 'comercial, profissional'}
+` : 'Modo genérico - usar paleta de cores adequada ao contexto'}
 
 Formato: ${format}
 
 IMPORTANTE: 
-1. IDENTIDADE VISUAL É FIXA - use as cores da marca obrigatoriamente
-2. Escolha o PROTAGONISTA: texto OU pessoa (não ambos competindo!)
-3. Escolha um LAYOUT DIFERENTE do padrão (não sempre classic!)
-4. Sugira CORES DE TEXTO que usem cores da marca (no mínimo 2 cores institucionais)
-5. O fundo deve SUSTENTAR a mensagem, não COMPETIR com ela
-6. Crie uma arte que pareça PARTE DE UMA SÉRIE, não isolada`;
+1. DEDUZA automaticamente o melhor HEADLINE, SUBHEADLINE e CTA a partir do "Texto da arte"
+2. O headline deve ser CURTO e IMPACTANTE (máx 50 caracteres)
+3. O subheadline complementa o headline (máx 80 caracteres)
+4. O CTA deve ser uma chamada para ação clara (máx 20 caracteres)
+${useBrandIdentity ? `5. IDENTIDADE VISUAL É FIXA - use as cores da marca obrigatoriamente
+6. Sugira CORES DE TEXTO que usem cores da marca` : '5. Use cores que combinem com o contexto da arte'}
+7. Escolha o PROTAGONISTA: texto OU pessoa (não ambos competindo!)
+8. Escolha um LAYOUT DIFERENTE do padrão (não sempre classic!)
+
+RESPONDA com o JSON incluindo os campos headline, subheadline e cta DEDUZIDOS do texto da arte.`;
 
     console.log("[generate-creative-v2] Getting Professional Art Director decision...");
 
@@ -773,7 +818,15 @@ IMPORTANTE:
     }
 
     const decision = normalizeDecision(parsed);
-    console.log("[generate-creative-v2] Professional Art Director decision:", decision);
+    
+    // Extract AI-deduced texts
+    const aiHeadline = (parsed as any)?.headline || effectiveHeadline;
+    const aiSubheadline = (parsed as any)?.subheadline || subheadline || '';
+    const aiCta = (parsed as any)?.cta || cta || '';
+    
+    console.log("[generate-creative-v2] AI deduced headline:", aiHeadline);
+    console.log("[generate-creative-v2] AI deduced subheadline:", aiSubheadline);
+    console.log("[generate-creative-v2] AI deduced CTA:", aiCta);
     console.log("[generate-creative-v2] Layout Style:", decision.layout_style);
     console.log("[generate-creative-v2] Protagonist:", decision.protagonist);
 
@@ -800,7 +853,7 @@ IMPORTANTE:
     const protagonistInstructions = getProtagonistInstructions(decision.protagonist);
 
     // Get mode-specific instructions
-    const modeInstructions = getModeInstructions(generationMode);
+    const modeInstructions = getModeInstructions(effectiveMode);
 
     // Get text colors from AI decision
     const textColors = decision.text_colors || {
@@ -899,8 +952,8 @@ ${renderTextOnImage ? `
 === TEXTO A RENDERIZAR ===
 
 HEADLINE (copie EXATAMENTE - letra por letra):
-"${headline}"
-Soletração: ${headline.split('').join('-')}
+"${aiHeadline}"
+Soletração: ${aiHeadline.split('').join('-')}
 
 REGRAS DE TIPOGRAFIA:
 1. Renderize EXATAMENTE o texto entre aspas, sem alterações
@@ -914,21 +967,21 @@ REGRA DE CONTRASTE (CRÍTICO):
 - Fundo CLARO → texto ESCURO ou cor saturada da marca
 - SEMPRE adicione sombra ou contorno para legibilidade
 
-${subheadline ? `
+${aiSubheadline ? `
 SUBHEADLINE (copie EXATAMENTE - letra por letra):
-"${subheadline}"
-Soletração: ${subheadline.split('').join('-')}
+"${aiSubheadline}"
+Soletração: ${aiSubheadline.split('').join('-')}
 Fonte: Regular, 50% do tamanho do headline
 Cor: ${textColors.subheadline}
 ` : ""}
 
-${cta && cta.trim() ? `
+${aiCta && aiCta.trim() ? `
 CTA (copie EXATAMENTE - letra por letra):
-"${cta}"
-Soletração: ${cta.split('').join('-')}
+"${aiCta}"
+Soletração: ${aiCta.split('').join('-')}
 Formato: Botão pill com background ${textColors.cta_bg}
 Texto: ${textColors.cta_text}
-RENDERIZE APENAS o texto "${cta}" - nada mais
+RENDERIZE APENAS o texto "${aiCta}" - nada mais
 ` : `
 SEM CTA:
 NÃO inclua nenhum botão ou call-to-action.
@@ -1055,25 +1108,32 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
 
       console.log(`[generate-creative-v2] Using layout style: ${variationLayout}, protagonist: ${decision.protagonist}`);
 
-      // Build message content based on generation mode
+      // Build message content - include all reference images
       const messageContent: Array<{type: string; text?: string; image_url?: {url: string}}> = [
         { type: "text", text: imagePrompt }
       ];
       
-      // Only include image reference for person and product modes
-      // Use optimizedPersonImage (professionally enhanced) instead of original
-      if (generationMode === 'person' && optimizedPersonImage) {
+      // Add reference images (new system - up to 4 images)
+      if (referenceImages.length > 0) {
+        for (const refImg of referenceImages) {
+          messageContent.push({ 
+            type: "image_url", 
+            image_url: { url: refImg }
+          });
+        }
+      } else if (effectiveMode === 'person' && optimizedPersonImage) {
+        // Fallback to legacy single image
         messageContent.push({ 
           type: "image_url", 
           image_url: { url: optimizedPersonImage }
         });
-      } else if (generationMode === 'product' && productImageBase64) {
+      } else if (effectiveMode === 'product' && productImageBase64) {
         messageContent.push({ 
           type: "image_url", 
           image_url: { url: productImageBase64 }
         });
       }
-      // text-only mode: no image reference, pure text-to-image generation
+      // text-only mode: no image reference
 
       const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -1152,9 +1212,9 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
     return respond({
       success: true,
       images: generatedImages,
-      headline: headline,
-      subheadline: subheadline || undefined,
-      cta: cta || undefined,
+      headline: aiHeadline,
+      subheadline: aiSubheadline || undefined,
+      cta: aiCta || undefined,
       template: decision.template,
       style: decision.style,
       layout_style: decision.layout_style,

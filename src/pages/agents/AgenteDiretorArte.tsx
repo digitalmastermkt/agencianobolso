@@ -51,6 +51,7 @@ import {
   Package,
   FileText,
   Star,
+  Plus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -204,16 +205,25 @@ export default function AgenteDiretorArte() {
   const [images, setImages] = useState<string[]>([]);
   const [personCutoutUrl, setPersonCutoutUrl] = useState<string | null>(null);
   
-  // Separate text fields - user controls exact text
-  const [contextDescription, setContextDescription] = useState(""); // For AI to understand scene
-  const [headline, setHeadline] = useState(""); // Exact text to render
-  const [subheadline, setSubheadline] = useState(""); // Exact text to render
-  const [cta, setCta] = useState(""); // Exact text to render
+  // New unified text fields
+  const [artText, setArtText] = useState(""); // What the user wants on the art
+  const [designOrientation, setDesignOrientation] = useState(""); // Visual instructions
+  
+  // Legacy fields kept for backward compat with results display
+  const [contextDescription, setContextDescription] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [subheadline, setSubheadline] = useState("");
+  const [cta, setCta] = useState("");
   
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
+  const [creativeStyle, setCreativeStyle] = useState<'brand' | 'generic'>('brand');
   const [generationMode, setGenerationMode] = useState<'person' | 'product' | 'text-only'>('person');
   const [variationsCount, setVariationsCount] = useState<1 | 2>(2);
+  
+  // Reference images (up to 4)
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const referenceInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null, null]);
   
   // Migrate old state values (e.g., 4) to max allowed (2)
   useEffect(() => {
@@ -583,38 +593,21 @@ export default function AgenteDiretorArte() {
       return;
     }
 
-    const contextText = contextDescription.trim();
-    const headlineText = headline.trim();
+    const artTextTrimmed = artText.trim();
     
-    if (!headlineText) {
+    if (!artTextTrimmed) {
       toast({
-        title: "Texto principal obrigatório",
-        description: "Digite o headline que aparecerá no banner.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Context is now optional - headline will be used as fallback in the edge function
-
-    // Validate image based on mode
-    if (generationMode === 'person' && !images[0]) {
-      toast({
-        title: "Foto necessária",
-        description: "Faça upload de uma foto sua para gerar o criativo.",
+        title: "Texto da arte obrigatório",
+        description: "Descreva o que você quer na arte.",
         variant: "destructive",
       });
       return;
     }
 
-    if (generationMode === 'product' && !productImage) {
-      toast({
-        title: "Foto do produto necessária",
-        description: "Faça upload de uma foto do seu produto.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Determine generation mode from reference images
+    // If no references, it's text-only; otherwise AI decides
+    const hasReferences = referenceImages.length > 0 || images.length > 0 || !!productImage;
+    const effectiveMode = hasReferences ? 'person' : 'text-only';
 
     setLoading(true);
     setDecision(null);
@@ -648,23 +641,32 @@ export default function AgenteDiretorArte() {
       // Determine which image to send based on mode
       const imageToSend = generationMode === 'product' ? productImage : images[0];
 
-      // Use new V2 edge function for AI-powered creative generation
-      // Pass user's exact texts separately from context
-      // renderTextOnImage = true means AI renders text directly on image using gemini-3-pro
+      // Collect all reference images (from referenceImages + legacy person/product uploads)
+      const allReferenceImages = [...referenceImages];
+      if (images[0] && !allReferenceImages.includes(images[0])) {
+        allReferenceImages.unshift(images[0]);
+      }
+      if (productImage && !allReferenceImages.includes(productImage)) {
+        allReferenceImages.push(productImage);
+      }
+
+      // Use new V2 edge function with new fields
       const { data, error } = await supabase.functions.invoke("generate-creative-v2", {
         body: { 
-          context: contextText, // For AI to understand scene
-          headline: headlineText.substring(0, 50), // Limit to 50 chars for better rendering
-          subheadline: subheadline.trim().substring(0, 80) || undefined, // Limit subheadline
-          cta: cta.trim().substring(0, 20) || undefined, // Limit CTA
+          // New fields
+          artText: artTextTrimmed,
+          designOrientation: designOrientation.trim() || undefined,
+          creativeStyle, // 'brand' | 'generic'
+          referenceImages: allReferenceImages.slice(0, 4), // Max 4
+          // Legacy fields for backward compat
+          context: artTextTrimmed,
+          headline: artTextTrimmed.substring(0, 50),
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
-          personImageBase64: generationMode === 'person' ? imageToSend : undefined,
-          productImageBase64: generationMode === 'product' ? imageToSend : undefined,
-          generationMode, // 'person' | 'product' | 'text-only'
-          variationsCount, // User selected: 1, 2, or 4
-          renderTextOnImage: true, // AI renders text directly - using gemini-3-pro for better text quality
-          // Logo and brand identity for professional design
+          personImageBase64: allReferenceImages[0] || undefined,
+          generationMode: effectiveMode,
+          variationsCount,
+          renderTextOnImage: true,
           logoUrl: includeLogo && brandProfile?.logo_url ? brandProfile.logo_url : null,
           brandIdentity: {
             colors: brandColors.length > 0 ? brandColors : brandProfile?.colors || [],
@@ -706,8 +708,8 @@ export default function AgenteDiretorArte() {
       
       // Text overlay data (used when renderTextOnImage is false)
       const textOverlayData = !data.renderTextOnImage ? {
-        headline: headlineText,
-        subheadline: subheadline.trim() || undefined,
+        headline: data.headline || artTextTrimmed,
+        subheadline: data.subheadline || undefined,
         cta: cta.trim() || undefined,
         textColors: data.text_colors || {
           headline: "#FFFFFF",
@@ -1308,11 +1310,7 @@ export default function AgenteDiretorArte() {
       case 3:
         return !!currentProjectId;
       case 4:
-        // Context is now optional - only headline and appropriate image are required
-        const hasRequiredImage = generationMode === 'text-only' || 
-          (generationMode === 'person' && images.length > 0) ||
-          (generationMode === 'product' && productImage);
-        return hasRequiredImage && headline.trim().length > 0;
+        return artText.trim().length > 0;
       default:
         return true;
     }
@@ -1599,15 +1597,58 @@ export default function AgenteDiretorArte() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ImageIcon className="w-5 h-5" />
+                <Wand2 className="w-5 h-5" />
                 Criar Banner
               </CardTitle>
               <CardDescription>
-                Configure o formato, modo e envie sua foto
+                Configure e gere sua arte criativa
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Art Text */}
+                <div>
+                  <Label htmlFor="artText" className="font-medium">
+                    Texto da arte *
+                  </Label>
+                  <Textarea
+                    id="artText"
+                    value={artText}
+                    onChange={(e) => setArtText(e.target.value)}
+                    placeholder="Descreva o criativo que você quer gerar... Ex: Promoção Black Friday com 50% de desconto em todos os cursos"
+                    className="mt-2 min-h-[100px] resize-none"
+                    maxLength={500}
+                  />
+                  <div className="flex justify-between mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      A IA vai criar automaticamente o melhor headline, subtítulo e CTA
+                    </p>
+                    <span className="text-xs text-muted-foreground">
+                      {artText.length}/500
+                    </span>
+                  </div>
+                </div>
+
+                {/* Design Orientation */}
+                <div>
+                  <Label htmlFor="designOrientation" className="font-medium">
+                    Orientação de Design e Cena <span className="text-muted-foreground font-normal">(opcional)</span>
+                  </Label>
+                  <Textarea
+                    id="designOrientation"
+                    value={designOrientation}
+                    onChange={(e) => setDesignOrientation(e.target.value)}
+                    placeholder="Ex: fundo neutro, sem efeitos especiais, pouco brilho, estilo minimalista"
+                    className="mt-2 min-h-[80px] resize-none"
+                    maxLength={300}
+                  />
+                  <div className="flex justify-end mt-1">
+                    <span className="text-xs text-muted-foreground">
+                      {designOrientation.length}/300
+                    </span>
+                  </div>
+                </div>
+
                 {/* Format Selector */}
                 <div>
                   <Label className="font-medium mb-3 block">Formato</Label>
@@ -1630,82 +1671,142 @@ export default function AgenteDiretorArte() {
                   </div>
                 </div>
 
-                {/* Generation Mode Selector */}
+                {/* Creative Style Selector */}
                 <div>
-                  <Label className="font-medium mb-3 block">Tipo de Arte</Label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <Label className="font-medium mb-3 block">Estilo do Criativo</Label>
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      onClick={() => setGenerationMode('person')}
+                      onClick={() => setCreativeStyle('brand')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        generationMode === 'person'
+                        creativeStyle === 'brand'
                           ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
                           : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/50'
                       }`}
                     >
-                      <User className={`w-6 h-6 ${generationMode === 'person' ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <span className={`text-sm font-medium ${generationMode === 'person' ? 'text-primary' : ''}`}>
-                        Pessoa
+                      <Palette className={`w-6 h-6 ${creativeStyle === 'brand' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className={`text-sm font-medium ${creativeStyle === 'brand' ? 'text-primary' : ''}`}>
+                        Marca
                       </span>
                       <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                        Inclui sua foto
+                        Usa identidade visual do perfil
                       </span>
                     </button>
                     
                     <button
                       type="button"
-                      onClick={() => setGenerationMode('product')}
+                      onClick={() => setCreativeStyle('generic')}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        generationMode === 'product'
+                        creativeStyle === 'generic'
                           ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
                           : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/50'
                       }`}
                     >
-                      <Package className={`w-6 h-6 ${generationMode === 'product' ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <span className={`text-sm font-medium ${generationMode === 'product' ? 'text-primary' : ''}`}>
-                        Produto
+                      <Sparkles className={`w-6 h-6 ${creativeStyle === 'generic' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className={`text-sm font-medium ${creativeStyle === 'generic' ? 'text-primary' : ''}`}>
+                        Genérico
                       </span>
                       <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                        Destaque seu produto
-                      </span>
-                    </button>
-                    
-                    <button
-                      type="button"
-                      onClick={() => setGenerationMode('text-only')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        generationMode === 'text-only'
-                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
-                          : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/50'
-                      }`}
-                    >
-                      <FileText className={`w-6 h-6 ${generationMode === 'text-only' ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <span className={`text-sm font-medium ${generationMode === 'text-only' ? 'text-primary' : ''}`}>
-                        Texto
-                      </span>
-                      <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                        Só tipografia
+                        Cria baseado no contexto
                       </span>
                     </button>
                   </div>
                 </div>
 
+                {/* Reference Photos Grid (up to 4) */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="font-medium">Fotos e Referências</Label>
+                    <span className="text-xs text-muted-foreground">{referenceImages.length}/4</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3">
+                    {[0, 1, 2, 3].map((slotIndex) => {
+                      const img = referenceImages[slotIndex];
+                      return (
+                        <div key={slotIndex} className="relative aspect-square">
+                          {img ? (
+                            <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-primary/30">
+                              <img 
+                                src={img} 
+                                alt={`Referência ${slotIndex + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReferenceImages(prev => prev.filter((_, i) => i !== slotIndex));
+                                }}
+                                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                ref={(el) => { referenceInputRefs.current[slotIndex] = el; }}
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) => {
+                                    if (ev.target?.result) {
+                                      setReferenceImages(prev => {
+                                        const next = [...prev];
+                                        next.push(ev.target!.result as string);
+                                        return next.slice(0, 4);
+                                      });
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                  e.target.value = '';
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => referenceInputRefs.current[slotIndex]?.click()}
+                                disabled={referenceImages.length > slotIndex}
+                                className="w-full h-full rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-30"
+                              >
+                                <Plus className="w-5 h-5 text-muted-foreground" />
+                                <span className="text-[10px] text-muted-foreground">Adicionar</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Adicione pessoas, produtos ou cenários. A IA vai compor a arte com as referências.
+                  </p>
+                </div>
 
-                {/* Gallery Photos - Only for person mode */}
-                {generationMode === 'person' && personPhotos.length > 0 && (
+                {/* Gallery Photos from Brand Profile */}
+                {personPhotos.length > 0 && (
                   <div>
-                    <Label className="font-medium mb-3 block">Fotos da Galeria</Label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <Label className="font-medium mb-3 block">Fotos da Galeria do Perfil</Label>
+                    <div className="grid grid-cols-5 gap-2">
                       {personPhotos.map((photo) => (
                         <button
                           key={photo.id}
                           type="button"
-                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                            selectedGalleryPhoto?.id === photo.id 
+                          disabled={referenceImages.length >= 4 && !referenceImages.includes(photo.photo_url)}
+                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all disabled:opacity-40 ${
+                            referenceImages.includes(photo.photo_url)
                               ? 'border-primary ring-2 ring-primary/30' 
                               : 'border-transparent hover:border-muted-foreground/30'
                           }`}
-                          onClick={() => handleSelectGalleryPhoto(photo)}
+                          onClick={() => {
+                            if (referenceImages.includes(photo.photo_url)) {
+                              setReferenceImages(prev => prev.filter(u => u !== photo.photo_url));
+                            } else if (referenceImages.length < 4) {
+                              setReferenceImages(prev => [...prev, photo.photo_url]);
+                            }
+                          }}
                         >
                           <img 
                             src={photo.photo_url} 
@@ -1718,262 +1819,6 @@ export default function AgenteDiretorArte() {
                   </div>
                 )}
 
-                {/* Person Photo Upload - Only for person mode */}
-                {generationMode === 'person' && (
-                  <div>
-                    <Label className="font-medium mb-2 block">
-                      Sua Foto
-                    </Label>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={`w-full border-dashed border-2 ${inputHeight}`}
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={images.length >= 1 || isRemovingBg}
-                    >
-                      <Upload className="w-5 h-5 mr-2" />
-                      {isRemovingBg ? 'Processando...' : 'Upload Nova Foto'}
-                    </Button>
-
-                    {isRemovingBg && (
-                      <div className="mt-4 space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Scissors className="w-4 h-4 animate-pulse" />
-                          <span>Removendo fundo... {bgRemovalProgress}%</span>
-                        </div>
-                        <Progress value={bgRemovalProgress} className="h-2" />
-                      </div>
-                    )}
-
-                    {images.length > 0 && (
-                      <div className="mt-4">
-                        <div className="relative inline-block">
-                          <div className="w-24 h-24 rounded-lg overflow-hidden border bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Crect%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23ccc%22%2F%3E%3C%2Fsvg%3E')]">
-                            <img 
-                              src={personCutoutUrl || images[0]} 
-                              alt="Foto selecionada"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeImage(0)}
-                            className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                          {isRemovingBg && (
-                            <div className="absolute inset-0 bg-background/80 rounded-lg flex items-center justify-center">
-                              <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                            </div>
-                          )}
-                          {personCutoutUrl && (
-                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                <Check className="w-2.5 h-2.5 mr-0.5" />
-                                Sem fundo
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {bgRemovalError && (
-                      <div className="mt-2 flex items-center gap-2 text-xs text-destructive">
-                        <AlertCircle className="w-3 h-3" />
-                        {bgRemovalError}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Product Photo Upload - Only for product mode */}
-                {generationMode === 'product' && (
-                  <div>
-                    <Label className="font-medium mb-2 block">
-                      Foto do Produto
-                    </Label>
-                    <input
-                      ref={productInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (e) => {
-                            if (e.target?.result) {
-                              setProductImage(e.target.result as string);
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="hidden"
-                    />
-                    
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={`w-full border-dashed border-2 ${inputHeight}`}
-                      onClick={() => productInputRef.current?.click()}
-                      disabled={!!productImage}
-                    >
-                      <Package className="w-5 h-5 mr-2" />
-                      Upload Foto do Produto
-                    </Button>
-
-                    {productImage && (
-                      <div className="mt-4">
-                        <div className="relative inline-block">
-                          <div className="w-24 h-24 rounded-lg overflow-hidden border">
-                            <img 
-                              src={productImage} 
-                              alt="Produto"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setProductImage(null)}
-                            className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Dica: Use uma foto com fundo claro ou transparente para melhor resultado.
-                    </p>
-                  </div>
-                )}
-
-                {/* Text-only mode info */}
-                {generationMode === 'text-only' && (
-                  <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <FileText className="w-5 h-5" />
-                      <span className="text-sm font-medium">Modo Tipografia</span>
-                    </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      A arte será gerada apenas com texto e elementos gráficos, sem fotos. 
-                      Ideal para promoções, anúncios institucionais e campanhas focadas na mensagem.
-                    </p>
-                  </div>
-                )}
-
-                <div>
-                  <Label htmlFor="context" className="font-medium">
-                    Contexto da Arte <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </Label>
-                  <Textarea
-                    id="context"
-                    value={contextDescription}
-                    onChange={(e) => setContextDescription(e.target.value)}
-                    placeholder="Descreva o objetivo da arte... Ex: Campanha de tráfego pago, Lançamento de produto, Black Friday, Promoção de vendas"
-                    className="mt-2 min-h-[80px] resize-none"
-                    maxLength={300}
-                  />
-                  <div className="flex justify-between mt-1">
-                    <p className="text-xs text-muted-foreground">
-                      A IA usará isso para criar o cenário apropriado. Se vazio, usa o headline como referência.
-                    </p>
-                    <span className="text-xs text-muted-foreground">
-                      {contextDescription.length}/300
-                    </span>
-                  </div>
-                </div>
-
-                {/* User-controlled exact texts */}
-                <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Type className="w-4 h-4 text-primary" />
-                    <span className="font-medium text-sm">Textos do Banner (exatamente como digitado)</span>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="headline" className="font-medium text-sm">
-                        Headline (Texto Principal) *
-                      </Label>
-                      <span className={`text-xs ${headline.length > 50 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {headline.length}/50
-                      </span>
-                    </div>
-                    <Input
-                      id="headline"
-                      value={headline}
-                      onChange={(e) => setHeadline(e.target.value)}
-                      placeholder="Ex: Últimos Dias de Oferta!"
-                      className="mt-1"
-                      maxLength={50}
-                    />
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="subheadline" className="font-medium text-sm">
-                        Subheadline (Texto Secundário)
-                      </Label>
-                      <span className={`text-xs ${subheadline.length > 80 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {subheadline.length}/80
-                      </span>
-                    </div>
-                    <Input
-                      id="subheadline"
-                      value={subheadline}
-                      onChange={(e) => setSubheadline(e.target.value)}
-                      placeholder="Ex: Essa é sua última chance do ano"
-                      className="mt-1"
-                      maxLength={80}
-                    />
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="cta" className="font-medium text-sm">
-                        CTA (Botão)
-                      </Label>
-                      <span className={`text-xs ${cta.length > 20 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {cta.length}/20
-                      </span>
-                    </div>
-                    <Input
-                      id="cta"
-                      value={cta}
-                      onChange={(e) => setCta(e.target.value)}
-                      placeholder="Ex: Clique em Saiba Mais"
-                      className="mt-1"
-                      maxLength={20}
-                    />
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground">
-                    ⚠️ Estes textos serão renderizados EXATAMENTE como você digitar. Verifique a ortografia!
-                  </p>
-                </div>
-
-                {/* Real-time Text Preview */}
-                {headline.trim().length > 0 && (
-                  <BannerTextPreview
-                    format={selectedFormat}
-                    headline={headline}
-                    subheadline={subheadline}
-                    cta={cta}
-                    brandColors={brandColors}
-                  />
-                )}
                 {/* Logo Toggle */}
                 {brandProfile?.logo_url && (
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -1984,7 +1829,7 @@ export default function AgenteDiretorArte() {
                         className="w-8 h-8 object-contain rounded"
                       />
                       <div>
-                        <Label className="font-medium">Incluir Logo na Arte</Label>
+                        <Label className="font-medium">Incluir Logo</Label>
                         <p className="text-xs text-muted-foreground">
                           Logo será posicionada sutilmente
                         </p>
@@ -1997,9 +1842,9 @@ export default function AgenteDiretorArte() {
                   </div>
                 )}
 
-                {/* Variations Count Selector */}
+                {/* Variations Count */}
                 <div>
-                  <Label className="font-medium mb-3 block">Quantidade de Variações</Label>
+                  <Label className="font-medium mb-3 block">Variações</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {([1, 2] as const).map((count) => (
                       <Button
@@ -2017,16 +1862,13 @@ export default function AgenteDiretorArte() {
                       </Button>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Cada variação consome créditos. 2 variações dão mais opções de escolha.
-                  </p>
                 </div>
 
                 <Button 
                   type="submit" 
                   className={`w-full ${buttonMinHeight} ${loading ? 'h-auto py-3' : ''}`} 
                   variant="gradient" 
-                  disabled={loading || images.length === 0 || limitReached}
+                  disabled={loading || !artText.trim() || limitReached}
                 >
                   {loading ? (
                     <div className="flex flex-col items-center gap-2 w-full">
