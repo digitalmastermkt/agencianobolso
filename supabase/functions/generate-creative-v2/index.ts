@@ -771,25 +771,17 @@ serve(async (req) => {
 
 ${designOrientation ? `ORIENTAÇÃO DE DESIGN E CENA: ${designOrientation.slice(0, 300)}` : ''}
 
-MODO DE REFERÊNCIAS: ${referenceImages.length} imagem(ns) de referência fornecida(s)
+REFERÊNCIAS VISUAIS: ${referenceImages.length} imagem(ns) de referência fornecida(s).
 ${referenceImages.length > 0 ? `
-=== REFERÊNCIAS VISUAIS COM PROPÓSITO ===
-${personRefs.length > 0 ? personRefs.map((_, i) => `FOTO ${referenceImages.indexOf(personRefs[i]) + 1} (PESSOA): Preserve a identidade facial EXATA desta pessoa. Use esta face, tom de pele, traços e cabelo.`).join('\n') : ''}
-${productRefs.length > 0 ? productRefs.map((_, i) => `FOTO ${referenceImages.indexOf(productRefs[i]) + 1} (PRODUTO/ROUPA): Use este produto/roupa na composição. Se há uma pessoa, vista-a com este item.`).join('\n') : ''}
-${sceneRefs.length > 0 ? sceneRefs.map((_, i) => `FOTO ${referenceImages.indexOf(sceneRefs[i]) + 1} (CENÁRIO): Use este ambiente/cenário como fundo da arte.`).join('\n') : ''}
-${genericRefs.length > 0 ? genericRefs.map((_, i) => `FOTO ${referenceImages.indexOf(genericRefs[i]) + 1} (REFERÊNCIA VISUAL): Use como inspiração visual geral para estilo, cores e composição.`).join('\n') : ''}
+As fotos abaixo são referências visuais. Cada uma tem um TIPO que indica o que ela representa:
+${personRefs.length > 0 ? `- ${personRefs.length} foto(s) de PESSOA: preserve a identidade facial` : ''}
+${productRefs.length > 0 ? `- ${productRefs.length} foto(s) de PRODUTO/ROUPA` : ''}
+${sceneRefs.length > 0 ? `- ${sceneRefs.length} foto(s) de CENÁRIO/AMBIENTE` : ''}
+${genericRefs.length > 0 ? `- ${genericRefs.length} foto(s) de REFERÊNCIA VISUAL geral` : ''}
 
-INSTRUÇÃO DE COMBINAÇÃO:
-${personRefs.length > 0 && productRefs.length > 0 && sceneRefs.length > 0 
-  ? 'COMBINE todos os elementos: A PESSOA deve aparecer VESTINDO/USANDO o PRODUTO, posicionada no CENÁRIO. Integração natural e coesa.'
-  : personRefs.length > 0 && productRefs.length > 0
-  ? 'A PESSOA deve aparecer VESTINDO/USANDO o PRODUTO da referência. Integração natural.'
-  : personRefs.length > 0 && sceneRefs.length > 0
-  ? 'A PESSOA deve aparecer naturalmente posicionada no CENÁRIO da referência.'
-  : productRefs.length > 0 && sceneRefs.length > 0
-  ? 'O PRODUTO deve ser apresentado no CENÁRIO da referência com iluminação profissional.'
-  : 'Use as referências para compor uma arte coesa e profissional.'}
-` : 'Sem imagens de referência - gerar arte baseada apenas no texto'}
+Use essas referências como BASE VISUAL para compor a arte. O que fazer com elas depende do TEXTO DA ARTE e da ORIENTAÇÃO DE DESIGN acima.
+A IA deve interpretar o contexto e integrar os elementos de forma natural e coerente.
+` : 'Sem imagens de referência - gerar arte baseada apenas no texto.'}
 
 ESTILO DO CRIATIVO: ${creativeStyle === 'brand' ? 'MARCA (usar identidade visual abaixo)' : 'GENÉRICO (criar baseado no contexto, sem prender à marca)'}
 
@@ -930,24 +922,15 @@ ${(generationMode === 'person' || personRefs.length > 0) ? `
 >>> ALERTA MÁXIMO: PRESERVAÇÃO DE IDENTIDADE FACIAL <<<
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-${personRefs.length > 0 ? `A(s) FOTO(S) marcada(s) como PESSOA contém(êm) uma pessoa real.` : 'A FOTO DE REFERÊNCIA CONTÉM UMA PESSOA REAL.'}
-VOCÊ DEVE PRESERVAR A IDENTIDADE FACIAL EXATAMENTE COMO NA FOTO.
+As fotos marcadas como PESSOA contêm uma pessoa real.
+PRESERVE A IDENTIDADE FACIAL EXATAMENTE COMO NA FOTO.
 
-NÃO CRIE UMA PESSOA DIFERENTE. 
-NÃO IDEALIZE. 
-NÃO MELHORE TRAÇOS.
+NÃO CRIE UMA PESSOA DIFERENTE. NÃO IDEALIZE. NÃO MELHORE TRAÇOS.
 USE A MESMA FACE, OS MESMOS TRAÇOS, A MESMA PELE.
 
-${productRefs.length > 0 ? `
-=== COMBINAÇÃO PESSOA + PRODUTO ===
-PEGUE A PESSOA da foto de PESSOA e VISTA-A / ASSOCIE com o PRODUTO da foto de PRODUTO.
-A pessoa deve aparecer USANDO/VESTINDO o produto naturalmente.
-` : ''}
-${sceneRefs.length > 0 ? `
-=== COMBINAÇÃO PESSOA + CENÁRIO ===
-COLOQUE A PESSOA no CENÁRIO da foto de CENÁRIO.
-A pessoa deve parecer NATURALMENTE integrada ao ambiente.
-` : ''}
+Use o TEXTO DA ARTE e a ORIENTAÇÃO DE DESIGN para decidir como integrar
+a pessoa, produtos e cenários das referências. A composição deve seguir
+o que o usuário descreveu, não regras fixas de combinação.
 
 ESSA É A REGRA MAIS IMPORTANTE DESTA GERAÇÃO.
 QUALQUER ALTERAÇÃO NA FACE É CONSIDERADA FALHA CRÍTICA.
