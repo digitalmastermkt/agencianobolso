@@ -221,9 +221,21 @@ export default function AgenteDiretorArte() {
   const [generationMode, setGenerationMode] = useState<'person' | 'product' | 'text-only'>('person');
   const [variationsCount, setVariationsCount] = useState<1 | 2>(2);
   
-  // Reference images (up to 4)
-  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  // Reference images (up to 4) with type classification
+  type ReferenceImageType = 'person' | 'product' | 'scene' | 'reference';
+  interface ReferenceImage {
+    url: string;
+    type: ReferenceImageType;
+  }
+  const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([]);
   const referenceInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null, null]);
+
+  const REFERENCE_TYPE_OPTIONS: { value: ReferenceImageType; label: string; icon: React.ReactNode }[] = [
+    { value: 'person', label: 'Pessoa', icon: <User className="w-3 h-3" /> },
+    { value: 'product', label: 'Produto', icon: <Package className="w-3 h-3" /> },
+    { value: 'scene', label: 'Cenário', icon: <ImageIcon className="w-3 h-3" /> },
+    { value: 'reference', label: 'Referência', icon: <Star className="w-3 h-3" /> },
+  ];
   
   // Migrate old state values (e.g., 4) to max allowed (2)
   useEffect(() => {
@@ -642,22 +654,23 @@ export default function AgenteDiretorArte() {
       const imageToSend = generationMode === 'product' ? productImage : images[0];
 
       // Collect all reference images (from referenceImages + legacy person/product uploads)
-      const allReferenceImages = [...referenceImages];
-      if (images[0] && !allReferenceImages.includes(images[0])) {
-        allReferenceImages.unshift(images[0]);
+      // Collect all reference images with types
+      const allReferenceImages: ReferenceImage[] = [...referenceImages];
+      if (images[0] && !allReferenceImages.find(r => r.url === images[0])) {
+        allReferenceImages.unshift({ url: images[0], type: 'person' });
       }
-      if (productImage && !allReferenceImages.includes(productImage)) {
-        allReferenceImages.push(productImage);
+      if (productImage && !allReferenceImages.find(r => r.url === productImage)) {
+        allReferenceImages.push({ url: productImage, type: 'product' });
       }
 
-      // Use new V2 edge function with new fields
+      // Use new V2 edge function with typed references
       const { data, error } = await supabase.functions.invoke("generate-creative-v2", {
         body: { 
           // New fields
           artText: artTextTrimmed,
           designOrientation: designOrientation.trim() || undefined,
           creativeStyle, // 'brand' | 'generic'
-          referenceImages: allReferenceImages.slice(0, 4), // Max 4
+          referenceImages: allReferenceImages.slice(0, 4), // Max 4 with types
           // Legacy fields for backward compat
           context: artTextTrimmed,
           headline: artTextTrimmed.substring(0, 50),
@@ -1719,27 +1732,51 @@ export default function AgenteDiretorArte() {
                     <Label className="font-medium">Fotos e Referências</Label>
                     <span className="text-xs text-muted-foreground">{referenceImages.length}/4</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[0, 1, 2, 3].map((slotIndex) => {
                       const img = referenceImages[slotIndex];
                       return (
-                        <div key={slotIndex} className="relative aspect-square">
+                        <div key={slotIndex} className="relative">
                           {img ? (
-                            <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-primary/30">
-                              <img 
-                                src={img} 
-                                alt={`Referência ${slotIndex + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setReferenceImages(prev => prev.filter((_, i) => i !== slotIndex));
-                                }}
-                                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
+                            <div className="space-y-1.5">
+                              <div className="relative aspect-square rounded-lg overflow-hidden border-2 border-primary/30">
+                                <img 
+                                  src={img.url} 
+                                  alt={`Referência ${slotIndex + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReferenceImages(prev => prev.filter((_, i) => i !== slotIndex));
+                                  }}
+                                  className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                              {/* Type selector */}
+                              <div className="grid grid-cols-2 gap-0.5">
+                                {REFERENCE_TYPE_OPTIONS.map((opt) => (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setReferenceImages(prev => prev.map((r, i) => 
+                                        i === slotIndex ? { ...r, type: opt.value } : r
+                                      ));
+                                    }}
+                                    className={`flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium transition-colors ${
+                                      img.type === opt.value
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                                    }`}
+                                  >
+                                    {opt.icon}
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           ) : (
                             <>
@@ -1756,7 +1793,7 @@ export default function AgenteDiretorArte() {
                                     if (ev.target?.result) {
                                       setReferenceImages(prev => {
                                         const next = [...prev];
-                                        next.push(ev.target!.result as string);
+                                        next.push({ url: ev.target!.result as string, type: 'reference' });
                                         return next.slice(0, 4);
                                       });
                                     }
@@ -1769,7 +1806,7 @@ export default function AgenteDiretorArte() {
                                 type="button"
                                 onClick={() => referenceInputRefs.current[slotIndex]?.click()}
                                 disabled={referenceImages.length > slotIndex}
-                                className="w-full h-full rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-30"
+                                className="w-full aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-30"
                               >
                                 <Plus className="w-5 h-5 text-muted-foreground" />
                                 <span className="text-[10px] text-muted-foreground">Adicionar</span>
@@ -1781,7 +1818,7 @@ export default function AgenteDiretorArte() {
                     })}
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Adicione pessoas, produtos ou cenários. A IA vai compor a arte com as referências.
+                    Adicione fotos e classifique como Pessoa, Produto, Cenário ou Referência. A IA vai combinar os elementos.
                   </p>
                 </div>
 
@@ -1790,31 +1827,34 @@ export default function AgenteDiretorArte() {
                   <div>
                     <Label className="font-medium mb-3 block">Fotos da Galeria do Perfil</Label>
                     <div className="grid grid-cols-5 gap-2">
-                      {personPhotos.map((photo) => (
-                        <button
-                          key={photo.id}
-                          type="button"
-                          disabled={referenceImages.length >= 4 && !referenceImages.includes(photo.photo_url)}
-                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all disabled:opacity-40 ${
-                            referenceImages.includes(photo.photo_url)
-                              ? 'border-primary ring-2 ring-primary/30' 
-                              : 'border-transparent hover:border-muted-foreground/30'
-                          }`}
-                          onClick={() => {
-                            if (referenceImages.includes(photo.photo_url)) {
-                              setReferenceImages(prev => prev.filter(u => u !== photo.photo_url));
-                            } else if (referenceImages.length < 4) {
-                              setReferenceImages(prev => [...prev, photo.photo_url]);
-                            }
-                          }}
-                        >
-                          <img 
-                            src={photo.photo_url} 
-                            alt={photo.name || 'Foto'} 
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
+                      {personPhotos.map((photo) => {
+                        const isSelected = referenceImages.some(r => r.url === photo.photo_url);
+                        return (
+                          <button
+                            key={photo.id}
+                            type="button"
+                            disabled={referenceImages.length >= 4 && !isSelected}
+                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all disabled:opacity-40 ${
+                              isSelected
+                                ? 'border-primary ring-2 ring-primary/30' 
+                                : 'border-transparent hover:border-muted-foreground/30'
+                            }`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setReferenceImages(prev => prev.filter(r => r.url !== photo.photo_url));
+                              } else if (referenceImages.length < 4) {
+                                setReferenceImages(prev => [...prev, { url: photo.photo_url, type: 'person' as ReferenceImageType }]);
+                              }
+                            }}
+                          >
+                            <img 
+                              src={photo.photo_url} 
+                              alt={photo.name || 'Foto'} 
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -2320,21 +2360,44 @@ export default function AgenteDiretorArte() {
                       <Label className="font-medium">Fotos e Referências</Label>
                       <span className="text-xs text-muted-foreground">{referenceImages.length}/4</span>
                     </div>
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {[0, 1, 2, 3].map((slotIndex) => {
                         const img = referenceImages[slotIndex];
                         return (
-                          <div key={slotIndex} className="relative aspect-square">
+                          <div key={slotIndex} className="relative">
                             {img ? (
-                              <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-primary/30">
-                                <img src={img} alt={`Referência ${slotIndex + 1}`} className="w-full h-full object-cover" />
-                                <button
-                                  type="button"
-                                  onClick={() => setReferenceImages(prev => prev.filter((_, i) => i !== slotIndex))}
-                                  className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
+                              <div className="space-y-1.5">
+                                <div className="relative aspect-square rounded-lg overflow-hidden border-2 border-primary/30">
+                                  <img src={img.url} alt={`Referência ${slotIndex + 1}`} className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => setReferenceImages(prev => prev.filter((_, i) => i !== slotIndex))}
+                                    className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-0.5">
+                                  {REFERENCE_TYPE_OPTIONS.map((opt) => (
+                                    <button
+                                      key={opt.value}
+                                      type="button"
+                                      onClick={() => {
+                                        setReferenceImages(prev => prev.map((r, i) => 
+                                          i === slotIndex ? { ...r, type: opt.value } : r
+                                        ));
+                                      }}
+                                      className={`flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium transition-colors ${
+                                        img.type === opt.value
+                                          ? 'bg-primary text-primary-foreground'
+                                          : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                                      }`}
+                                    >
+                                      {opt.icon}
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -2351,7 +2414,7 @@ export default function AgenteDiretorArte() {
                                       if (ev.target?.result) {
                                         setReferenceImages(prev => {
                                           const next = [...prev];
-                                          next.push(ev.target!.result as string);
+                                          next.push({ url: ev.target!.result as string, type: 'reference' });
                                           return next.slice(0, 4);
                                         });
                                       }
@@ -2364,7 +2427,7 @@ export default function AgenteDiretorArte() {
                                   type="button"
                                   onClick={() => referenceInputRefs.current[slotIndex]?.click()}
                                   disabled={referenceImages.length > slotIndex}
-                                  className="w-full h-full rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-30"
+                                  className="w-full aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-30"
                                 >
                                   <Plus className="w-5 h-5 text-muted-foreground" />
                                   <span className="text-[10px] text-muted-foreground">Adicionar</span>
@@ -2376,7 +2439,7 @@ export default function AgenteDiretorArte() {
                       })}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Adicione pessoas, produtos ou cenários. A IA vai compor a arte com as referências.
+                      Adicione fotos e classifique como Pessoa, Produto, Cenário ou Referência.
                     </p>
                   </div>
 
@@ -2385,27 +2448,30 @@ export default function AgenteDiretorArte() {
                     <div>
                       <Label className="font-medium mb-3 block">Fotos da Galeria do Perfil</Label>
                       <div className="grid grid-cols-5 gap-2">
-                        {personPhotos.map((photo) => (
-                          <button
-                            key={photo.id}
-                            type="button"
-                            disabled={referenceImages.length >= 4 && !referenceImages.includes(photo.photo_url)}
-                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all disabled:opacity-40 ${
-                              referenceImages.includes(photo.photo_url)
-                                ? 'border-primary ring-2 ring-primary/30'
-                                : 'border-transparent hover:border-muted-foreground/30'
-                            }`}
-                            onClick={() => {
-                              if (referenceImages.includes(photo.photo_url)) {
-                                setReferenceImages(prev => prev.filter(u => u !== photo.photo_url));
-                              } else if (referenceImages.length < 4) {
-                                setReferenceImages(prev => [...prev, photo.photo_url]);
-                              }
-                            }}
-                          >
-                            <img src={photo.photo_url} alt={photo.name || 'Foto'} className="w-full h-full object-cover" />
-                          </button>
-                        ))}
+                        {personPhotos.map((photo) => {
+                          const isSelected = referenceImages.some(r => r.url === photo.photo_url);
+                          return (
+                            <button
+                              key={photo.id}
+                              type="button"
+                              disabled={referenceImages.length >= 4 && !isSelected}
+                              className={`aspect-square rounded-lg overflow-hidden border-2 transition-all disabled:opacity-40 ${
+                                isSelected
+                                  ? 'border-primary ring-2 ring-primary/30'
+                                  : 'border-transparent hover:border-muted-foreground/30'
+                              }`}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setReferenceImages(prev => prev.filter(r => r.url !== photo.photo_url));
+                                } else if (referenceImages.length < 4) {
+                                  setReferenceImages(prev => [...prev, { url: photo.photo_url, type: 'person' as ReferenceImageType }]);
+                                }
+                              }}
+                            >
+                              <img src={photo.photo_url} alt={photo.name || 'Foto'} className="w-full h-full object-cover" />
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
