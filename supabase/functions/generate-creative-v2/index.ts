@@ -657,11 +657,32 @@ serve(async (req) => {
     console.log("[generate-creative-v2] creativeStyle:", creativeStyle);
     console.log("[generate-creative-v2] artText:", artText?.substring(0, 100));
 
-    // Reference images (up to 4)
-    const referenceImages: string[] = Array.isArray(rawReferenceImages) 
-      ? rawReferenceImages.filter((img: unknown) => typeof img === 'string').slice(0, 4)
+    // Reference images (up to 4) - support both typed objects and plain strings
+    interface TypedReference { url: string; type: 'person' | 'product' | 'scene' | 'reference'; }
+    const referenceImages: TypedReference[] = Array.isArray(rawReferenceImages)
+      ? rawReferenceImages
+          .filter((img: unknown) => img !== null && img !== undefined)
+          .map((img: unknown) => {
+            if (typeof img === 'string') return { url: img, type: 'reference' as const };
+            if (typeof img === 'object' && img !== null && 'url' in img) {
+              const obj = img as { url: string; type?: string };
+              const validTypes = ['person', 'product', 'scene', 'reference'];
+              return { url: obj.url, type: (validTypes.includes(obj.type || '') ? obj.type : 'reference') as TypedReference['type'] };
+            }
+            return null;
+          })
+          .filter((x: TypedReference | null): x is TypedReference => x !== null)
+          .slice(0, 4)
       : [];
+    
+    // Categorize references by type
+    const personRefs = referenceImages.filter(r => r.type === 'person');
+    const productRefs = referenceImages.filter(r => r.type === 'product');
+    const sceneRefs = referenceImages.filter(r => r.type === 'scene');
+    const genericRefs = referenceImages.filter(r => r.type === 'reference');
+    
     console.log("[generate-creative-v2] Reference images count:", referenceImages.length);
+    console.log("[generate-creative-v2] By type - Person:", personRefs.length, "Product:", productRefs.length, "Scene:", sceneRefs.length, "Generic:", genericRefs.length);
 
     // Use artText as primary, fallback to headline, then context
     const effectiveArtText = (artText && typeof artText === 'string' && artText.trim().length > 0) 
@@ -688,10 +709,14 @@ serve(async (req) => {
       return respond({ success: false, error: "O campo format é obrigatório." }, 400);
     }
 
-    // Determine effective mode based on reference images
+    // Determine effective mode based on typed reference images
     let effectiveMode = generationMode;
-    if (referenceImages.length > 0 && generationMode === 'text-only') {
-      effectiveMode = 'person'; // Has reference images, use person mode
+    if (personRefs.length > 0) {
+      effectiveMode = 'person'; // Has person photos
+    } else if (productRefs.length > 0 && personRefs.length === 0) {
+      effectiveMode = 'product'; // Product only
+    } else if (referenceImages.length > 0 && generationMode === 'text-only') {
+      effectiveMode = 'person'; // Has reference images, default to person mode
     }
     if (referenceImages.length === 0 && !personImageBase64 && !productImageBase64) {
       effectiveMode = 'text-only'; // No images at all
@@ -747,7 +772,24 @@ serve(async (req) => {
 ${designOrientation ? `ORIENTAÇÃO DE DESIGN E CENA: ${designOrientation.slice(0, 300)}` : ''}
 
 MODO DE REFERÊNCIAS: ${referenceImages.length} imagem(ns) de referência fornecida(s)
-${referenceImages.length > 0 ? 'A IA deve usar essas imagens como referência visual (podem ser pessoas, produtos, cenários)' : 'Sem imagens de referência - gerar arte baseada apenas no texto'}
+${referenceImages.length > 0 ? `
+=== REFERÊNCIAS VISUAIS COM PROPÓSITO ===
+${personRefs.length > 0 ? personRefs.map((_, i) => `FOTO ${referenceImages.indexOf(personRefs[i]) + 1} (PESSOA): Preserve a identidade facial EXATA desta pessoa. Use esta face, tom de pele, traços e cabelo.`).join('\n') : ''}
+${productRefs.length > 0 ? productRefs.map((_, i) => `FOTO ${referenceImages.indexOf(productRefs[i]) + 1} (PRODUTO/ROUPA): Use este produto/roupa na composição. Se há uma pessoa, vista-a com este item.`).join('\n') : ''}
+${sceneRefs.length > 0 ? sceneRefs.map((_, i) => `FOTO ${referenceImages.indexOf(sceneRefs[i]) + 1} (CENÁRIO): Use este ambiente/cenário como fundo da arte.`).join('\n') : ''}
+${genericRefs.length > 0 ? genericRefs.map((_, i) => `FOTO ${referenceImages.indexOf(genericRefs[i]) + 1} (REFERÊNCIA VISUAL): Use como inspiração visual geral para estilo, cores e composição.`).join('\n') : ''}
+
+INSTRUÇÃO DE COMBINAÇÃO:
+${personRefs.length > 0 && productRefs.length > 0 && sceneRefs.length > 0 
+  ? 'COMBINE todos os elementos: A PESSOA deve aparecer VESTINDO/USANDO o PRODUTO, posicionada no CENÁRIO. Integração natural e coesa.'
+  : personRefs.length > 0 && productRefs.length > 0
+  ? 'A PESSOA deve aparecer VESTINDO/USANDO o PRODUTO da referência. Integração natural.'
+  : personRefs.length > 0 && sceneRefs.length > 0
+  ? 'A PESSOA deve aparecer naturalmente posicionada no CENÁRIO da referência.'
+  : productRefs.length > 0 && sceneRefs.length > 0
+  ? 'O PRODUTO deve ser apresentado no CENÁRIO da referência com iluminação profissional.'
+  : 'Use as referências para compor uma arte coesa e profissional.'}
+` : 'Sem imagens de referência - gerar arte baseada apenas no texto'}
 
 ESTILO DO CRIATIVO: ${creativeStyle === 'brand' ? 'MARCA (usar identidade visual abaixo)' : 'GENÉRICO (criar baseado no contexto, sem prender à marca)'}
 
@@ -883,18 +925,29 @@ RESPONDA com o JSON incluindo os campos headline, subheadline e cta DEDUZIDOS do
       // Professional brand prompt with philosophy - adapted for generation mode
       const imagePrompt = `=== DIRETOR DE ARTE SÊNIOR - CRIATIVO PROFISSIONAL - VARIAÇÃO ${i + 1} ===
 
-${generationMode === 'person' ? `
+${(generationMode === 'person' || personRefs.length > 0) ? `
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>> ALERTA MÁXIMO: PRESERVAÇÃO DE IDENTIDADE FACIAL <<<
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-A FOTO DE REFERÊNCIA CONTÉM UMA PESSOA REAL.
+${personRefs.length > 0 ? `A(s) FOTO(S) marcada(s) como PESSOA contém(êm) uma pessoa real.` : 'A FOTO DE REFERÊNCIA CONTÉM UMA PESSOA REAL.'}
 VOCÊ DEVE PRESERVAR A IDENTIDADE FACIAL EXATAMENTE COMO NA FOTO.
 
 NÃO CRIE UMA PESSOA DIFERENTE. 
 NÃO IDEALIZE. 
 NÃO MELHORE TRAÇOS.
 USE A MESMA FACE, OS MESMOS TRAÇOS, A MESMA PELE.
+
+${productRefs.length > 0 ? `
+=== COMBINAÇÃO PESSOA + PRODUTO ===
+PEGUE A PESSOA da foto de PESSOA e VISTA-A / ASSOCIE com o PRODUTO da foto de PRODUTO.
+A pessoa deve aparecer USANDO/VESTINDO o produto naturalmente.
+` : ''}
+${sceneRefs.length > 0 ? `
+=== COMBINAÇÃO PESSOA + CENÁRIO ===
+COLOQUE A PESSOA no CENÁRIO da foto de CENÁRIO.
+A pessoa deve parecer NATURALMENTE integrada ao ambiente.
+` : ''}
 
 ESSA É A REGRA MAIS IMPORTANTE DESTA GERAÇÃO.
 QUALQUER ALTERAÇÃO NA FACE É CONSIDERADA FALHA CRÍTICA.
@@ -1113,12 +1166,23 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
         { type: "text", text: imagePrompt }
       ];
       
-      // Add reference images (new system - up to 4 images)
+      // Add reference images with type labels
       if (referenceImages.length > 0) {
-        for (const refImg of referenceImages) {
+        const typeLabels: Record<string, string> = {
+          person: 'PESSOA - preserve identidade facial',
+          product: 'PRODUTO/ROUPA - use este item',
+          scene: 'CENÁRIO - use como fundo',
+          reference: 'REFERÊNCIA VISUAL - inspire-se',
+        };
+        for (let ri = 0; ri < referenceImages.length; ri++) {
+          const refImg = referenceImages[ri];
+          messageContent.push({
+            type: "text",
+            text: `[FOTO ${ri + 1} - ${typeLabels[refImg.type] || 'REFERÊNCIA'}]`
+          });
           messageContent.push({ 
             type: "image_url", 
-            image_url: { url: refImg }
+            image_url: { url: refImg.url }
           });
         }
       } else if (effectiveMode === 'person' && optimizedPersonImage) {
