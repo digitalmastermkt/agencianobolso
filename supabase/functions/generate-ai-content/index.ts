@@ -176,7 +176,29 @@ serve(async (req) => {
   secureLog('info', 'Request received', { requestId });
 
   try {
-    const { agentType, formData, userId } = await req.json();
+    // Extract userId from JWT, never trust client-supplied userId
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+    const userId = claimsData.claims.sub as string;
+
+    const { agentType, formData } = await req.json();
     
     if (!openAIApiKey) {
       secureLog('error', 'OPENAI_API_KEY not configured', { requestId });
