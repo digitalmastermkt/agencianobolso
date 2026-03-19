@@ -770,20 +770,26 @@ export default function AgenteDiretorArte() {
       // Auto advance to result step
       setCurrentStep(5);
 
+      const partialMsg = data.partial 
+        ? ` (${data.images?.length || 1} de ${data.requestedVariations || variationsCount} variações geradas)`
+        : "";
+
       toast({
-        title: "Criativo gerado! ✨",
-        description: data.usedFallback 
-          ? "Imagem gerada com sucesso (modo alternativo)." 
-          : "Pessoa recriada no cenário com preservação de identidade!",
+        title: `Criativo gerado! ✨${partialMsg}`,
+        description: data.partial 
+          ? "Algumas variações demoraram demais. Você pode regenerar as faltantes."
+          : data.usedFallback 
+            ? "Imagem gerada com sucesso (modo alternativo)." 
+            : "Pessoa recriada no cenário com preservação de identidade!",
       });
     } catch (error: unknown) {
       console.error("Erro na geração:", error);
       const errorMsg = error instanceof Error ? error.message : "Ocorreu um erro ao processar sua solicitação.";
-      const isTimeout = errorMsg.includes('timeout') || errorMsg.includes('546') || errorMsg.includes('non-2xx');
+      const isTimeout = errorMsg.includes('timeout') || errorMsg.includes('546') || errorMsg.includes('non-2xx') || errorMsg.includes('FunctionsHttpError');
       toast({
-        title: isTimeout ? "Tempo limite excedido" : "Erro",
+        title: isTimeout ? "Tempo limite excedido ⏱️" : "Erro",
         description: isTimeout 
-          ? "A geração demorou muito. Tente novamente com 1 variação."
+          ? "A geração demorou muito. Tente com 1 variação ou simplifique as referências."
           : errorMsg,
         variant: "destructive",
       });

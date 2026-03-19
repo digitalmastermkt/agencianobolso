@@ -899,16 +899,20 @@ RESPONDA com o JSON incluindo os campos headline, subheadline e cta DEDUZIDOS do
 
     // Generate requested number of variations
     // LIMITED TO 2 MAX to avoid edge function timeout (was hitting 150s limit with 4 variations)
-    // Smart fallback: if user had old value (e.g., 4), use max instead of defaulting to 1
     const MAX_VARIATIONS = 2;
     const actualVariations = Math.min(Math.max(variationsCount || 1, 1), MAX_VARIATIONS);
     const generatedImages: string[] = [];
+    let isPartialSuccess = false;
 
     // Different layout styles for each variation
     const layoutVariations = ["classic", "diagonal", "centered_bold", "inverted", "side_text"];
 
+    // Per-image timeout: 90s for first, 70s for subsequent (leave room for response)
+    const IMAGE_TIMEOUT_MS = [90000, 70000];
+
     for (let i = 0; i < actualVariations; i++) {
       console.log(`[generate-creative-v2] Generating variation ${i + 1}/${actualVariations}...`);
+      const variationStartTime = Date.now();
       
       // Use different layout for each variation
       const variationLayout = layoutVariations[i % layoutVariations.length];
@@ -1182,67 +1186,113 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
       }
       // text-only mode: no image reference
 
-      const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-pro-image-preview",
-          messages: [
-            {
-              role: "user",
-              content: messageContent
-            }
-          ],
-          modalities: ["image", "text"]
-        }),
-      });
+      // Generate image with timeout and retry
+      const timeoutMs = IMAGE_TIMEOUT_MS[Math.min(i, IMAGE_TIMEOUT_MS.length - 1)];
+      let imageData: any = null;
+      let lastError: string | null = null;
 
-      if (!imageResponse.ok) {
-        const errText = await imageResponse.text();
-        console.error(`[generate-creative-v2] Image generation error (variation ${i + 1}):`, errText);
-        
-        if (imageResponse.status === 429) {
-          return respond({ 
-            success: false, 
-            error: "Limite de requisições excedido. Aguarde alguns segundos." 
-          }, 429);
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-3-pro-image-preview",
+              messages: [
+                {
+                  role: "user",
+                  content: messageContent
+                }
+              ],
+              modalities: ["image", "text"]
+            }),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!imageResponse.ok) {
+            const errText = await imageResponse.text();
+            console.error(`[generate-creative-v2] Image generation error (variation ${i + 1}, attempt ${attempt + 1}):`, errText);
+            
+            if (imageResponse.status === 429) {
+              return respond({ 
+                success: false, 
+                error: "Limite de requisições excedido. Aguarde alguns segundos." 
+              }, 429);
+            }
+            if (imageResponse.status === 402) {
+              return respond({ 
+                success: false, 
+                error: "Créditos insuficientes. Adicione créditos ao workspace." 
+              }, 402);
+            }
+            
+            lastError = `HTTP ${imageResponse.status}`;
+            continue; // retry
+          }
+
+          imageData = await imageResponse.json();
+          break; // success, exit retry loop
+        } catch (fetchErr: any) {
+          clearTimeout(timeoutId);
+          if (fetchErr.name === 'AbortError') {
+            const elapsed = ((Date.now() - variationStartTime) / 1000).toFixed(1);
+            console.warn(`[generate-creative-v2] Variation ${i + 1} timed out after ${elapsed}s (attempt ${attempt + 1})`);
+            lastError = 'timeout';
+            
+            // If we already have images, don't retry - just return partial
+            if (generatedImages.length > 0) {
+              isPartialSuccess = true;
+              break;
+            }
+            // First image timed out on first attempt - retry once
+            continue;
+          }
+          console.error(`[generate-creative-v2] Fetch error (variation ${i + 1}, attempt ${attempt + 1}):`, fetchErr);
+          lastError = fetchErr.message || 'fetch_error';
+          continue; // retry
         }
-        if (imageResponse.status === 402) {
-          return respond({ 
-            success: false, 
-            error: "Créditos insuficientes. Adicione créditos ao workspace." 
-          }, 402);
-        }
-        
-        continue;
       }
 
-      const imageData = await imageResponse.json();
-      const generatedImageBase64 = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      // If this variation timed out and we have partial results, stop generating more
+      if (!imageData && generatedImages.length > 0) {
+        isPartialSuccess = true;
+        console.log(`[generate-creative-v2] Stopping after ${generatedImages.length} images due to timeout`);
+        break;
+      }
+
+      const generatedImageBase64 = imageData?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
       
       if (generatedImageBase64) {
+        const elapsed = ((Date.now() - variationStartTime) / 1000).toFixed(1);
         // Try to upload to storage, fallback to base64 if storage is not configured
         if (supabaseClient && userId !== "anonymous") {
           const storageUrl = await uploadToStorage(supabaseClient, userId, generatedImageBase64, i);
           if (storageUrl) {
             generatedImages.push(storageUrl);
-            console.log(`[generate-creative-v2] Variation ${i + 1} uploaded to storage: ${storageUrl}`);
+            console.log(`[generate-creative-v2] Variation ${i + 1} uploaded to storage in ${elapsed}s: ${storageUrl}`);
           } else {
-            // Fallback to base64 if upload fails
             generatedImages.push(generatedImageBase64);
             console.log(`[generate-creative-v2] Variation ${i + 1} storage upload failed, using base64`);
           }
         } else {
-          // No storage configured, use base64
           generatedImages.push(generatedImageBase64);
-          console.log(`[generate-creative-v2] Variation ${i + 1} generated (no storage configured)`);
+          console.log(`[generate-creative-v2] Variation ${i + 1} generated in ${elapsed}s (no storage configured)`);
         }
         console.log(`[generate-creative-v2] Variation ${i + 1} generated successfully with layout: ${variationLayout}, protagonist: ${decision.protagonist}`);
       } else {
-        console.warn(`[generate-creative-v2] Variation ${i + 1} returned no image`);
+        console.warn(`[generate-creative-v2] Variation ${i + 1} returned no image (error: ${lastError})`);
+        if (generatedImages.length > 0) {
+          isPartialSuccess = true;
+          break;
+        }
       }
     }
 
@@ -1254,10 +1304,12 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
       }, 500);
     }
 
-    console.log(`[generate-creative-v2] Success! Generated ${generatedImages.length} PROFESSIONAL BRAND images`);
+    console.log(`[generate-creative-v2] ${isPartialSuccess ? 'Partial' : 'Full'} success! Generated ${generatedImages.length}/${actualVariations} PROFESSIONAL BRAND images`);
 
     return respond({
       success: true,
+      partial: isPartialSuccess,
+      requestedVariations: actualVariations,
       images: generatedImages,
       headline: aiHeadline,
       subheadline: aiSubheadline || undefined,
