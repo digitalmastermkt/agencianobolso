@@ -899,16 +899,20 @@ RESPONDA com o JSON incluindo os campos headline, subheadline e cta DEDUZIDOS do
 
     // Generate requested number of variations
     // LIMITED TO 2 MAX to avoid edge function timeout (was hitting 150s limit with 4 variations)
-    // Smart fallback: if user had old value (e.g., 4), use max instead of defaulting to 1
     const MAX_VARIATIONS = 2;
     const actualVariations = Math.min(Math.max(variationsCount || 1, 1), MAX_VARIATIONS);
     const generatedImages: string[] = [];
+    let isPartialSuccess = false;
 
     // Different layout styles for each variation
     const layoutVariations = ["classic", "diagonal", "centered_bold", "inverted", "side_text"];
 
+    // Per-image timeout: 90s for first, 70s for subsequent (leave room for response)
+    const IMAGE_TIMEOUT_MS = [90000, 70000];
+
     for (let i = 0; i < actualVariations; i++) {
       console.log(`[generate-creative-v2] Generating variation ${i + 1}/${actualVariations}...`);
+      const variationStartTime = Date.now();
       
       // Use different layout for each variation
       const variationLayout = layoutVariations[i % layoutVariations.length];
