@@ -1304,10 +1304,12 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
       }, 500);
     }
 
-    console.log(`[generate-creative-v2] Success! Generated ${generatedImages.length} PROFESSIONAL BRAND images`);
+    console.log(`[generate-creative-v2] ${isPartialSuccess ? 'Partial' : 'Full'} success! Generated ${generatedImages.length}/${actualVariations} PROFESSIONAL BRAND images`);
 
     return respond({
       success: true,
+      partial: isPartialSuccess,
+      requestedVariations: actualVariations,
       images: generatedImages,
       headline: aiHeadline,
       subheadline: aiSubheadline || undefined,

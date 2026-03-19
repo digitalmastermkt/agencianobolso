@@ -770,11 +770,17 @@ export default function AgenteDiretorArte() {
       // Auto advance to result step
       setCurrentStep(5);
 
+      const partialMsg = data.partial 
+        ? ` (${data.images?.length || 1} de ${data.requestedVariations || variationsCount} variações geradas)`
+        : "";
+
       toast({
-        title: "Criativo gerado! ✨",
-        description: data.usedFallback 
-          ? "Imagem gerada com sucesso (modo alternativo)." 
-          : "Pessoa recriada no cenário com preservação de identidade!",
+        title: `Criativo gerado! ✨${partialMsg}`,
+        description: data.partial 
+          ? "Algumas variações demoraram demais. Você pode regenerar as faltantes."
+          : data.usedFallback 
+            ? "Imagem gerada com sucesso (modo alternativo)." 
+            : "Pessoa recriada no cenário com preservação de identidade!",
       });
     } catch (error: unknown) {
       console.error("Erro na geração:", error);
