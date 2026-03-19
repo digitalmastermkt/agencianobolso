@@ -785,11 +785,11 @@ export default function AgenteDiretorArte() {
     } catch (error: unknown) {
       console.error("Erro na geração:", error);
       const errorMsg = error instanceof Error ? error.message : "Ocorreu um erro ao processar sua solicitação.";
-      const isTimeout = errorMsg.includes('timeout') || errorMsg.includes('546') || errorMsg.includes('non-2xx');
+      const isTimeout = errorMsg.includes('timeout') || errorMsg.includes('546') || errorMsg.includes('non-2xx') || errorMsg.includes('FunctionsHttpError');
       toast({
-        title: isTimeout ? "Tempo limite excedido" : "Erro",
+        title: isTimeout ? "Tempo limite excedido ⏱️" : "Erro",
         description: isTimeout 
-          ? "A geração demorou muito. Tente novamente com 1 variação."
+          ? "A geração demorou muito. Tente com 1 variação ou simplifique as referências."
           : errorMsg,
         variant: "destructive",
       });
