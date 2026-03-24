@@ -1855,8 +1855,8 @@ export default function AgenteDiretorArte() {
                   </p>
                 </div>
 
-                {/* Gallery Photos from Brand Profile */}
-                {personPhotos.length > 0 && (
+                {/* Gallery Photos from Brand Profile - only when style is 'brand' */}
+                {creativeStyle === 'brand' && personPhotos.length > 0 && (
                   <div>
                     <Label className="font-medium mb-3 block">Fotos da Galeria do Perfil</Label>
                     <div className="grid grid-cols-5 gap-2">
@@ -1867,7 +1867,7 @@ export default function AgenteDiretorArte() {
                             key={photo.id}
                             type="button"
                             disabled={referenceImages.length >= 4 && !isSelected}
-                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all disabled:opacity-40 ${
+                            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all disabled:opacity-40 ${
                               isSelected
                                 ? 'border-primary ring-2 ring-primary/30' 
                                 : 'border-transparent hover:border-muted-foreground/30'
@@ -1885,6 +1885,16 @@ export default function AgenteDiretorArte() {
                               alt={photo.name || 'Foto'} 
                               className="w-full h-full object-cover"
                             />
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                <CheckCircle2 className="w-5 h-5 text-primary drop-shadow-md" />
+                              </div>
+                            )}
+                            {photo.name && (
+                              <span className="absolute bottom-0 left-0 right-0 text-[8px] text-center bg-black/50 text-white py-0.5 truncate px-1">
+                                {photo.name}
+                              </span>
+                            )}
                           </button>
                         );
                       })}
