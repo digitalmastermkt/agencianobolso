@@ -2380,6 +2380,13 @@ export default function AgenteDiretorArte() {
                         <Palette className={`w-6 h-6 ${creativeStyle === 'brand' ? 'text-primary' : 'text-muted-foreground'}`} />
                         <span className={`text-sm font-medium ${creativeStyle === 'brand' ? 'text-primary' : ''}`}>Marca</span>
                         <span className="text-[10px] text-muted-foreground text-center leading-tight">Usa identidade visual do perfil</span>
+                        {creativeStyle === 'brand' && brandProfile && brandColors.length > 0 && (
+                          <div className="flex gap-1 mt-1">
+                            {brandColors.slice(0, 5).map((c, i) => (
+                              <div key={i} className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: c }} />
+                            ))}
+                          </div>
+                        )}
                       </button>
                       <button
                         type="button"
@@ -2395,6 +2402,26 @@ export default function AgenteDiretorArte() {
                         <span className="text-[10px] text-muted-foreground text-center leading-tight">Cria baseado no contexto</span>
                       </button>
                     </div>
+                    {creativeStyle === 'brand' && !brandProfile && (
+                      <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Selecione um perfil de marca no menu lateral
+                      </p>
+                    )}
+                    {creativeStyle === 'brand' && brandProfile && (
+                      <div className="mt-3 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                        <div className="flex items-center gap-2">
+                          <Palette className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-xs font-medium">{brandProfile.name}</span>
+                        </div>
+                        {(brandProfile.visual_style || brandProfile.mood) && (
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {brandProfile.visual_style && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{brandProfile.visual_style}</Badge>}
+                            {brandProfile.mood && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{brandProfile.mood}</Badge>}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Reference Photos Grid */}
