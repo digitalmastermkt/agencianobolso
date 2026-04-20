@@ -1,3 +1,14 @@
+// =============================================================================
+// generate-creative-v2 — ÚNICA FUNÇÃO DE GERAÇÃO DE CRIATIVOS
+// -----------------------------------------------------------------------------
+// Esta é a única Edge Function de geração de criativos do projeto. Substitui e
+// consolida as funções legadas (deletadas em 2026-04):
+//   - generate_creatives
+//   - generate-banner-images
+//   - generate-personalized-banner
+// Motivo da consolidação: eliminar duplicação de lógica, centralizar controle
+// de créditos, retries e progressão sequencial em um único pipeline.
+// =============================================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
@@ -651,6 +662,7 @@ serve(async (req) => {
       logoUrl,
       brandIdentity,
       renderTextOnImage = false,
+      theme, // optional: 'promocao' | 'lancamento' | 'data_comemorativa' | 'institucional' | 'servico'
     } = await req.json();
     
     console.log("[generate-creative-v2] renderTextOnImage:", renderTextOnImage);
