@@ -1,3 +1,14 @@
+// =============================================================================
+// generate-creative-v2 — ÚNICA FUNÇÃO DE GERAÇÃO DE CRIATIVOS
+// -----------------------------------------------------------------------------
+// Esta é a única Edge Function de geração de criativos do projeto. Substitui e
+// consolida as funções legadas (deletadas em 2026-04):
+//   - generate_creatives
+//   - generate-banner-images
+//   - generate-personalized-banner
+// Motivo da consolidação: eliminar duplicação de lógica, centralizar controle
+// de créditos, retries e progressão sequencial em um único pipeline.
+// =============================================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
@@ -538,8 +549,8 @@ COMPOSIÇÃO COM PESSOA:
   }
 };
 
-// Master user emails that bypass credit checks
-const MASTER_USER_EMAILS = ["digitalmastermkt@gmail.com"];
+// Master user email - sourced from MASTER_USER_EMAIL secret (no hardcoding).
+const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -585,7 +596,7 @@ serve(async (req) => {
         if (user?.id) {
           userId = user.id;
           userEmail = user.email || null;
-          isMasterUser = MASTER_USER_EMAILS.includes(userEmail || "");
+          isMasterUser = !!MASTER_USER_EMAIL && (userEmail || "").toLowerCase() === MASTER_USER_EMAIL;
         }
       } catch (e) {
         console.log("[generate-creative-v2] Could not get user from token, using anonymous");
@@ -651,6 +662,7 @@ serve(async (req) => {
       logoUrl,
       brandIdentity,
       renderTextOnImage = false,
+      theme, // optional: 'promocao' | 'lancamento' | 'data_comemorativa' | 'institucional' | 'servico'
     } = await req.json();
     
     console.log("[generate-creative-v2] renderTextOnImage:", renderTextOnImage);
@@ -796,6 +808,15 @@ Mood: ${sanitizedBrandIdentity.mood || 'comercial, profissional'}
 
 Formato: ${format}
 
+${theme ? `TEMA DA ARTE: ${String(theme).toUpperCase()}
+Diretrizes obrigatórias por tema:
+- promocao: paleta vibrante (vermelho/laranja/amarelo), estilo dynamic, urgência e oferta em destaque.
+- lancamento: paleta moderna (preto/dourado/neon), estilo premium ou dynamic, exclusividade e novidade.
+- data_comemorativa: paleta festiva, estilo festive, atmosfera celebrativa.
+- institucional: paleta sóbria (azul/cinza/branco), estilo clean, profissional e confiável.
+- servico: paleta neutra com accent da marca, estilo minimal/clean, foco em benefício.
+Aplique a diretriz correspondente ao tema "${theme}" na composição, paleta e estilo.
+` : ''}
 IMPORTANTE: 
 1. DEDUZA automaticamente o melhor HEADLINE, SUBHEADLINE e CTA a partir do "Texto da arte"
 2. O headline deve ser CURTO e IMPACTANTE (máx 50 caracteres)
@@ -1186,12 +1207,19 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
       }
       // text-only mode: no image reference
 
-      // Generate image with timeout and retry
+      // Generate image with timeout and retry (with exponential backoff for 429)
       const timeoutMs = IMAGE_TIMEOUT_MS[Math.min(i, IMAGE_TIMEOUT_MS.length - 1)];
       let imageData: any = null;
       let lastError: string | null = null;
+      const MAX_ATTEMPTS = 3;
+      const BACKOFF_MS = [500, 1000, 2000];
 
-      for (let attempt = 0; attempt < 2; attempt++) {
+      // Sequential pacing: 500ms gap between variations to avoid burst rate-limit
+      if (i > 0) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -1220,20 +1248,28 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
           if (!imageResponse.ok) {
             const errText = await imageResponse.text();
             console.error(`[generate-creative-v2] Image generation error (variation ${i + 1}, attempt ${attempt + 1}):`, errText);
-            
+
             if (imageResponse.status === 429) {
-              return respond({ 
-                success: false, 
-                error: "Limite de requisições excedido. Aguarde alguns segundos." 
+              // Exponential backoff retry on rate-limit before failing the whole job
+              if (attempt < MAX_ATTEMPTS - 1) {
+                const wait = BACKOFF_MS[attempt];
+                console.warn(`[generate-creative-v2] 429 received, backoff ${wait}ms before retry ${attempt + 2}`);
+                await new Promise((r) => setTimeout(r, wait));
+                lastError = `HTTP 429`;
+                continue;
+              }
+              return respond({
+                success: false,
+                error: "Limite de requisições excedido. Aguarde alguns segundos e tente novamente."
               }, 429);
             }
             if (imageResponse.status === 402) {
-              return respond({ 
-                success: false, 
-                error: "Créditos insuficientes. Adicione créditos ao workspace." 
+              return respond({
+                success: false,
+                error: "Créditos insuficientes. Adicione créditos ao workspace."
               }, 402);
             }
-            
+
             lastError = `HTTP ${imageResponse.status}`;
             continue; // retry
           }
@@ -1246,7 +1282,7 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
             const elapsed = ((Date.now() - variationStartTime) / 1000).toFixed(1);
             console.warn(`[generate-creative-v2] Variation ${i + 1} timed out after ${elapsed}s (attempt ${attempt + 1})`);
             lastError = 'timeout';
-            
+
             // If we already have images, don't retry - just return partial
             if (generatedImages.length > 0) {
               isPartialSuccess = true;

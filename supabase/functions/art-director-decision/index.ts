@@ -7,14 +7,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+type ThemeKey = "promocao" | "lancamento" | "data_comemorativa" | "institucional" | "servico";
+
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
   headline: string;
   subheadline?: string;
   cta?: string;
   colors: string[];
-  style: "clean" | "minimal" | "premium";
+  style: "clean" | "minimal" | "premium" | "dynamic" | "festive";
 }
+
+const THEME_GUIDELINES: Record<ThemeKey, string> = {
+  promocao: "Tema PROMOÇÃO: paleta vibrante (vermelho, laranja, amarelo), estilo 'dynamic', atmosfera urgente e chamativa, composição com destaque para preço/oferta.",
+  lancamento: "Tema LANÇAMENTO: paleta moderna e impactante (preto, dourado, cores neon), estilo 'premium' ou 'dynamic', atmosfera de exclusividade e novidade, composição centralizada com foco no produto/serviço.",
+  data_comemorativa: "Tema DATA COMEMORATIVA: paleta festiva alinhada à data (cores temáticas), estilo 'festive', atmosfera celebrativa e calorosa, composição com elementos decorativos sutis.",
+  institucional: "Tema INSTITUCIONAL: paleta sóbria e corporativa (azul, cinza, branco), estilo 'clean', atmosfera profissional e confiável, composição equilibrada e minimalista.",
+  servico: "Tema SERVIÇO: paleta neutra com accent da marca, estilo 'minimal' ou 'clean', atmosfera clara e funcional, composição focada no benefício/transformação.",
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -51,7 +61,8 @@ serve(async (req) => {
   console.log(`[ArtDirector] Authenticated user: ${userId}`);
 
   try {
-    const { images, bannerText, ctaText } = await req.json();
+    const { images, bannerText, ctaText, theme } = await req.json();
+    const themeKey = (theme && THEME_GUIDELINES[theme as ThemeKey]) ? (theme as ThemeKey) : null;
     
     if (!images || !Array.isArray(images) || images.length === 0) {
       return new Response(
@@ -94,15 +105,16 @@ ESTRUTURA OBRIGATÓRIA DO JSON:
   "subheadline": "texto de apoio opcional (máximo 12 palavras)",
   "cta": "chamada para ação curta opcional (máximo 4 palavras)",
   "colors": ["#HEX1", "#HEX2", "#HEX3"],
-  "style": "clean" | "minimal" | "premium"
+  "style": "clean" | "minimal" | "premium" | "dynamic" | "festive"
 }
 
 CRITÉRIOS DE DECISÃO:
 - template: baseado no equilíbrio visual e espaço para texto
 - headline: extraído ou adaptado do texto fornecido pelo usuário
-- colors: extraídas da identidade visual dos prints (paleta dominante)
-- style: inferido a partir da estética geral dos prints
+- colors: extraídas da identidade visual dos prints (paleta dominante), ajustadas ao tema quando informado
+- style: inferido a partir da estética geral dos prints e do tema da arte
 
+${themeKey ? `DIRETRIZES OBRIGATÓRIAS DE TEMA:\n${THEME_GUIDELINES[themeKey]}\n` : ''}
 RESPONDA APENAS O JSON. NADA MAIS.`;
 
     const userPrompt = `Analise estas imagens de referência do Instagram e retorne suas decisões de design.
@@ -184,7 +196,7 @@ Retorne APENAS o JSON com suas decisões. Nenhum texto adicional.`;
       }
       
       // Validate style value
-      if (!['clean', 'minimal', 'premium'].includes(decision.style)) {
+      if (!['clean', 'minimal', 'premium', 'dynamic', 'festive'].includes(decision.style)) {
         decision.style = 'clean';
       }
       

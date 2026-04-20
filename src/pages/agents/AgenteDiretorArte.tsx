@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
@@ -218,6 +219,7 @@ export default function AgenteDiretorArte() {
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [creativeStyle, setCreativeStyle] = useState<'brand' | 'generic'>('brand');
+  const [theme, setTheme] = useState<'promocao' | 'lancamento' | 'data_comemorativa' | 'institucional' | 'servico'>('institucional');
   const [generationMode, setGenerationMode] = useState<'person' | 'product' | 'text-only'>('person');
   const [variationsCount, setVariationsCount] = useState<1 | 2>(2);
   
@@ -670,6 +672,7 @@ export default function AgenteDiretorArte() {
           artText: artTextTrimmed,
           designOrientation: designOrientation.trim() || undefined,
           creativeStyle, // 'brand' | 'generic'
+          theme,
           referenceImages: allReferenceImages.slice(0, 4), // Max 4 with types
           // Legacy fields for backward compat
           context: artTextTrimmed,
@@ -824,6 +827,7 @@ export default function AgenteDiretorArte() {
           format: selectedFormat, 
           personImageBase64: images[0],
           variationsCount: 1,
+          theme,
         },
       });
 
@@ -1757,6 +1761,23 @@ export default function AgenteDiretorArte() {
                       )}
                     </div>
                   )}
+
+                  {/* Theme Selector */}
+                  <div className="mt-3 space-y-1.5">
+                    <Label className="text-xs font-medium">Tema da arte</Label>
+                    <Select value={theme} onValueChange={(v) => setTheme(v as typeof theme)}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="promocao">Promoção</SelectItem>
+                        <SelectItem value="lancamento">Lançamento</SelectItem>
+                        <SelectItem value="data_comemorativa">Data Comemorativa</SelectItem>
+                        <SelectItem value="institucional">Institucional</SelectItem>
+                        <SelectItem value="servico">Serviço</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Reference Photos Grid (up to 4) */}
