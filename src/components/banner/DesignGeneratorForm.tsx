@@ -87,6 +87,14 @@ const STYLE_OPTIONS = [
   },
 ];
 
+const THEME_OPTIONS = [
+  { value: "promocao", label: "Promoção" },
+  { value: "lancamento", label: "Lançamento" },
+  { value: "data_comemorativa", label: "Data Comemorativa" },
+  { value: "institucional", label: "Institucional" },
+  { value: "servico", label: "Serviço" },
+];
+
 export function DesignGeneratorForm({ 
   identity, 
   person,
@@ -104,6 +112,7 @@ export function DesignGeneratorForm({
   const [multiFormatMode, setMultiFormatMode] = useState(false);
   const [selectedFormats, setSelectedFormats] = useState<string[]>(["quadrado"]);
   const [selectedStyle, setSelectedStyle] = useState("editorial_premium");
+  const [selectedTheme, setSelectedTheme] = useState<string>("institucional");
   const [formData, setFormData] = useState({
     bannerText: "",
     cta: "",
@@ -216,36 +225,59 @@ export function DesignGeneratorForm({
       for (let i = 0; i < formatsToGenerate.length; i++) {
         const formato = formatsToGenerate[i];
         const formatLabel = FORMAT_OPTIONS.find(f => f.value === formato)?.label || formato;
-        
-        setProgress((i / totalFormats) * 80 + 10);
-        setProgressText(`Gerando ${formatLabel} (${i + 1}/${totalFormats})...`);
 
-        const { data, error } = await supabase.functions.invoke('generate-personalized-banner', {
+        setProgress((i / totalFormats) * 80 + 10);
+        setProgressText(`Gerando variação ${i + 1} de ${totalFormats} — ${formatLabel}...`);
+
+        // Map form formato to v2's expected format string
+        const formatMapV2: Record<string, string> = {
+          quadrado: "1080x1080",
+          story: "1080x1920",
+          retangular: "1200x628",
+          banner: "1200x400",
+        };
+
+        const { data, error } = await supabase.functions.invoke('generate-creative-v2', {
           body: {
-            identity,
-            person,
-            personPhotoUrl: personPhotoUrl || null,  // Enviar foto para preservar identidade
-            bannerText: formData.bannerText,
+            // New v2 contract
+            artText: `${formData.bannerText}${formData.additionalInfo ? `\n\n${formData.additionalInfo}` : ''}`,
+            designOrientation: formData.additionalInfo || undefined,
+            creativeStyle: 'brand',
+            referenceImages: personPhotoUrl ? [{ url: personPhotoUrl, type: 'person' }] : [],
+            theme: selectedTheme,
+            // Legacy compatibility fields still consumed by v2
+            context: formData.bannerText,
+            headline: formData.bannerText.substring(0, 50),
+            subheadline: '',
             cta: formData.cta,
-            formato: formato,
-            additionalInfo: formData.additionalInfo,
-            generationStyle: selectedStyle
+            brandProfile: {},
+            personImageBase64: personPhotoUrl || undefined,
+            generationMode: personPhotoUrl ? 'person' : 'text-only',
+            format: formatMapV2[formato] || formato,
+            variationsCount: 1,
+            renderTextOnImage: true,
+            brandIdentity: {
+              colors: identity.colors,
+              typography: identity.typography,
+              visualStyle: identity.visualStyle,
+              mood: identity.mood,
+              recurringElements: identity.recurringElements,
+            },
           }
         });
 
         if (error) throw error;
-        if (data.error) throw new Error(data.error);
+        if (data?.error) throw new Error(data.error);
 
-        // Add format info to images + normalize success flag (some backends return only imageUrl)
-        const imagesWithFormat = (data.images || []).map((img: BannerImage) => {
-          const normalizedSuccess = typeof img.success === "boolean" ? img.success : !!img.imageUrl;
-          return {
-            ...img,
-            success: normalizedSuccess,
-            format: formato,
-          };
-        });
-        
+        // v2 returns { success, images: string[] (urls or base64) }
+        const v2Images: string[] = Array.isArray(data?.images) ? data.images : [];
+        const imagesWithFormat: BannerImage[] = v2Images.map((url) => ({
+          style: selectedStyle,
+          imageUrl: url,
+          success: !!url,
+          format: formato,
+        }));
+
         allImages.push(...imagesWithFormat);
       }
 
