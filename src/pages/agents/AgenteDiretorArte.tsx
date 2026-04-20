@@ -218,6 +218,7 @@ export default function AgenteDiretorArte() {
   // Format & mode
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [creativeStyle, setCreativeStyle] = useState<'brand' | 'generic'>('brand');
+  const [theme, setTheme] = useState<'promocao' | 'lancamento' | 'data_comemorativa' | 'institucional' | 'servico'>('institucional');
   const [generationMode, setGenerationMode] = useState<'person' | 'product' | 'text-only'>('person');
   const [variationsCount, setVariationsCount] = useState<1 | 2>(2);
   
@@ -670,6 +671,7 @@ export default function AgenteDiretorArte() {
           artText: artTextTrimmed,
           designOrientation: designOrientation.trim() || undefined,
           creativeStyle, // 'brand' | 'generic'
+          theme,
           referenceImages: allReferenceImages.slice(0, 4), // Max 4 with types
           // Legacy fields for backward compat
           context: artTextTrimmed,
@@ -824,6 +826,7 @@ export default function AgenteDiretorArte() {
           format: selectedFormat, 
           personImageBase64: images[0],
           variationsCount: 1,
+          theme,
         },
       });
 
