@@ -808,6 +808,15 @@ Mood: ${sanitizedBrandIdentity.mood || 'comercial, profissional'}
 
 Formato: ${format}
 
+${theme ? `TEMA DA ARTE: ${String(theme).toUpperCase()}
+Diretrizes obrigatórias por tema:
+- promocao: paleta vibrante (vermelho/laranja/amarelo), estilo dynamic, urgência e oferta em destaque.
+- lancamento: paleta moderna (preto/dourado/neon), estilo premium ou dynamic, exclusividade e novidade.
+- data_comemorativa: paleta festiva, estilo festive, atmosfera celebrativa.
+- institucional: paleta sóbria (azul/cinza/branco), estilo clean, profissional e confiável.
+- servico: paleta neutra com accent da marca, estilo minimal/clean, foco em benefício.
+Aplique a diretriz correspondente ao tema "${theme}" na composição, paleta e estilo.
+` : ''}
 IMPORTANTE: 
 1. DEDUZA automaticamente o melhor HEADLINE, SUBHEADLINE e CTA a partir do "Texto da arte"
 2. O headline deve ser CURTO e IMPACTANTE (máx 50 caracteres)
