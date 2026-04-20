@@ -7,8 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Master user emails that bypass credit checks
-const MASTER_USER_EMAILS = ["digitalmastermkt@gmail.com"];
+// Master user email - sourced from MASTER_USER_EMAIL secret (no hardcoding).
+const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
 
 // Credit costs
 const CREDITS_CREATE_BRAND = 2;
@@ -76,7 +76,7 @@ serve(async (req) => {
         if (user?.id) {
           userId = user.id;
           userEmail = user.email || null;
-          isMasterUser = MASTER_USER_EMAILS.includes(userEmail || "");
+          isMasterUser = !!MASTER_USER_EMAIL && (userEmail || "").toLowerCase() === MASTER_USER_EMAIL;
         }
       } catch (e) {
         console.log("[analyze-instagram-identity] Could not get user from token");

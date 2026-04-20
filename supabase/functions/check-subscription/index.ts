@@ -8,8 +8,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Master user email - has unlimited access to everything
-const MASTER_USER_EMAIL = "digitalmastermkt@gmail.com";
+// Master user email - sourced from MASTER_USER_EMAIL secret (no hardcoding).
+const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
 
 const log = (step: string, details?: unknown) =>
   console.log(`[CHECK-SUBSCRIPTION] ${step}`, details ?? "");
@@ -42,7 +42,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User email not available");
 
     // Master user bypass - always return Elite subscription
-    if (user.email.toLowerCase() === MASTER_USER_EMAIL.toLowerCase()) {
+    if (MASTER_USER_EMAIL && user.email.toLowerCase() === MASTER_USER_EMAIL) {
       log("Master user detected, granting Elite access");
       return new Response(
         JSON.stringify({ 

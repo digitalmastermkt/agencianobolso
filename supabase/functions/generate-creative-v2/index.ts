@@ -538,8 +538,8 @@ COMPOSIÇÃO COM PESSOA:
   }
 };
 
-// Master user emails that bypass credit checks
-const MASTER_USER_EMAILS = ["digitalmastermkt@gmail.com"];
+// Master user email - sourced from MASTER_USER_EMAIL secret (no hardcoding).
+const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -585,7 +585,7 @@ serve(async (req) => {
         if (user?.id) {
           userId = user.id;
           userEmail = user.email || null;
-          isMasterUser = MASTER_USER_EMAILS.includes(userEmail || "");
+          isMasterUser = !!MASTER_USER_EMAIL && (userEmail || "").toLowerCase() === MASTER_USER_EMAIL;
         }
       } catch (e) {
         console.log("[generate-creative-v2] Could not get user from token, using anonymous");
