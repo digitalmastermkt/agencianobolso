@@ -402,6 +402,24 @@ export function DesignGeneratorForm({
               ))}
             </div>
           </div>
+
+          {/* Theme Selector */}
+          <div className="space-y-2 pt-2">
+            <Label htmlFor="theme">Tema da arte</Label>
+            <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+              <SelectTrigger id="theme">
+                <SelectValue placeholder="Selecione o tema" />
+              </SelectTrigger>
+              <SelectContent>
+                {THEME_OPTIONS.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Define paleta, atmosfera e composição da arte (ex.: promoção é mais vibrante; institucional é mais sóbrio).
+            </p>
+          </div>
         </div>
 
         {/* Person Summary */}
