@@ -1,54 +1,80 @@
 
 
-## Plano: Nova Paleta de Cores para App de Agência de Marketing Digital
+# Auditoria e Refatoração — Agência no Bolso
 
-### Análise do Problema Atual
-A paleta atual usa cyan elétrico (#00BFFF) + roxo neon + pink — um visual "cyberpunk" que funciona para apps de tecnologia pura, mas não transmite **confiança profissional** que uma agência de marketing precisa. Fica visualmente agressivo e cansativo.
+## Prioridade 1 — Segurança: remover e-mails hardcoded
 
-### Recomendação: Paleta "Premium Agency"
+**Problema:** Três Edge Functions e um arquivo do frontend contêm `digitalmastermkt@gmail.com` hardcoded.
 
-A cor ideal para um app de agência de marketing digital é **violeta/índigo profundo** como primária, combinado com **dourado/âmbar** como accent. Essa combinação transmite:
+**Ação:**
+- Adicionar secret `MASTER_USER_EMAIL` no Supabase (será solicitada ao usuário).
+- Refatorar para ler `Deno.env.get('MASTER_USER_EMAIL')` em:
+  - `supabase/functions/analyze-instagram-identity/index.ts`
+  - `supabase/functions/generate-creative-v2/index.ts`
+  - `supabase/functions/check-subscription/index.ts`
+- Frontend (`src/lib/constants.ts`): manter helper `isMasterUser()` mas remover o e-mail literal — passar a comparar contra um valor vindo de variável pública opcional `VITE_MASTER_USER_EMAIL` (string vazia se não definida). Isso desacopla o código do e-mail real.
 
-- **Criatividade** (violeta) — associado a imaginação e inovação
-- **Profissionalismo** (índigo escuro) — transmite seriedade e competência
-- **Valor/Premium** (dourado) — remete a qualidade e resultados
+## Prioridade 2 — Consolidar funções de geração
 
-```text
-Paleta Proposta:
+**Estado atual:**
+| Função | Usada no frontend? | Status |
+|---|---|---|
+| `generate-creative-v2` | Sim (AgenteDiretorArte) — 1380 linhas, mais completa | **MANTER** |
+| `generate-personalized-banner` | Sim (DesignGeneratorForm) — 141 linhas | Migrar chamada → deletar |
+| `generate_creatives` | Não | Deletar |
+| `generate-banner-images` | Não | Deletar |
 
-PRIMARY:     #7C3AED (Violeta vibrante - botões, links, CTAs)
-ACCENT:      #F59E0B (Âmbar/Dourado - destaques, badges, sucesso)
-BACKGROUND:  #0F0D15 (Preto-violeta profundo)
-CARD:        #1A1625 (Elevação sutil violeta)
-MUTED:       #2D2640 (Bordas e áreas secundárias)
-FOREGROUND:  #F0ECF9 (Branco levemente lilás)
-DESTRUCTIVE: #EF4444 (Vermelho padrão)
+**Ação:**
+- Adaptar `DesignGeneratorForm.tsx` para chamar `generate-creative-v2` com payload equivalente (mapear campos atuais para o contrato da v2).
+- Deletar diretórios das 3 funções obsoletas + entradas no `supabase/config.toml`.
+- Adicionar comentário-cabeçalho em `generate-creative-v2/index.ts` explicando que ela é a única função de geração e por quê.
+- Usar `supabase--delete_edge_functions` para remover as funções deployadas.
 
-Gradientes:
-- Primary: Violeta → Índigo (#7C3AED → #4F46E5)
-- Accent:  Violeta → Âmbar (#7C3AED → #F59E0B)  
-- Subtle:  Background escuro com toque violeta
-```
+## Prioridade 3 — Variação visual por tema
 
-### Mudanças Técnicas
+**Ação:**
+- Em `art-director-decision/index.ts`: aceitar parâmetro opcional `theme` (`promocao | lancamento | data_comemorativa | institucional | servico`). Injetar no system prompt um bloco de diretrizes por tema (paleta, estilo `clean|dynamic|premium|festive`, atmosfera, composição).
+- Estender o tipo `ArtDirectorDecision.style` para incluir `dynamic` e `festive`.
+- `generate-creative-v2` aceita e repassa `theme` ao art director.
+- `DesignGeneratorForm.tsx` e `AgenteDiretorArte.tsx`: novo campo Select "Tema da arte" com as 5 opções; envia no payload.
 
-1. **`src/index.css`** — Substituir toda a paleta dark mode:
-   - `--primary`: de cyan para violeta `263 84% 58%`
-   - `--background`: preto-violeta `260 20% 7%`
-   - `--card`: elevação violeta `260 25% 12%`
-   - `--accent`: âmbar dourado `43 96% 56%`
-   - `--border`: violeta muted `260 20% 20%`
-   - Gradientes atualizados para violeta→índigo
-   - Sombras/glows com tom violeta em vez de cyan
+## Prioridade 4 — Concorrência na geração múltipla
 
-2. **`src/index.css`** (light mode) — Ajustar para coerência:
-   - Primary violeta mantido
-   - Backgrounds claros com toque lavanda
+**Ação em `generate-creative-v2`:**
+- Loop de variações já é sequencial. Adicionar `await new Promise(r => setTimeout(r, 500))` entre variações.
+- Wrapper de retry com backoff exponencial (500ms → 1s → 2s, máx 3 tentativas) ao detectar HTTP 429 da chamada de imagem.
 
-3. **`tailwind.config.ts`** — Nenhuma mudança estrutural necessária (já usa CSS variables)
+**Frontend (`AgenteDiretorArte.tsx` e `DesignGeneratorForm.tsx`):**
+- Estado `generationProgress: { current, total, status }` já existe parcialmente — exibir progresso "Gerando variação X de Y" com `Progress` bar.
 
-4. **`src/components/ui/button.tsx`** — Nenhuma mudança (já usa `bg-primary`)
+## Prioridade 5 — Limpeza geral
 
-### Arquivos Modificados
-1. `src/index.css` — Nova paleta de cores completa
+- **Imports não usados:** rodar varredura com `eslint --fix` focada em `no-unused-vars` apenas nos arquivos `src/`.
+- **Mensagens de erro em PT-BR:** padronizar respostas das Edge Functions remanescentes (`{ error: "mensagem em português" }`).
+- **Hooks duplicados:** `usePlanAccess` já consome `useSubscription` — sem duplicação real. `useCreditsBalance` é independente (créditos ≠ assinatura). **Não consolidar** para evitar quebrar fluxos. Apenas documentar a separação no topo de cada arquivo.
+- **Componentes/páginas órfãos:** validar via `rg` cada arquivo em `src/pages` e `src/components` contra rotas em `App.tsx` e imports. Remover apenas itens com zero referências (lista será exibida antes de deletar).
+
+## Arquivos modificados
+
+**Edge Functions:**
+- editar: `analyze-instagram-identity`, `generate-creative-v2`, `check-subscription`, `art-director-decision`
+- deletar: `generate_creatives`, `generate-banner-images`, `generate-personalized-banner`
+- atualizar: `supabase/config.toml`
+
+**Frontend:**
+- `src/lib/constants.ts`
+- `src/components/banner/DesignGeneratorForm.tsx` (migrar invoke + campo tema + progresso)
+- `src/pages/agents/AgenteDiretorArte.tsx` (campo tema)
+
+## O que NÃO será tocado
+Auth (`useAuth`, `ProtectedRoute`, `AdminRoute`), créditos (`debit_user_credits`, `refund_user_credits`), PWA, Stripe (`create-checkout`, `stripe-webhook`, `check-subscription` apenas troca do e-mail), schema do banco, rotas públicas de captura.
+
+## Passos de execução
+1. Solicitar secret `MASTER_USER_EMAIL`.
+2. Refatorar e-mail hardcoded (P1).
+3. Migrar `DesignGeneratorForm` → `generate-creative-v2`, deletar funções obsoletas (P2).
+4. Adicionar `theme` no fluxo art-director + UI (P3).
+5. Adicionar delay/retry/backoff + UI de progresso (P4).
+6. Limpeza de imports e arquivos órfãos (P5).
+7. Listar mudanças no chat para revisão.
 
