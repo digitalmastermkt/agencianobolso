@@ -1760,6 +1760,23 @@ export default function AgenteDiretorArte() {
                       )}
                     </div>
                   )}
+
+                  {/* Theme Selector */}
+                  <div className="mt-3 space-y-1.5">
+                    <Label className="text-xs font-medium">Tema da arte</Label>
+                    <Select value={theme} onValueChange={(v) => setTheme(v as typeof theme)}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="promocao">Promoção</SelectItem>
+                        <SelectItem value="lancamento">Lançamento</SelectItem>
+                        <SelectItem value="data_comemorativa">Data Comemorativa</SelectItem>
+                        <SelectItem value="institucional">Institucional</SelectItem>
+                        <SelectItem value="servico">Serviço</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Reference Photos Grid (up to 4) */}
