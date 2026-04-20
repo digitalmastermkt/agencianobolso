@@ -1198,12 +1198,19 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
       }
       // text-only mode: no image reference
 
-      // Generate image with timeout and retry
+      // Generate image with timeout and retry (with exponential backoff for 429)
       const timeoutMs = IMAGE_TIMEOUT_MS[Math.min(i, IMAGE_TIMEOUT_MS.length - 1)];
       let imageData: any = null;
       let lastError: string | null = null;
+      const MAX_ATTEMPTS = 3;
+      const BACKOFF_MS = [500, 1000, 2000];
 
-      for (let attempt = 0; attempt < 2; attempt++) {
+      // Sequential pacing: 500ms gap between variations to avoid burst rate-limit
+      if (i > 0) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -1232,20 +1239,28 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
           if (!imageResponse.ok) {
             const errText = await imageResponse.text();
             console.error(`[generate-creative-v2] Image generation error (variation ${i + 1}, attempt ${attempt + 1}):`, errText);
-            
+
             if (imageResponse.status === 429) {
-              return respond({ 
-                success: false, 
-                error: "Limite de requisições excedido. Aguarde alguns segundos." 
+              // Exponential backoff retry on rate-limit before failing the whole job
+              if (attempt < MAX_ATTEMPTS - 1) {
+                const wait = BACKOFF_MS[attempt];
+                console.warn(`[generate-creative-v2] 429 received, backoff ${wait}ms before retry ${attempt + 2}`);
+                await new Promise((r) => setTimeout(r, wait));
+                lastError = `HTTP 429`;
+                continue;
+              }
+              return respond({
+                success: false,
+                error: "Limite de requisições excedido. Aguarde alguns segundos e tente novamente."
               }, 429);
             }
             if (imageResponse.status === 402) {
-              return respond({ 
-                success: false, 
-                error: "Créditos insuficientes. Adicione créditos ao workspace." 
+              return respond({
+                success: false,
+                error: "Créditos insuficientes. Adicione créditos ao workspace."
               }, 402);
             }
-            
+
             lastError = `HTTP ${imageResponse.status}`;
             continue; // retry
           }
@@ -1258,7 +1273,7 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
             const elapsed = ((Date.now() - variationStartTime) / 1000).toFixed(1);
             console.warn(`[generate-creative-v2] Variation ${i + 1} timed out after ${elapsed}s (attempt ${attempt + 1})`);
             lastError = 'timeout';
-            
+
             // If we already have images, don't retry - just return partial
             if (generatedImages.length > 0) {
               isPartialSuccess = true;
