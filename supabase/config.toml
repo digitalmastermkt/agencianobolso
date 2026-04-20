@@ -21,14 +21,11 @@ verify_jwt = true
 [functions.analyze-person-photo]
 verify_jwt = true
 
-[functions.generate-personalized-banner]
-verify_jwt = true
-
 [functions.art-director-decision]
 verify_jwt = true
 
-[functions.generate_creatives]
-verify_jwt = true
-
+# generate-creative-v2 is the SOLE creative generation function.
+# Replaced and consolidated: generate_creatives, generate-banner-images,
+# generate-personalized-banner (deleted). All frontend calls go to v2.
 [functions.generate-creative-v2]
 verify_jwt = true
