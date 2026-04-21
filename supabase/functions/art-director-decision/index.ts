@@ -80,7 +80,7 @@ serve(async (req) => {
   console.log(`[ArtDirector] Authenticated user: ${userId}`);
 
   try {
-    const { images, bannerText, ctaText, theme, creativeType } = await req.json();
+    const { images, bannerText, ctaText, theme, creativeType, imageContent } = await req.json();
     const themeKey = (theme && THEME_GUIDELINES[theme as ThemeKey]) ? (theme as ThemeKey) : null;
     const ctKey = (creativeType && CREATIVE_TYPE_GUIDELINES[creativeType as CreativeTypeKey])
       ? (creativeType as CreativeTypeKey)
