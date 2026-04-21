@@ -1755,10 +1755,22 @@ export default function AgenteDiretorArte() {
                     </button>
                   </div>
                   {creativeStyle === 'brand' && !brandProfile && (
-                    <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      Selecione um perfil de marca no menu lateral
-                    </p>
+                    <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                      <p className="text-xs text-amber-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Nenhum perfil de marca selecionado
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setBrandPickerOpen(true)}
+                        className="min-h-[44px] sm:min-h-[36px]"
+                      >
+                        <Palette className="w-4 h-4 mr-1" />
+                        Selecionar perfil de marca
+                      </Button>
+                    </div>
                   )}
                   {creativeStyle === 'brand' && brandProfile && (
                     <div className="mt-3 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
@@ -2442,10 +2454,22 @@ export default function AgenteDiretorArte() {
                       </button>
                     </div>
                     {creativeStyle === 'brand' && !brandProfile && (
-                      <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        Selecione um perfil de marca no menu lateral
-                      </p>
+                      <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                        <p className="text-xs text-amber-500 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Nenhum perfil de marca selecionado
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setBrandPickerOpen(true)}
+                          className="min-h-[44px] sm:min-h-[36px]"
+                        >
+                          <Palette className="w-4 h-4 mr-1" />
+                          Selecionar perfil de marca
+                        </Button>
+                      </div>
                     )}
                     {creativeStyle === 'brand' && brandProfile && (
                       <div className="mt-3 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
