@@ -9,7 +9,11 @@ const corsHeaders = {
 };
 
 // Master user email - secret with hardcoded fallback for resilience.
-const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
+const MASTER_EMAIL_SECRET = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase().trim();
+const MASTER_EMAILS = new Set<string>([
+  "digitalmastermkt@gmail.com",
+  ...(MASTER_EMAIL_SECRET.includes("@") ? [MASTER_EMAIL_SECRET] : []),
+]);
 
 const log = (step: string, details?: unknown) =>
   console.log(`[CHECK-SUBSCRIPTION] ${step}`, details ?? "");
@@ -42,7 +46,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User email not available");
 
     // Master user bypass - always return Elite subscription
-    if (MASTER_USER_EMAIL && user.email.toLowerCase() === MASTER_USER_EMAIL) {
+    if (MASTER_EMAILS.has(user.email.toLowerCase().trim())) {
       log("Master user detected, granting Elite access");
       return new Response(
         JSON.stringify({ 

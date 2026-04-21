@@ -549,8 +549,13 @@ COMPOSIÇÃO COM PESSOA:
   }
 };
 
-// Master user email - secret with hardcoded fallback for resilience.
-const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
+// Master user emails - includes secret + hardcoded fallback for resilience.
+// If the secret is misconfigured (not an email), the hardcoded fallback ensures master access works.
+const MASTER_EMAIL_SECRET = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase().trim();
+const MASTER_EMAILS = new Set<string>([
+  "digitalmastermkt@gmail.com",
+  ...(MASTER_EMAIL_SECRET.includes("@") ? [MASTER_EMAIL_SECRET] : []),
+]);
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -596,7 +601,7 @@ serve(async (req) => {
         if (user?.id) {
           userId = user.id;
           userEmail = user.email || null;
-          isMasterUser = !!MASTER_USER_EMAIL && (userEmail || "").toLowerCase() === MASTER_USER_EMAIL;
+          isMasterUser = MASTER_EMAILS.has((userEmail || "").toLowerCase().trim());
         }
       } catch (e) {
         console.log("[generate-creative-v2] Could not get user from token, using anonymous");
