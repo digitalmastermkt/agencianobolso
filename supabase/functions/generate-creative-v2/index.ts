@@ -664,6 +664,7 @@ serve(async (req) => {
       renderTextOnImage = false,
       theme, // optional: 'promocao' | 'lancamento' | 'data_comemorativa' | 'institucional' | 'servico'
       creativeType, // optional: 'trafego_pago' | 'live_evento' | 'data_comemorativa' | 'lancamento' | 'institucional' | 'aviso_comunicado'
+      imageContent, // optional analysis from analyze-person-photo
     } = await req.json();
     
     console.log("[generate-creative-v2] renderTextOnImage:", renderTextOnImage);
