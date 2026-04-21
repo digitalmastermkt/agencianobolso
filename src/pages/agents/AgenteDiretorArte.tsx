@@ -2654,6 +2654,7 @@ export default function AgenteDiretorArte() {
                       variant="gradient"
                       size="lg"
                       disabled={loading || !artText.trim() || limitReached}
+                      title={limitReached ? "Limite de 10 artes atingido no plano gratuito" : ""}
                     >
                       {loading ? (
                         <div className="flex flex-col items-center gap-2 w-full">
