@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { VisualIdentity } from "./IdentityVisualCard";
 import { PersonAnalysis } from "./PersonPhotoUpload";
+import { CreativeTypeSelector } from "./CreativeTypeSelector";
+import { CREATIVE_TYPES, DEFAULT_CREATIVE_TYPE, getCreativeTypeMeta, type CreativeType } from "@/lib/creativeTypes";
 
 interface BannerImage {
   style: string;
@@ -113,6 +115,7 @@ export function DesignGeneratorForm({
   const [selectedFormats, setSelectedFormats] = useState<string[]>(["quadrado"]);
   const [selectedStyle, setSelectedStyle] = useState("editorial_premium");
   const [selectedTheme, setSelectedTheme] = useState<string>("institucional");
+  const [creativeType, setCreativeType] = useState<CreativeType>(DEFAULT_CREATIVE_TYPE);
   const [formData, setFormData] = useState({
     bannerText: "",
     cta: "",
@@ -245,6 +248,7 @@ export function DesignGeneratorForm({
             creativeStyle: 'brand',
             referenceImages: personPhotoUrl ? [{ url: personPhotoUrl, type: 'person' }] : [],
             theme: selectedTheme,
+            creativeType,
             // Legacy compatibility fields still consumed by v2
             context: formData.bannerText,
             headline: formData.bannerText.substring(0, 50),
