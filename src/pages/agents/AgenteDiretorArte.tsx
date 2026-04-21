@@ -1767,6 +1767,11 @@ export default function AgenteDiretorArte() {
                     </div>
                   )}
 
+                  {/* Creative Type Selector */}
+                  <div className="mt-3">
+                    <CreativeTypeSelector value={creativeType} onChange={setCreativeType} />
+                  </div>
+
                   {/* Theme Selector */}
                   <div className="mt-3 space-y-1.5">
                     <Label className="text-xs font-medium">Tema da arte</Label>
