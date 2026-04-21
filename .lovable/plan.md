@@ -2,49 +2,50 @@
 
 ## Diagnóstico
 
-Mesmo no preview a geração falha. Preciso investigar a fundo para identificar a causa real antes de mudar código. Os logs do `check-subscription` aparecem normais, mas não vi logs do `generate-creative-v2` na execução recente — o que sugere que ou:
+O código de login **não foi alterado**. O erro nos logs do Supabase é claro:
 
-1. A função está sendo chamada mas falhando silenciosamente (erro de payload, modelo, ou timeout)
-2. A função nem está sendo invocada (erro no frontend antes da chamada)
-3. A função retorna erro estruturado que o frontend não está mostrando claramente
+```
+error_code: "invalid_credentials"
+msg: "400: Invalid login credentials"
+path: "/token"
+```
 
-## Plano de Investigação e Correção
+Isso significa: **o e-mail e/ou senha digitados não batem com o que está cadastrado no Supabase Auth**. Não é bug do app — é credencial errada.
 
-### Passo 1 — Coletar evidências (read-only)
-- Ler logs recentes da edge function `generate-creative-v2` (últimas execuções) para ver o erro exato.
-- Ler logs de `art-director-decision` (etapa anterior do pipeline).
-- Ler console logs do navegador no preview para identificar erro client-side.
-- Inspecionar `src/pages/agents/AgenteDiretorArte.tsx` no trecho do `handleGenerate` para confirmar payload enviado.
-- Inspecionar `supabase/functions/generate-creative-v2/index.ts` nas linhas críticas (chamada ao gateway, validação de inputs, tratamento de erro).
-- Conferir se `LOVABLE_API_KEY` está nos secrets (já confirmado que está).
+Houve **5 tentativas seguidas** falhando com esse mesmo erro, todas vindas do `https://agencianobolso.lovable.app/`. Antes disso há um `refresh_token_not_found`, indicando que a sessão antiga expirou e foi deslogada.
 
-### Passo 2 — Identificar a causa raiz
-Possíveis causas a verificar:
-- **Modelo errado ainda em algum lugar**: confirmar que ambas linhas 208 e 1263 foram realmente atualizadas para `google/gemini-2.5-flash-image-preview` (não há resíduo de `gemini-3-pro-image-preview`).
-- **Payload inválido ao gateway**: `image_url.url` recebendo string vazia, undefined ou objeto.
-- **Timeout no gateway**: imagem muito grande sendo enviada como base64 estourando 150s.
-- **Erro 402/429 do gateway**: créditos da workspace Lovable AI esgotados (retorna 402) ou rate limit (429).
-- **Resposta sem `images`**: o gateway retornando texto em vez de imagem por modelo/prompt incorreto.
-- **Erro CORS/network**: chamada nem sai do browser.
+## Causas possíveis (ordem de probabilidade)
 
-### Passo 3 — Aplicar correção pontual
-Após identificar a causa real, vou aplicar **a correção mínima necessária**. Possíveis ações (depende do diagnóstico):
+1. **Senha digitada errada** (mais comum) — caps lock, espaço extra, ou esqueceu mesmo.
+2. **Conta `digitalmastermkt@gmail.com` não existe no Supabase Auth** desse projeto — pode ter sido criada apenas localmente em outro ambiente.
+3. **Senha foi alterada** em algum momento e a antiga não funciona mais.
 
-- Se for crédito Lovable AI esgotado (402) → avisar o usuário para adicionar créditos em Settings > Workspace > Usage. **Não há fix de código.**
-- Se for payload inválido → corrigir o ponto exato no frontend ou backend.
-- Se for tratamento de erro silencioso → adicionar `toast` com mensagem clara no frontend e logging mais explícito no backend.
-- Se for timeout → reduzir tamanho da imagem de referência antes do envio.
+## Solução
 
-### Passo 4 — Verificação
-- Testar geração no preview logado como master.
-- Confirmar log `Generating variation 1/...` e resposta com imagem.
-- Se persistir, retornar com novo diagnóstico baseado no log mais recente.
+**Não há código para corrigir.** A ação é resetar a senha:
 
-## NÃO será tocado
-- Lógica de créditos da app (`debit_user_credits`, `refund_user_credits`).
-- Schema do banco, RLS, auth, Stripe, PWA.
-- Fluxo do `art-director-decision` (a menos que os logs apontem ele como culpado).
+### Opção A (recomendada): Resetar a senha pelo próprio app
+1. Na tela de login, clicar em **"Esqueci minha senha"**.
+2. Informar `digitalmastermkt@gmail.com`.
+3. Abrir o e-mail, clicar no link, definir nova senha em `/reset-password`.
+4. Voltar e logar com a senha nova.
 
-## Observação importante
-O erro pode ser **402 Payment Required** do Lovable AI Gateway (créditos da workspace esgotados, separado dos créditos da app). Esse erro precisa ser surfado claramente ao usuário com toast — não é um bug de código, é falta de saldo na workspace. Vou confirmar isso nos logs antes de qualquer mudança.
+### Opção B: Resetar direto no painel Supabase
+1. Abrir [Auth → Users](https://supabase.com/dashboard/project/mqzbuctebbyryptmprkc/auth/users).
+2. Localizar `digitalmastermkt@gmail.com`.
+3. Se **não existir**, criar com "Add user" → "Create new user" e definir uma senha.
+4. Se **existir**, clicar nos 3 pontos → "Send password recovery" ou "Reset password".
+
+### Opção C: Confirmar que o usuário existe
+Se a Opção A enviar e-mail mas você não receber, é sinal que o usuário não existe nesse Supabase. Use a Opção B para criar.
+
+## O que NÃO vai ser feito
+
+- Não vou mexer em `Auth.tsx`, `useAuth`, nem em provider de OAuth — todos estão funcionando (logs mostram `/user` retornando 200 antes do logout).
+- Não vou alterar políticas, RLS ou edge functions de auth.
+- Não vou tocar no fluxo do master user — ele só ativa **depois** que o login bem-sucedido acontece.
+
+## Verificação
+
+Após resetar a senha e logar com sucesso, os logs do Supabase Auth mostrarão `status: 200` em `/token`, e o app entra normalmente. A geração de arte (corrigida nas mensagens anteriores) deve funcionar logo em seguida.
 
