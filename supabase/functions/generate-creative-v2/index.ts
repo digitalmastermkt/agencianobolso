@@ -818,6 +818,16 @@ Diretrizes obrigatórias por tema:
 - servico: paleta neutra com accent da marca, estilo minimal/clean, foco em benefício.
 Aplique a diretriz correspondente ao tema "${theme}" na composição, paleta e estilo.
 ` : ''}
+${creativeType ? `TIPO DE CRIATIVO: ${String(creativeType).toUpperCase()}
+Diretrizes estruturais obrigatórias por tipo de criativo (define HIERARQUIA, presença de CTA e ATMOSFERA):
+- trafego_pago: headline forte + subheadline de apoio + CTA destacado e clicável. Foco em conversão.
+- live_evento: DATA e HORÁRIO em tipografia grande são prioridade. Hierarquia: data/hora > tema > "Participe"/"Assista". Atmosfera dinâmica e energética. CTA deve ser de participação, não venda.
+- data_comemorativa: mensagem afetiva CENTRALIZADA + logo da marca em destaque sutil. SEM CTA. Atmosfera emocional, calorosa, festiva.
+- lancamento: pouco texto, MUITO impacto visual. Suspense ou data de lançamento. CTA opcional e sutil. Estilo premium ou dramático.
+- institucional: equilíbrio visual, tom sóbrio. Destaque para propósito ou conquista. SEM CTA. Sem urgência.
+- aviso_comunicado: TEXTO GRANDE E LEGÍVEL é prioridade. Layout clean, hierarquia simples, contraste máximo. SEM CTA.
+Aplique a diretriz do tipo "${creativeType}" na composição, hierarquia e atmosfera da arte gerada.
+` : ''}
 IMPORTANTE: 
 1. DEDUZA automaticamente o melhor HEADLINE, SUBHEADLINE e CTA a partir do "Texto da arte"
 2. O headline deve ser CURTO e IMPACTANTE (máx 50 caracteres)
