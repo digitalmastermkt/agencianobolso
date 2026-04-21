@@ -1,80 +1,70 @@
 
 
-# Auditoria e Refatoração — Agência no Bolso
+# Sistema de Tipos de Criativo
 
-## Prioridade 1 — Segurança: remover e-mails hardcoded
+Adicionar uma camada de **tipo de criativo** que muda hierarquia visual, presença de CTA, atmosfera e prompt — sem tocar em créditos, auth, PWA, Storage ou histórico.
 
-**Problema:** Três Edge Functions e um arquivo do frontend contêm `digitalmastermkt@gmail.com` hardcoded.
+## 1. Enum compartilhado (frontend + edge functions)
 
-**Ação:**
-- Adicionar secret `MASTER_USER_EMAIL` no Supabase (será solicitada ao usuário).
-- Refatorar para ler `Deno.env.get('MASTER_USER_EMAIL')` em:
-  - `supabase/functions/analyze-instagram-identity/index.ts`
-  - `supabase/functions/generate-creative-v2/index.ts`
-  - `supabase/functions/check-subscription/index.ts`
-- Frontend (`src/lib/constants.ts`): manter helper `isMasterUser()` mas remover o e-mail literal — passar a comparar contra um valor vindo de variável pública opcional `VITE_MASTER_USER_EMAIL` (string vazia se não definida). Isso desacopla o código do e-mail real.
+Definir 6 tipos com metadados (label, ícone, descrição, regras estruturais):
 
-## Prioridade 2 — Consolidar funções de geração
+| Tipo | Hierarquia | CTA? | Atmosfera |
+|---|---|---|---|
+| `trafego_pago` | Headline + Sub + CTA destacado | Sim, forte | Conversão / urgência |
+| `live_evento` | Data/hora grandes + Tema + "Participe" | "Participe"/"Assista" | Dinâmica, energética |
+| `data_comemorativa` | Mensagem afetiva centralizada + logo | Não | Emocional, festiva |
+| `lancamento` | Pouco texto, suspense, data | Opcional | Premium, dramático |
+| `institucional` | Propósito/marca | Não | Sóbrio, equilibrado |
+| `aviso_comunicado` | Texto grande legível | Não | Clean, direto |
 
-**Estado atual:**
-| Função | Usada no frontend? | Status |
-|---|---|---|
-| `generate-creative-v2` | Sim (AgenteDiretorArte) — 1380 linhas, mais completa | **MANTER** |
-| `generate-personalized-banner` | Sim (DesignGeneratorForm) — 141 linhas | Migrar chamada → deletar |
-| `generate_creatives` | Não | Deletar |
-| `generate-banner-images` | Não | Deletar |
+Arquivo novo: `src/lib/creativeTypes.ts` exportando `CREATIVE_TYPES` (array com value/label/icon/description) e `CreativeType` type. Espelho em cada edge function (para evitar import cross-boundary).
 
-**Ação:**
-- Adaptar `DesignGeneratorForm.tsx` para chamar `generate-creative-v2` com payload equivalente (mapear campos atuais para o contrato da v2).
-- Deletar diretórios das 3 funções obsoletas + entradas no `supabase/config.toml`.
-- Adicionar comentário-cabeçalho em `generate-creative-v2/index.ts` explicando que ela é a única função de geração e por quê.
-- Usar `supabase--delete_edge_functions` para remover as funções deployadas.
+## 2. UI — `DesignGeneratorForm.tsx`
 
-## Prioridade 3 — Variação visual por tema
+- **Antes** do campo "Texto Principal", adicionar bloco **"Tipo de Criativo"** com grid 2 colunas (mobile: 1) de cards selecionáveis (mesma estética do `STYLE_OPTIONS` atual: ícone + label + descrição curta, 44px+ touch target).
+- Estado `selectedCreativeType` (default: `trafego_pago` — preserva comportamento atual).
+- Esconder campo **CTA** quando tipo for `data_comemorativa`, `institucional` ou `aviso_comunicado` (não inventar CTA onde não cabe).
+- Trocar placeholder do "Texto Principal" conforme tipo (ex: live mostra "Ex: Live sobre Tráfego Pago — Quinta 20h").
+- Enviar `creativeType: selectedCreativeType` no payload de `generate-creative-v2`.
 
-**Ação:**
-- Em `art-director-decision/index.ts`: aceitar parâmetro opcional `theme` (`promocao | lancamento | data_comemorativa | institucional | servico`). Injetar no system prompt um bloco de diretrizes por tema (paleta, estilo `clean|dynamic|premium|festive`, atmosfera, composição).
-- Estender o tipo `ArtDirectorDecision.style` para incluir `dynamic` e `festive`.
-- `generate-creative-v2` aceita e repassa `theme` ao art director.
-- `DesignGeneratorForm.tsx` e `AgenteDiretorArte.tsx`: novo campo Select "Tema da arte" com as 5 opções; envia no payload.
+Também adicionar o seletor em `src/pages/agents/AgenteDiretorArte.tsx` (mesmo componente reutilizável para manter consistência) — criar `src/components/banner/CreativeTypeSelector.tsx` para evitar duplicação.
 
-## Prioridade 4 — Concorrência na geração múltipla
+## 3. `art-director-decision/index.ts`
 
-**Ação em `generate-creative-v2`:**
-- Loop de variações já é sequencial. Adicionar `await new Promise(r => setTimeout(r, 500))` entre variações.
-- Wrapper de retry com backoff exponencial (500ms → 1s → 2s, máx 3 tentativas) ao detectar HTTP 429 da chamada de imagem.
+- Aceitar `creativeType` no body.
+- Adicionar `CREATIVE_TYPE_GUIDELINES` (mapa por tipo) com regras estruturais específicas: hierarquia, presença de CTA, tom, composição.
+- Injetar no system prompt um bloco **"DIRETRIZES DE TIPO DE CRIATIVO"** (combina com o `THEME_GUIDELINES` atual — tipo define a estrutura, tema reforça a paleta/atmosfera).
+- Para tipos sem CTA, instruir o modelo a **omitir** o campo `cta` no JSON.
+- Para `aviso_comunicado` e `data_comemorativa`, forçar `template: pessoa_centro` quando aplicável.
 
-**Frontend (`AgenteDiretorArte.tsx` e `DesignGeneratorForm.tsx`):**
-- Estado `generationProgress: { current, total, status }` já existe parcialmente — exibir progresso "Gerando variação X de Y" com `Progress` bar.
+## 4. `generate-creative-v2/index.ts`
 
-## Prioridade 5 — Limpeza geral
+- Aceitar `creativeType` no body e repassar ao `art-director-decision` quando invocado internamente.
+- Adicionar `CREATIVE_TYPE_PROMPT_BLOCKS` (mapa) que injeta instruções no prompt final do Gemini:
+  - `live_evento`: "destacar data e horário em tipografia grande, hierarquia: data > tema > chamada"
+  - `data_comemorativa`: "logo da marca em destaque, sem CTA, atmosfera celebrativa"
+  - `aviso_comunicado`: "texto grande e legível, contraste máximo, layout clean"
+  - etc.
+- Default: comportamento atual (equivalente a `trafego_pago`) para retrocompatibilidade.
 
-- **Imports não usados:** rodar varredura com `eslint --fix` focada em `no-unused-vars` apenas nos arquivos `src/`.
-- **Mensagens de erro em PT-BR:** padronizar respostas das Edge Functions remanescentes (`{ error: "mensagem em português" }`).
-- **Hooks duplicados:** `usePlanAccess` já consome `useSubscription` — sem duplicação real. `useCreditsBalance` é independente (créditos ≠ assinatura). **Não consolidar** para evitar quebrar fluxos. Apenas documentar a separação no topo de cada arquivo.
-- **Componentes/páginas órfãos:** validar via `rg` cada arquivo em `src/pages` e `src/components` contra rotas em `App.tsx` e imports. Remover apenas itens com zero referências (lista será exibida antes de deletar).
+## 5. Compatibilidade
+
+- Todos os parâmetros novos são **opcionais**. Chamadas sem `creativeType` continuam funcionando como hoje (`trafego_pago` implícito).
+- Schema do banco intacto. `project_generations` armazena os campos atuais; `creativeType` opcionalmente entra no payload `images`/metadata sem migração.
+- Sem mudanças em débito de créditos, lógica de retry/backoff (P4 anterior preservada), ou autenticação.
 
 ## Arquivos modificados
 
-**Edge Functions:**
-- editar: `analyze-instagram-identity`, `generate-creative-v2`, `check-subscription`, `art-director-decision`
-- deletar: `generate_creatives`, `generate-banner-images`, `generate-personalized-banner`
-- atualizar: `supabase/config.toml`
+**Novos:**
+- `src/lib/creativeTypes.ts`
+- `src/components/banner/CreativeTypeSelector.tsx`
 
-**Frontend:**
-- `src/lib/constants.ts`
-- `src/components/banner/DesignGeneratorForm.tsx` (migrar invoke + campo tema + progresso)
-- `src/pages/agents/AgenteDiretorArte.tsx` (campo tema)
+**Editados:**
+- `src/components/banner/DesignGeneratorForm.tsx` (seletor + esconder CTA condicional + enviar `creativeType`)
+- `src/pages/agents/AgenteDiretorArte.tsx` (mesmo seletor + enviar `creativeType`)
+- `supabase/functions/art-director-decision/index.ts` (guidelines + system prompt)
+- `supabase/functions/generate-creative-v2/index.ts` (prompt blocks + repasse ao art-director)
 
-## O que NÃO será tocado
-Auth (`useAuth`, `ProtectedRoute`, `AdminRoute`), créditos (`debit_user_credits`, `refund_user_credits`), PWA, Stripe (`create-checkout`, `stripe-webhook`, `check-subscription` apenas troca do e-mail), schema do banco, rotas públicas de captura.
-
-## Passos de execução
-1. Solicitar secret `MASTER_USER_EMAIL`.
-2. Refatorar e-mail hardcoded (P1).
-3. Migrar `DesignGeneratorForm` → `generate-creative-v2`, deletar funções obsoletas (P2).
-4. Adicionar `theme` no fluxo art-director + UI (P3).
-5. Adicionar delay/retry/backoff + UI de progresso (P4).
-6. Limpeza de imports e arquivos órfãos (P5).
-7. Listar mudanças no chat para revisão.
+## NÃO será tocado
+Auth, ProtectedRoute, créditos (`debit_user_credits`/`refund_user_credits`), PWA, Stripe, schema do banco, Storage, histórico de gerações, rotas públicas.
 
