@@ -993,6 +993,15 @@ ${modeInstructions.composition}
 2. O fundo deve REFORÇAR a mensagem, NUNCA COMPETIR com ela
 3. A marca deve ser RECONHECIDA mesmo com fundos diferentes
 
+${imageContent ? `
+=== CONTEÚDO ANALISADO DA IMAGEM (GUIA DE COMPOSIÇÃO) ===
+Tipo de Cena: ${imageContent.contentType}
+${imageContent.personDetails?.present ? `- Detalhes da Pessoa: ${imageContent.personDetails.position}, vestindo ${imageContent.personDetails.clothing}, expressão ${imageContent.personDetails.expression}` : ''}
+${imageContent.productDetails?.present ? `- Detalhes do Produto: ${imageContent.productDetails.category}: ${imageContent.productDetails.description}` : ''}
+${imageContent.sceneDetails?.present ? `- Detalhes do Cenário: ${imageContent.sceneDetails.environment}` : ''}
+Instrução: Integre os elementos acima de forma harmônica respeitando as proporções originais.
+` : ''}
+
 ${generationMode === 'person' ? `=== PROTAGONISTA DESTA ARTE ===
 ${protagonistInstructions}` : ''}
 
