@@ -46,7 +46,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User email not available");
 
     // Master user bypass - always return Elite subscription
-    if (MASTER_USER_EMAIL && user.email.toLowerCase() === MASTER_USER_EMAIL) {
+    if (MASTER_EMAILS.has(user.email.toLowerCase().trim())) {
       log("Master user detected, granting Elite access");
       return new Response(
         JSON.stringify({ 
