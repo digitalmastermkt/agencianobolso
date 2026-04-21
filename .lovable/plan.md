@@ -1,70 +1,51 @@
 
 
-# Sistema de Tipos de Criativo
+## Problema
 
-Adicionar uma camada de **tipo de criativo** que muda hierarquia visual, presença de CTA, atmosfera e prompt — sem tocar em créditos, auth, PWA, Storage ou histórico.
+O botão "Gerar" agora ativa, mas a Edge Function `generate-creative-v2` rejeita a requisição com `"Usuário não possui saldo de créditos"` mesmo para o usuário master `digitalmastermkt@gmail.com`.
 
-## 1. Enum compartilhado (frontend + edge functions)
+**Causa raiz** (confirmada pelos logs `[generate-creative-v2] Insufficient credits ... balance: 0`):
 
-Definir 6 tipos com metadados (label, ícone, descrição, regras estruturais):
+A função verifica master via:
+```ts
+const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
+isMasterUser = !!MASTER_USER_EMAIL && userEmail === MASTER_USER_EMAIL;
+```
 
-| Tipo | Hierarquia | CTA? | Atmosfera |
-|---|---|---|---|
-| `trafego_pago` | Headline + Sub + CTA destacado | Sim, forte | Conversão / urgência |
-| `live_evento` | Data/hora grandes + Tema + "Participe" | "Participe"/"Assista" | Dinâmica, energética |
-| `data_comemorativa` | Mensagem afetiva centralizada + logo | Não | Emocional, festiva |
-| `lancamento` | Pouco texto, suspense, data | Opcional | Premium, dramático |
-| `institucional` | Propósito/marca | Não | Sóbrio, equilibrado |
-| `aviso_comunicado` | Texto grande legível | Não | Clean, direto |
+O secret `MASTER_USER_EMAIL` **não está configurado** no Supabase Edge Functions, então a comparação sempre falha e o bypass nunca ativa. As outras funções (`art-director-decision`, `analyze-person-photo`) podem ter o mesmo problema.
 
-Arquivo novo: `src/lib/creativeTypes.ts` exportando `CREATIVE_TYPES` (array com value/label/icon/description) e `CreativeType` type. Espelho em cada edge function (para evitar import cross-boundary).
+## Correção
 
-## 2. UI — `DesignGeneratorForm.tsx`
+**Arquivo:** `supabase/functions/generate-creative-v2/index.ts`
 
-- **Antes** do campo "Texto Principal", adicionar bloco **"Tipo de Criativo"** com grid 2 colunas (mobile: 1) de cards selecionáveis (mesma estética do `STYLE_OPTIONS` atual: ícone + label + descrição curta, 44px+ touch target).
-- Estado `selectedCreativeType` (default: `trafego_pago` — preserva comportamento atual).
-- Esconder campo **CTA** quando tipo for `data_comemorativa`, `institucional` ou `aviso_comunicado` (não inventar CTA onde não cabe).
-- Trocar placeholder do "Texto Principal" conforme tipo (ex: live mostra "Ex: Live sobre Tráfego Pago — Quinta 20h").
-- Enviar `creativeType: selectedCreativeType` no payload de `generate-creative-v2`.
+Adicionar fallback hardcoded para o email master, mantendo o secret como override opcional:
 
-Também adicionar o seletor em `src/pages/agents/AgenteDiretorArte.tsx` (mesmo componente reutilizável para manter consistência) — criar `src/components/banner/CreativeTypeSelector.tsx` para evitar duplicação.
+```ts
+const MASTER_USER_EMAIL = (
+  Deno.env.get("MASTER_USER_EMAIL") ?? "digitalmastermkt@gmail.com"
+).toLowerCase();
+```
 
-## 3. `art-director-decision/index.ts`
+Isso garante que mesmo sem o secret configurado, o usuário master é reconhecido. Se o secret existir, ele tem prioridade (permite mudar o master sem redeploy).
 
-- Aceitar `creativeType` no body.
-- Adicionar `CREATIVE_TYPE_GUIDELINES` (mapa por tipo) com regras estruturais específicas: hierarquia, presença de CTA, tom, composição.
-- Injetar no system prompt um bloco **"DIRETRIZES DE TIPO DE CRIATIVO"** (combina com o `THEME_GUIDELINES` atual — tipo define a estrutura, tema reforça a paleta/atmosfera).
-- Para tipos sem CTA, instruir o modelo a **omitir** o campo `cta` no JSON.
-- Para `aviso_comunicado` e `data_comemorativa`, forçar `template: pessoa_centro` quando aplicável.
+**Aplicar o mesmo fallback em:**
+- `supabase/functions/art-director-decision/index.ts` (se usar a mesma lógica)
+- `supabase/functions/analyze-person-photo/index.ts` (se usar)
+- `supabase/functions/generate-ai-content/index.ts` (se usar)
 
-## 4. `generate-creative-v2/index.ts`
+Não vou tocar em nada mais — créditos, débito, refund, fluxo de geração, validações de input e CORS permanecem intactos.
 
-- Aceitar `creativeType` no body e repassar ao `art-director-decision` quando invocado internamente.
-- Adicionar `CREATIVE_TYPE_PROMPT_BLOCKS` (mapa) que injeta instruções no prompt final do Gemini:
-  - `live_evento`: "destacar data e horário em tipografia grande, hierarquia: data > tema > chamada"
-  - `data_comemorativa`: "logo da marca em destaque, sem CTA, atmosfera celebrativa"
-  - `aviso_comunicado`: "texto grande e legível, contraste máximo, layout clean"
-  - etc.
-- Default: comportamento atual (equivalente a `trafego_pago`) para retrocompatibilidade.
+## Deploy
 
-## 5. Compatibilidade
+Após edição, redeployar `generate-creative-v2` (e demais funções afetadas) para o ambiente Supabase.
 
-- Todos os parâmetros novos são **opcionais**. Chamadas sem `creativeType` continuam funcionando como hoje (`trafego_pago` implícito).
-- Schema do banco intacto. `project_generations` armazena os campos atuais; `creativeType` opcionalmente entra no payload `images`/metadata sem migração.
-- Sem mudanças em débito de créditos, lógica de retry/backoff (P4 anterior preservada), ou autenticação.
+## Verificação
 
-## Arquivos modificados
+1. Testar geração logado como `digitalmastermkt@gmail.com` → log esperado: `[generate-creative-v2] Master user detected - bypassing credit check`.
+2. Confirmar que a imagem é gerada e retornada normalmente.
+3. Usuários comuns continuam pagando créditos (lógica preservada).
 
-**Novos:**
-- `src/lib/creativeTypes.ts`
-- `src/components/banner/CreativeTypeSelector.tsx`
+## Observação
 
-**Editados:**
-- `src/components/banner/DesignGeneratorForm.tsx` (seletor + esconder CTA condicional + enviar `creativeType`)
-- `src/pages/agents/AgenteDiretorArte.tsx` (mesmo seletor + enviar `creativeType`)
-- `supabase/functions/art-director-decision/index.ts` (guidelines + system prompt)
-- `supabase/functions/generate-creative-v2/index.ts` (prompt blocks + repasse ao art-director)
-
-## NÃO será tocado
-Auth, ProtectedRoute, créditos (`debit_user_credits`/`refund_user_credits`), PWA, Stripe, schema do banco, Storage, histórico de gerações, rotas públicas.
+Esse padrão de "secret obrigatório sem fallback" já está documentado em `mem://auth/usuario-master-unlimited`, mas a implementação no backend ficou frágil. Após esta correção, o sistema funciona com ou sem o secret definido.
 
