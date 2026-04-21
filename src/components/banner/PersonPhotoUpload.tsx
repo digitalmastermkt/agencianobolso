@@ -9,6 +9,25 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandPersonPhotosManager, PersonPhoto } from "./BrandPersonPhotosManager";
 
+export interface ImageContent {
+  contentType: "person" | "product" | "scene" | "person_with_product" | "person_in_scene" | "other";
+  personDetails: {
+    present: boolean;
+    position: "front" | "side" | "diagonal" | "back";
+    clothing: string;
+    expression: string;
+  };
+  productDetails: {
+    present: boolean;
+    category: "roupa" | "acessório" | "alimento" | "eletrônico" | "móvel" | "outro";
+    description: string;
+  };
+  sceneDetails: {
+    present: boolean;
+    environment: "estúdio" | "loja" | "natureza" | "escritório" | "externo" | string;
+  };
+}
+
 export interface PersonAnalysis {
   description: string;
   pose: string;
@@ -20,6 +39,7 @@ export interface PersonAnalysis {
   };
   style: string;
   expression: string;
+  imageContent?: ImageContent;
 }
 
 interface BrandProfile {
