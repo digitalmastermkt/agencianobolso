@@ -75,6 +75,8 @@ import { CREDIT_COSTS } from "@/lib/credits-config";
 import { toPng } from 'html-to-image';
 import { CreativeTypeSelector } from "@/components/banner/CreativeTypeSelector";
 import { DEFAULT_CREATIVE_TYPE, type CreativeType } from "@/lib/creativeTypes";
+import { BrandProfilePickerDialog } from "@/components/banner/BrandProfilePickerDialog";
+import { ProjectPickerDialog } from "@/components/banner/ProjectPickerDialog";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
