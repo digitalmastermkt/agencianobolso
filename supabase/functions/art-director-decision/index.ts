@@ -228,7 +228,15 @@ Retorne APENAS o JSON com suas decisões. Nenhum texto adicional.`;
       } else {
         decision.colors = decision.colors.slice(0, 3);
       }
-      
+
+      // Apply creative type post-processing
+      if (omitCta) {
+        decision.cta = undefined;
+      }
+      if (forceCentro) {
+        decision.template = 'pessoa_centro';
+      }
+
     } catch (parseError) {
       console.error('[ArtDirector] Failed to parse decision JSON:', parseError);
       
