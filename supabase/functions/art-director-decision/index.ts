@@ -80,9 +80,14 @@ serve(async (req) => {
   console.log(`[ArtDirector] Authenticated user: ${userId}`);
 
   try {
-    const { images, bannerText, ctaText, theme } = await req.json();
+    const { images, bannerText, ctaText, theme, creativeType } = await req.json();
     const themeKey = (theme && THEME_GUIDELINES[theme as ThemeKey]) ? (theme as ThemeKey) : null;
-    
+    const ctKey = (creativeType && CREATIVE_TYPE_GUIDELINES[creativeType as CreativeTypeKey])
+      ? (creativeType as CreativeTypeKey)
+      : null;
+    const omitCta = ctKey ? TYPES_WITHOUT_CTA.includes(ctKey) : false;
+    const forceCentro = ctKey ? TYPES_FORCE_CENTRO.includes(ctKey) : false;
+
     if (!images || !Array.isArray(images) || images.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Pelo menos uma imagem de referência é necessária' }), 
@@ -102,7 +107,7 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log(`[ArtDirector] Analyzing ${images.length} images for design decisions...`);
+    console.log(`[ArtDirector] Analyzing ${images.length} images. creativeType=${ctKey ?? 'default'} theme=${themeKey ?? 'none'}`);
 
     const systemPrompt = `Você é um DIRETOR DE ARTE especializado em design de banners para Instagram.
 
@@ -122,19 +127,17 @@ ESTRUTURA OBRIGATÓRIA DO JSON:
   "template": "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda",
   "headline": "texto curto e impactante (máximo 8 palavras)",
   "subheadline": "texto de apoio opcional (máximo 12 palavras)",
-  "cta": "chamada para ação curta opcional (máximo 4 palavras)",
-  "colors": ["#HEX1", "#HEX2", "#HEX3"],
+${omitCta ? '  // NÃO INCLUA o campo "cta" — este tipo de criativo não usa CTA\n' : '  "cta": "chamada para ação curta opcional (máximo 4 palavras)",\n'}  "colors": ["#HEX1", "#HEX2", "#HEX3"],
   "style": "clean" | "minimal" | "premium" | "dynamic" | "festive"
 }
 
 CRITÉRIOS DE DECISÃO:
-- template: baseado no equilíbrio visual e espaço para texto
+- template: baseado no equilíbrio visual e espaço para texto${forceCentro ? ' — OBRIGATORIAMENTE use "pessoa_centro" para este tipo de criativo' : ''}
 - headline: extraído ou adaptado do texto fornecido pelo usuário
 - colors: extraídas da identidade visual dos prints (paleta dominante), ajustadas ao tema quando informado
 - style: inferido a partir da estética geral dos prints e do tema da arte
 
-${themeKey ? `DIRETRIZES OBRIGATÓRIAS DE TEMA:\n${THEME_GUIDELINES[themeKey]}\n` : ''}
-RESPONDA APENAS O JSON. NADA MAIS.`;
+${ctKey ? `DIRETRIZES OBRIGATÓRIAS DE TIPO DE CRIATIVO:\n${CREATIVE_TYPE_GUIDELINES[ctKey]}\n` : ''}${themeKey ? `DIRETRIZES OBRIGATÓRIAS DE TEMA:\n${THEME_GUIDELINES[themeKey]}\n` : ''}RESPONDA APENAS O JSON. NADA MAIS.`;
 
     const userPrompt = `Analise estas imagens de referência do Instagram e retorne suas decisões de design.
 
