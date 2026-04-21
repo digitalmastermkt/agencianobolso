@@ -230,7 +230,13 @@ Formato de resposta JSON EXATO:
           clothingColors: ['neutro']
         },
         style: 'casual',
-        expression: 'amigável'
+        expression: 'amigável',
+        imageContent: {
+          contentType: "person",
+          personDetails: { present: true, position: "front", clothing: "casual", expression: "natural" },
+          productDetails: { present: false, category: "outro", description: "" },
+          sceneDetails: { present: false, environment: "estúdio" }
+        }
       };
     }
 
