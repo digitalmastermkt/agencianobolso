@@ -1,51 +1,44 @@
 
 
-## Diagnóstico
+## Problema
 
-O código de login **não foi alterado**. O erro nos logs do Supabase é claro:
-
-```
-error_code: "invalid_credentials"
-msg: "400: Invalid login credentials"
-path: "/token"
-```
-
-Isso significa: **o e-mail e/ou senha digitados não batem com o que está cadastrado no Supabase Auth**. Não é bug do app — é credencial errada.
-
-Houve **5 tentativas seguidas** falhando com esse mesmo erro, todas vindas do `https://agencianobolso.lovable.app/`. Antes disso há um `refresh_token_not_found`, indicando que a sessão antiga expirou e foi deslogada.
-
-## Causas possíveis (ordem de probabilidade)
-
-1. **Senha digitada errada** (mais comum) — caps lock, espaço extra, ou esqueceu mesmo.
-2. **Conta `digitalmastermkt@gmail.com` não existe no Supabase Auth** desse projeto — pode ter sido criada apenas localmente em outro ambiente.
-3. **Senha foi alterada** em algum momento e a antiga não funciona mais.
+Na tela de geração (step final do Diretor de Arte), quando o usuário não tem perfil de marca selecionado, aparece a mensagem **"Selecione um perfil de marca no menu lateral"** — mas **não existe menu lateral**. O perfil só pode ser escolhido voltando ao Step 1 do stepper, e o projeto só no Step 3. Isso quebra o fluxo: o usuário fica preso sem entender onde clicar.
 
 ## Solução
 
-**Não há código para corrigir.** A ação é resetar a senha:
+Adicionar **dois pop-ups (Dialogs)** acessíveis diretamente da tela de geração, mostrando os perfis e projetos cadastrados para seleção rápida — sem precisar voltar nos steps.
 
-### Opção A (recomendada): Resetar a senha pelo próprio app
-1. Na tela de login, clicar em **"Esqueci minha senha"**.
-2. Informar `digitalmastermkt@gmail.com`.
-3. Abrir o e-mail, clicar no link, definir nova senha em `/reset-password`.
-4. Voltar e logar com a senha nova.
+### 1. Pop-up "Selecionar Perfil de Marca"
+- Trocar o texto **"Selecione um perfil de marca no menu lateral"** (linhas 1754 e 2441) por um **botão** "Selecionar perfil de marca".
+- Ao clicar, abre `Dialog` com a lista de perfis cadastrados (reusa a UI do `BrandProfileSelector`: cards com nome, cores e check no selecionado).
+- Inclui botão **"+ Criar novo perfil"** dentro do mesmo dialog para casos sem nenhum perfil.
+- Ao selecionar, fecha o dialog e atualiza `selectedBrandProfileId` — o card "Marca" passa a mostrar o perfil escolhido com cores e badges.
 
-### Opção B: Resetar direto no painel Supabase
-1. Abrir [Auth → Users](https://supabase.com/dashboard/project/mqzbuctebbyryptmprkc/auth/users).
-2. Localizar `digitalmastermkt@gmail.com`.
-3. Se **não existir**, criar com "Add user" → "Create new user" e definir uma senha.
-4. Se **existir**, clicar nos 3 pontos → "Send password recovery" ou "Reset password".
+### 2. Pop-up "Selecionar Projeto"
+- Adicionar, ao lado do nome do projeto atual no header da seção de geração, um botão **"Trocar projeto"** (ou **"Selecionar projeto"** quando `currentProjectId` é null).
+- Abre `Dialog` listando todos os projetos com nome, contagem de banners e indicador do atual.
+- Inclui input + botão **"Criar novo projeto"** dentro do dialog (reaproveita `handleCreateProject`).
+- Ao clicar em um projeto, fecha o dialog e chama `handleSelectProject(id)`.
 
-### Opção C: Confirmar que o usuário existe
-Se a Opção A enviar e-mail mas você não receber, é sinal que o usuário não existe nesse Supabase. Use a Opção B para criar.
+### 3. Componentes novos
+- `src/components/banner/BrandProfilePickerDialog.tsx` — pop-up reutilizável (lista perfis, criar novo, selecionar).
+- `src/components/banner/ProjectPickerDialog.tsx` — pop-up reutilizável (lista projetos, criar novo, selecionar).
 
-## O que NÃO vai ser feito
+Ambos seguem o design system (dark violet, touch targets 44px, mobile-first com Drawer no mobile via `useIsMobile`).
 
-- Não vou mexer em `Auth.tsx`, `useAuth`, nem em provider de OAuth — todos estão funcionando (logs mostram `/user` retornando 200 antes do logout).
-- Não vou alterar políticas, RLS ou edge functions de auth.
-- Não vou tocar no fluxo do master user — ele só ativa **depois** que o login bem-sucedido acontece.
+### 4. Integração em `AgenteDiretorArte.tsx`
+- Substituir as 2 ocorrências do texto "menu lateral" pelos botões que abrem `BrandProfilePickerDialog`.
+- Adicionar botão "Trocar projeto" no header do bloco de geração (próximo ao nome do projeto atual ou ao card de criativo).
+- Manter os Steps 1 e 3 originais funcionando (não removo nada — só adiciono atalhos).
+
+## O que NÃO será tocado
+- Lógica de geração de arte, créditos, edge functions.
+- Schema do banco (`brand_profiles`, `brand_projects`).
+- Stepper / fluxo dos 4 passos atuais.
+- `BrandProfileSelector` original (continua sendo usado no Step 1).
 
 ## Verificação
-
-Após resetar a senha e logar com sucesso, os logs do Supabase Auth mostrarão `status: 200` em `/token`, e o app entra normalmente. A geração de arte (corrigida nas mensagens anteriores) deve funcionar logo em seguida.
+- Na tela de geração, com nenhum perfil selecionado → aparece botão "Selecionar perfil de marca" → clica → dialog abre com perfis → seleciona → card "Marca" mostra perfil escolhido com cores.
+- Mesmo fluxo para projeto: botão "Trocar projeto" → dialog → seleciona → header atualiza.
+- No mobile (375px), os dialogs viram Drawers e respeitam 44px de touch target.
 
