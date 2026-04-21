@@ -290,6 +290,10 @@ export default function AgenteDiretorArte() {
   
   // Delete confirmation dialog
   const [projectToDelete, setProjectToDelete] = useState<ProjectItem | null>(null);
+
+  // Picker dialogs (selecionar perfil/projeto direto da tela de geração)
+  const [brandPickerOpen, setBrandPickerOpen] = useState(false);
+  const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   
   const storageKey = useMemo(
     () => `${PROJECTS_STORAGE_KEY}:${user?.id ?? "anonymous"}`,
