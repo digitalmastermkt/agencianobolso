@@ -549,8 +549,8 @@ COMPOSIÇÃO COM PESSOA:
   }
 };
 
-// Master user email - sourced from MASTER_USER_EMAIL secret (no hardcoding).
-const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
+// Master user email - secret with hardcoded fallback for resilience.
+const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "digitalmastermkt@gmail.com").toLowerCase();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

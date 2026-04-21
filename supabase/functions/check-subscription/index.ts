@@ -8,8 +8,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Master user email - sourced from MASTER_USER_EMAIL secret (no hardcoding).
-const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
+// Master user email - secret with hardcoded fallback for resilience.
+const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "digitalmastermkt@gmail.com").toLowerCase();
 
 const log = (step: string, details?: unknown) =>
   console.log(`[CHECK-SUBSCRIPTION] ${step}`, details ?? "");
