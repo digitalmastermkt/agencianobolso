@@ -75,6 +75,8 @@ import { CREDIT_COSTS } from "@/lib/credits-config";
 import { toPng } from 'html-to-image';
 import { CreativeTypeSelector } from "@/components/banner/CreativeTypeSelector";
 import { DEFAULT_CREATIVE_TYPE, type CreativeType } from "@/lib/creativeTypes";
+import { BrandProfilePickerDialog } from "@/components/banner/BrandProfilePickerDialog";
+import { ProjectPickerDialog } from "@/components/banner/ProjectPickerDialog";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -288,6 +290,10 @@ export default function AgenteDiretorArte() {
   
   // Delete confirmation dialog
   const [projectToDelete, setProjectToDelete] = useState<ProjectItem | null>(null);
+
+  // Picker dialogs (selecionar perfil/projeto direto da tela de geração)
+  const [brandPickerOpen, setBrandPickerOpen] = useState(false);
+  const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   
   const storageKey = useMemo(
     () => `${PROJECTS_STORAGE_KEY}:${user?.id ?? "anonymous"}`,
@@ -1546,6 +1552,16 @@ export default function AgenteDiretorArte() {
                         setSelectedFormat(format as BannerFormat);
                       }}
                     />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setProjectPickerOpen(true)}
+                      className="min-h-[44px]"
+                    >
+                      <FolderOpen className="w-4 h-4 mr-1" />
+                      {currentProjectId ? "Trocar projeto" : "Selecionar projeto"}
+                    </Button>
                     {currentProjectId && (
                       <GenerationsGallery
                         projectId={currentProjectId}
@@ -1749,10 +1765,22 @@ export default function AgenteDiretorArte() {
                     </button>
                   </div>
                   {creativeStyle === 'brand' && !brandProfile && (
-                    <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      Selecione um perfil de marca no menu lateral
-                    </p>
+                    <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                      <p className="text-xs text-amber-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Nenhum perfil de marca selecionado
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setBrandPickerOpen(true)}
+                        className="min-h-[44px] sm:min-h-[36px]"
+                      >
+                        <Palette className="w-4 h-4 mr-1" />
+                        Selecionar perfil de marca
+                      </Button>
+                    </div>
                   )}
                   {creativeStyle === 'brand' && brandProfile && (
                     <div className="mt-3 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
@@ -2436,10 +2464,22 @@ export default function AgenteDiretorArte() {
                       </button>
                     </div>
                     {creativeStyle === 'brand' && !brandProfile && (
-                      <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        Selecione um perfil de marca no menu lateral
-                      </p>
+                      <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                        <p className="text-xs text-amber-500 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Nenhum perfil de marca selecionado
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setBrandPickerOpen(true)}
+                          className="min-h-[44px] sm:min-h-[36px]"
+                        >
+                          <Palette className="w-4 h-4 mr-1" />
+                          Selecionar perfil de marca
+                        </Button>
+                      </div>
                     )}
                     {creativeStyle === 'brand' && brandProfile && (
                       <div className="mt-3 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
@@ -2907,6 +2947,32 @@ export default function AgenteDiretorArte() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BrandProfilePickerDialog
+        open={brandPickerOpen}
+        onOpenChange={setBrandPickerOpen}
+        selectedProfileId={selectedBrandProfileId}
+        onSelect={(p) => setSelectedBrandProfileId(p.id)}
+      />
+
+      <ProjectPickerDialog
+        open={projectPickerOpen}
+        onOpenChange={setProjectPickerOpen}
+        projects={projects}
+        currentProjectId={currentProjectId}
+        onSelect={handleSelectProject}
+        onCreate={async (name) => {
+          const newProject: ProjectItem = {
+            id: crypto.randomUUID(),
+            name,
+            banners: [],
+          };
+          await saveProjectToSupabase(newProject);
+          setProjects((prev) => [newProject, ...prev]);
+          setCurrentProjectId(newProject.id);
+          currentProjectRef.current = newProject.id;
+        }}
+      />
     </DashboardLayout>
   );
 }
