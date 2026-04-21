@@ -8,7 +8,11 @@ const corsHeaders = {
 };
 
 // Master user email - secret with hardcoded fallback for resilience.
-const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
+const MASTER_EMAIL_SECRET = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase().trim();
+const MASTER_EMAILS = new Set<string>([
+  "digitalmastermkt@gmail.com",
+  ...(MASTER_EMAIL_SECRET.includes("@") ? [MASTER_EMAIL_SECRET] : []),
+]);
 
 // Credit costs
 const CREDITS_CREATE_BRAND = 2;
