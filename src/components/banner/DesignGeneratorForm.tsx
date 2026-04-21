@@ -249,6 +249,7 @@ export function DesignGeneratorForm({
             referenceImages: personPhotoUrl ? [{ url: personPhotoUrl, type: 'person' }] : [],
             theme: selectedTheme,
             creativeType,
+            imageContent: person.imageContent,
             // Legacy compatibility fields still consumed by v2
             context: formData.bannerText,
             headline: formData.bannerText.substring(0, 50),

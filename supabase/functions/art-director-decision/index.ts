@@ -80,7 +80,7 @@ serve(async (req) => {
   console.log(`[ArtDirector] Authenticated user: ${userId}`);
 
   try {
-    const { images, bannerText, ctaText, theme, creativeType } = await req.json();
+    const { images, bannerText, ctaText, theme, creativeType, imageContent } = await req.json();
     const themeKey = (theme && THEME_GUIDELINES[theme as ThemeKey]) ? (theme as ThemeKey) : null;
     const ctKey = (creativeType && CREATIVE_TYPE_GUIDELINES[creativeType as CreativeTypeKey])
       ? (creativeType as CreativeTypeKey)
@@ -115,12 +115,18 @@ REGRAS ABSOLUTAS:
 1. Responda EXCLUSIVAMENTE com um JSON válido
 2. NÃO escreva NADA fora do JSON
 3. NÃO adicione comentários, explicações ou texto adicional
-4. NÃO descreva pessoas, rostos, corpos ou aparências
+4. NÃO descreva pessoas, rostos, corpos ou aparências no JSON de resposta
 5. NÃO invente marcas ou logotipos
 6. NÃO use linguagem criativa desnecessária
 7. Seja objetivo e previsível
 
-Sua função é analisar prints de Instagram e retornar DECISÕES DE DESIGN em JSON.
+Sua função é analisar prints de Instagram e informações de conteúdo de imagem para retornar DECISÕES DE DESIGN em JSON.
+
+${imageContent ? `CONTEXTO DA IMAGEM ANALISADA:
+- Tipo de Conteúdo: ${imageContent.contentType}
+- Detalhes da Pessoa: ${imageContent.personDetails?.present ? `${imageContent.personDetails.position}, vestindo ${imageContent.personDetails.clothing}, expressão ${imageContent.personDetails.expression}` : 'Nenhuma pessoa detectada'}
+- Detalhes do Produto: ${imageContent.productDetails?.present ? `${imageContent.productDetails.category}, descrição: ${imageContent.productDetails.description}` : 'Nenhum produto detectado'}
+- Detalhes do Cenário: ${imageContent.sceneDetails?.present ? `Ambiente: ${imageContent.sceneDetails.environment}` : 'Nenhum cenário específico detectado'}` : ''}
 
 ESTRUTURA OBRIGATÓRIA DO JSON:
 {
@@ -131,7 +137,12 @@ ${omitCta ? '  // NÃO INCLUA o campo "cta" — este tipo de criativo não usa C
   "style": "clean" | "minimal" | "premium" | "dynamic" | "festive"
 }
 
-CRITÉRIOS DE DECISÃO:
+CRITÉRIOS DE DECISÃO BASEADOS NO CONTEÚDO:
+- Se contentType for "person": Garanta que o template dê destaque à pessoa. Se creativeType for "trafego_pago" ou "lancamento", sugira composições que foquem na autoridade ou novidade.
+- Se contentType for "product": O layout deve focar no produto. Se houver produto e pessoa ("person_with_product"), equilibre os dois.
+- Se contentType for "scene": O cenário deve servir como base atmosférica para o texto.
+
+DIRETRIZES GERAIS:
 - template: baseado no equilíbrio visual e espaço para texto${forceCentro ? ' — OBRIGATORIAMENTE use "pessoa_centro" para este tipo de criativo' : ''}
 - headline: extraído ou adaptado do texto fornecido pelo usuário
 - colors: extraídas da identidade visual dos prints (paleta dominante), ajustadas ao tema quando informado

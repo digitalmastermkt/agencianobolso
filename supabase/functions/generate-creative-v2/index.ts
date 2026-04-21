@@ -664,6 +664,7 @@ serve(async (req) => {
       renderTextOnImage = false,
       theme, // optional: 'promocao' | 'lancamento' | 'data_comemorativa' | 'institucional' | 'servico'
       creativeType, // optional: 'trafego_pago' | 'live_evento' | 'data_comemorativa' | 'lancamento' | 'institucional' | 'aviso_comunicado'
+      imageContent, // optional analysis from analyze-person-photo
     } = await req.json();
     
     console.log("[generate-creative-v2] renderTextOnImage:", renderTextOnImage);
@@ -781,6 +782,14 @@ serve(async (req) => {
     // ============ STEP 1: Art Director - PROFESSIONAL BRAND PHILOSOPHY ============
     const userPrompt = `TEXTO DA ARTE (o usuário quer este conteúdo na arte):
 "${effectiveArtText.slice(0, 500)}"
+
+${imageContent ? `
+ANÁLISE DE CONTEÚDO DA IMAGEM:
+- Tipo: ${imageContent.contentType}
+- Pessoa: ${imageContent.personDetails?.present ? `${imageContent.personDetails.position}, vestindo ${imageContent.personDetails.clothing}, expressão ${imageContent.personDetails.expression}` : 'Nenhuma'}
+- Produto: ${imageContent.productDetails?.present ? `${imageContent.productDetails.category}: ${imageContent.productDetails.description}` : 'Nenhum'}
+- Cenário: ${imageContent.sceneDetails?.present ? `Ambiente: ${imageContent.sceneDetails.environment}` : 'Nenhum'}
+` : ''}
 
 ${designOrientation ? `ORIENTAÇÃO DE DESIGN E CENA: ${designOrientation.slice(0, 300)}` : ''}
 
@@ -983,6 +992,15 @@ ${modeInstructions.composition}
 1. IDENTIDADE VISUAL É FIXA - Fundo e cenário são VARIÁVEIS
 2. O fundo deve REFORÇAR a mensagem, NUNCA COMPETIR com ela
 3. A marca deve ser RECONHECIDA mesmo com fundos diferentes
+
+${imageContent ? `
+=== CONTEÚDO ANALISADO DA IMAGEM (GUIA DE COMPOSIÇÃO) ===
+Tipo de Cena: ${imageContent.contentType}
+${imageContent.personDetails?.present ? `- Detalhes da Pessoa: ${imageContent.personDetails.position}, vestindo ${imageContent.personDetails.clothing}, expressão ${imageContent.personDetails.expression}` : ''}
+${imageContent.productDetails?.present ? `- Detalhes do Produto: ${imageContent.productDetails.category}: ${imageContent.productDetails.description}` : ''}
+${imageContent.sceneDetails?.present ? `- Detalhes do Cenário: ${imageContent.sceneDetails.environment}` : ''}
+Instrução: Integre os elementos acima de forma harmônica respeitando as proporções originais.
+` : ''}
 
 ${generationMode === 'person' ? `=== PROTAGONISTA DESTA ARTE ===
 ${protagonistInstructions}` : ''}

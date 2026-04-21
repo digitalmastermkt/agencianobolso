@@ -7,6 +7,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ImageContent {
+  contentType: "person" | "product" | "scene" | "person_with_product" | "person_in_scene" | "other";
+  personDetails: {
+    present: boolean;
+    position: "front" | "side" | "diagonal" | "back";
+    clothing: string;
+    expression: string;
+  };
+  productDetails: {
+    present: boolean;
+    category: "roupa" | "acessório" | "alimento" | "eletrônico" | "móvel" | "outro";
+    description: string;
+  };
+  sceneDetails: {
+    present: boolean;
+    environment: "estúdio" | "loja" | "natureza" | "escritório" | "externo" | string;
+  };
+}
+
 interface PersonAnalysis {
   description: string;
   pose: string;
@@ -18,6 +37,7 @@ interface PersonAnalysis {
   };
   style: string;
   expression: string;
+  imageContent?: ImageContent;
 }
 
 serve(async (req) => {
@@ -98,19 +118,51 @@ Extraia:
 4. **Harmonia de cores**: Tom de pele, cor de cabelo, cores predominantes da roupa
 5. **Estilo**: Classificação do estilo (formal, casual, esportivo, elegante, etc.)
 6. **Expressão**: Descrição da expressão facial e energia transmitida
+7. **imageContent**: Objeto contendo os detalhes abaixo:
+   - **contentType**: "person" | "product" | "scene" | "person_with_product" | "person_in_scene" | "other"
+   - **personDetails**: 
+     - present: boolean
+     - position: "front" | "side" | "diagonal" | "back"
+     - clothing: descrição do vestuário detectado
+     - expression: descrição da expressão/postura
+   - **productDetails**: 
+     - present: boolean
+     - category: "roupa" | "acessório" | "alimento" | "eletrônico" | "móvel" | "outro"
+     - description: string
+   - **sceneDetails**: 
+     - present: boolean
+     - environment: "estúdio" | "loja" | "natureza" | "escritório" | "externo"
 
 Formato de resposta JSON EXATO:
 {
-  "description": "Descrição geral da pessoa",
-  "pose": "tipo de pose",
-  "suggestedContext": "cenários sugeridos para combinar",
+  "description": "...",
+  "pose": "...",
+  "suggestedContext": "...",
   "colorHarmony": {
-    "skinTone": "tom de pele",
-    "hairColor": "cor do cabelo",
-    "clothingColors": ["cor1", "cor2"]
+    "skinTone": "...",
+    "hairColor": "...",
+    "clothingColors": ["..."]
   },
-  "style": "estilo geral",
-  "expression": "descrição da expressão"
+  "style": "...",
+  "expression": "...",
+  "imageContent": {
+    "contentType": "...",
+    "personDetails": {
+      "present": true,
+      "position": "...",
+      "clothing": "...",
+      "expression": "..."
+    },
+    "productDetails": {
+      "present": false,
+      "category": "...",
+      "description": "..."
+    },
+    "sceneDetails": {
+      "present": false,
+      "environment": "..."
+    }
+  }
 }`
               },
               {
@@ -178,7 +230,13 @@ Formato de resposta JSON EXATO:
           clothingColors: ['neutro']
         },
         style: 'casual',
-        expression: 'amigável'
+        expression: 'amigável',
+        imageContent: {
+          contentType: "person",
+          personDetails: { present: true, position: "front", clothing: "casual", expression: "natural" },
+          productDetails: { present: false, category: "outro", description: "" },
+          sceneDetails: { present: false, environment: "estúdio" }
+        }
       };
     }
 

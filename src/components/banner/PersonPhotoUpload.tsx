@@ -9,6 +9,25 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandPersonPhotosManager, PersonPhoto } from "./BrandPersonPhotosManager";
 
+export interface ImageContent {
+  contentType: "person" | "product" | "scene" | "person_with_product" | "person_in_scene" | "other";
+  personDetails: {
+    present: boolean;
+    position: "front" | "side" | "diagonal" | "back";
+    clothing: string;
+    expression: string;
+  };
+  productDetails: {
+    present: boolean;
+    category: "roupa" | "acessório" | "alimento" | "eletrônico" | "móvel" | "outro";
+    description: string;
+  };
+  sceneDetails: {
+    present: boolean;
+    environment: "estúdio" | "loja" | "natureza" | "escritório" | "externo" | string;
+  };
+}
+
 export interface PersonAnalysis {
   description: string;
   pose: string;
@@ -20,6 +39,7 @@ export interface PersonAnalysis {
   };
   style: string;
   expression: string;
+  imageContent?: ImageContent;
 }
 
 interface BrandProfile {
@@ -381,6 +401,44 @@ export function PersonPhotoUpload({
                 "{person.suggestedContext}"
               </p>
             </div>
+
+            {/* Image Content Details */}
+            {person.imageContent && (
+              <div className="pt-2 border-t space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-primary">Conteúdo Detectado</div>
+                  <Badge variant="outline" className="capitalize">
+                    {person.imageContent.contentType.replace(/_/g, ' ')}
+                  </Badge>
+                </div>
+                
+                {person.imageContent.personDetails.present && (
+                  <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
+                    <div className="font-semibold flex items-center gap-1">
+                      <User className="w-3 h-3" /> Pessoa
+                    </div>
+                    <div>Posição: {person.imageContent.personDetails.position}</div>
+                    <div>Vestuário: {person.imageContent.personDetails.clothing}</div>
+                  </div>
+                )}
+
+                {person.imageContent.productDetails.present && (
+                  <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
+                    <div className="font-semibold flex items-center gap-1">
+                      <ImageIcon className="w-3 h-3" /> Produto ({person.imageContent.productDetails.category})
+                    </div>
+                    <div>{person.imageContent.productDetails.description}</div>
+                  </div>
+                )}
+
+                {person.imageContent.sceneDetails.present && (
+                  <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
+                    <div className="font-semibold">Cenário</div>
+                    <div>Ambiente: {person.imageContent.sceneDetails.environment}</div>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
