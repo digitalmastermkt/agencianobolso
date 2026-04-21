@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { VisualIdentity } from "./IdentityVisualCard";
 import { PersonAnalysis } from "./PersonPhotoUpload";
 import { CreativeTypeSelector } from "./CreativeTypeSelector";
-import { CREATIVE_TYPES, DEFAULT_CREATIVE_TYPE, getCreativeTypeMeta, type CreativeType } from "@/lib/creativeTypes";
+import { DEFAULT_CREATIVE_TYPE, getCreativeTypeMeta, type CreativeType } from "@/lib/creativeTypes";
 
 interface BannerImage {
   style: string;
