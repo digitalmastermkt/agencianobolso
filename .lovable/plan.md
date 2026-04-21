@@ -1,51 +1,50 @@
 
 
-## O que quebrou
+## Diagnóstico
 
-Identifiquei **3 problemas reais** introduzidos nas alterações recentes:
+Mesmo no preview a geração falha. Preciso investigar a fundo para identificar a causa real antes de mudar código. Os logs do `check-subscription` aparecem normais, mas não vi logs do `generate-creative-v2` na execução recente — o que sugere que ou:
 
-### 1. Modelo de geração de imagem incorreto (CRÍTICO)
-- **Arquivo:** `supabase/functions/generate-creative-v2/index.ts` (linhas 208 e 1263)
-- **Problema:** alguém trocou o modelo para `google/gemini-3-pro-image-preview`. Esse modelo **não existe** no Lovable AI Gateway. O modelo correto e fixado pelo projeto é **`google/gemini-2.5-flash-image-preview`** (regra registrada em memória — modelo escolhido por custo/eficiência).
-- **Sintoma:** a função recebe a request, debita crédito (no caso do master, faz bypass), monta o prompt, mas o `fetch` para o gateway falha silenciosamente ou retorna erro de modelo inválido. Daí o "não está gerando imagem".
+1. A função está sendo chamada mas falhando silenciosamente (erro de payload, modelo, ou timeout)
+2. A função nem está sendo invocada (erro no frontend antes da chamada)
+3. A função retorna erro estruturado que o frontend não está mostrando claramente
 
-### 2. `personImageBase64` recebendo objeto em vez de string
-- **Arquivo:** `src/pages/agents/AgenteDiretorArte.tsx` (linha 686)
-- **Problema:** `personImageBase64: allReferenceImages[0]` passa `{url, type}` quando deveria passar a string da URL. No backend (linhas 780, 1225-1230) isso é usado direto como `image_url.url`, gerando uma URL inválida `[object Object]`.
-- **Correção:** `personImageBase64: allReferenceImages[0]?.url || undefined`
+## Plano de Investigação e Correção
 
-### 3. Hardcoded `MASTER_USER_EMAIL` flagado como vulnerabilidade (não quebra, mas faz parte da limpeza)
-- O scanner de segurança apontou os fallbacks hardcoded como erro. Como o secret `MASTER_USER_EMAIL` **já está configurado** no Supabase (visto em `<secrets>`), o fallback não é mais necessário e gera risco. Vou remover o fallback hardcoded das 3 funções e deixar `?? ""` — assim, se o secret existir (que existe), tudo funciona; e o email não fica exposto no código.
+### Passo 1 — Coletar evidências (read-only)
+- Ler logs recentes da edge function `generate-creative-v2` (últimas execuções) para ver o erro exato.
+- Ler logs de `art-director-decision` (etapa anterior do pipeline).
+- Ler console logs do navegador no preview para identificar erro client-side.
+- Inspecionar `src/pages/agents/AgenteDiretorArte.tsx` no trecho do `handleGenerate` para confirmar payload enviado.
+- Inspecionar `supabase/functions/generate-creative-v2/index.ts` nas linhas críticas (chamada ao gateway, validação de inputs, tratamento de erro).
+- Conferir se `LOVABLE_API_KEY` está nos secrets (já confirmado que está).
 
-## Plano de Correção
+### Passo 2 — Identificar a causa raiz
+Possíveis causas a verificar:
+- **Modelo errado ainda em algum lugar**: confirmar que ambas linhas 208 e 1263 foram realmente atualizadas para `google/gemini-2.5-flash-image-preview` (não há resíduo de `gemini-3-pro-image-preview`).
+- **Payload inválido ao gateway**: `image_url.url` recebendo string vazia, undefined ou objeto.
+- **Timeout no gateway**: imagem muito grande sendo enviada como base64 estourando 150s.
+- **Erro 402/429 do gateway**: créditos da workspace Lovable AI esgotados (retorna 402) ou rate limit (429).
+- **Resposta sem `images`**: o gateway retornando texto em vez de imagem por modelo/prompt incorreto.
+- **Erro CORS/network**: chamada nem sai do browser.
 
-### Arquivo 1: `supabase/functions/generate-creative-v2/index.ts`
-- Linha 208: `model: "google/gemini-3-pro-image-preview"` → `model: "google/gemini-2.5-flash-image-preview"`
-- Linha 1263: idem
+### Passo 3 — Aplicar correção pontual
+Após identificar a causa real, vou aplicar **a correção mínima necessária**. Possíveis ações (depende do diagnóstico):
 
-### Arquivo 2: `src/pages/agents/AgenteDiretorArte.tsx`
-- Linha 686: `personImageBase64: allReferenceImages[0] || undefined` → `personImageBase64: allReferenceImages[0]?.url || undefined`
+- Se for crédito Lovable AI esgotado (402) → avisar o usuário para adicionar créditos em Settings > Workspace > Usage. **Não há fix de código.**
+- Se for payload inválido → corrigir o ponto exato no frontend ou backend.
+- Se for tratamento de erro silencioso → adicionar `toast` com mensagem clara no frontend e logging mais explícito no backend.
+- Se for timeout → reduzir tamanho da imagem de referência antes do envio.
 
-### Arquivos 3, 4, 5: Remover fallback hardcoded do master email (segurança)
-- `supabase/functions/generate-creative-v2/index.ts` linha 553
-- `supabase/functions/check-subscription/index.ts` linha ~12
-- `supabase/functions/analyze-instagram-identity/index.ts` linha ~11
-- Padrão novo: `const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();`
-- Como o secret está configurado, o usuário master continua funcionando normalmente.
-
-### Deploy
-- Redeployar `generate-creative-v2`, `check-subscription`, `analyze-instagram-identity` automaticamente após as edições.
+### Passo 4 — Verificação
+- Testar geração no preview logado como master.
+- Confirmar log `Generating variation 1/...` e resposta com imagem.
+- Se persistir, retornar com novo diagnóstico baseado no log mais recente.
 
 ## NÃO será tocado
-- Lógica de créditos (`debit_user_credits`, `refund_user_credits`)
-- Sistema de auth, PWA, Stripe, Storage
-- Pipeline do art-director-decision (já está correto após última mudança de `imageContent`)
-- Schema do banco
-- RLS policies (os outros findings de segurança ficam para um próximo ciclo)
+- Lógica de créditos da app (`debit_user_credits`, `refund_user_credits`).
+- Schema do banco, RLS, auth, Stripe, PWA.
+- Fluxo do `art-director-decision` (a menos que os logs apontem ele como culpado).
 
-## Verificação
-Após deploy, testar geração logado como `digitalmastermkt@gmail.com`. Logs esperados:
-- `[generate-creative-v2] Master user detected - bypassing credit check`
-- `[generate-creative-v2] Generating variation 1/...`
-- Imagem retornada com sucesso.
+## Observação importante
+O erro pode ser **402 Payment Required** do Lovable AI Gateway (créditos da workspace esgotados, separado dos créditos da app). Esse erro precisa ser surfado claramente ao usuário com toast — não é um bug de código, é falta de saldo na workspace. Vou confirmar isso nos logs antes de qualquer mudança.
 
