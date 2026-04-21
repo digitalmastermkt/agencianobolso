@@ -2947,6 +2947,32 @@ export default function AgenteDiretorArte() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BrandProfilePickerDialog
+        open={brandPickerOpen}
+        onOpenChange={setBrandPickerOpen}
+        selectedProfileId={selectedBrandProfileId}
+        onSelect={(p) => setSelectedBrandProfileId(p.id)}
+      />
+
+      <ProjectPickerDialog
+        open={projectPickerOpen}
+        onOpenChange={setProjectPickerOpen}
+        projects={projects}
+        currentProjectId={currentProjectId}
+        onSelect={handleSelectProject}
+        onCreate={async (name) => {
+          const newProject: ProjectItem = {
+            id: crypto.randomUUID(),
+            name,
+            banners: [],
+          };
+          await saveProjectToSupabase(newProject);
+          setProjects((prev) => [newProject, ...prev]);
+          setCurrentProjectId(newProject.id);
+          currentProjectRef.current = newProject.id;
+        }}
+      />
     </DashboardLayout>
   );
 }
