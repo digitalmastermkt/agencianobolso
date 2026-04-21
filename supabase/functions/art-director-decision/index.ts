@@ -8,6 +8,13 @@ const corsHeaders = {
 };
 
 type ThemeKey = "promocao" | "lancamento" | "data_comemorativa" | "institucional" | "servico";
+type CreativeTypeKey =
+  | "trafego_pago"
+  | "live_evento"
+  | "data_comemorativa"
+  | "lancamento"
+  | "institucional"
+  | "aviso_comunicado";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -25,6 +32,18 @@ const THEME_GUIDELINES: Record<ThemeKey, string> = {
   institucional: "Tema INSTITUCIONAL: paleta sóbria e corporativa (azul, cinza, branco), estilo 'clean', atmosfera profissional e confiável, composição equilibrada e minimalista.",
   servico: "Tema SERVIÇO: paleta neutra com accent da marca, estilo 'minimal' ou 'clean', atmosfera clara e funcional, composição focada no benefício/transformação.",
 };
+
+const CREATIVE_TYPE_GUIDELINES: Record<CreativeTypeKey, string> = {
+  trafego_pago: "TIPO TRÁFEGO PAGO: hierarquia headline forte + subheadline de apoio + CTA destacado e clicável. Foco total em conversão. CTA OBRIGATÓRIO.",
+  live_evento: "TIPO LIVE/EVENTO: priorize DATA e HORÁRIO em tipografia grande (hierarquia: data/hora > tema > chamada). CTA deve ser 'Participe', 'Assista' ou similar (não venda). Atmosfera dinâmica e energética.",
+  data_comemorativa: "TIPO DATA COMEMORATIVA: mensagem afetiva CENTRALIZADA, logo da marca em destaque sutil. NÃO INCLUIR CAMPO 'cta' no JSON. Atmosfera emocional e calorosa. Force template 'pessoa_centro' quando houver pessoa.",
+  lancamento: "TIPO LANÇAMENTO: pouco texto, MUITO impacto visual. Pode usar suspense, contagem regressiva ou data de lançamento. CTA é opcional — se incluir, deve ser sutil ('Em breve', 'Saiba mais'). Estilo premium ou dramático.",
+  institucional: "TIPO INSTITUCIONAL: equilíbrio visual e tom sóbrio. Destaque para propósito, conquista ou mensagem de marca. NÃO INCLUIR CAMPO 'cta' no JSON. Sem urgência.",
+  aviso_comunicado: "TIPO AVISO/COMUNICADO: TEXTO GRANDE E LEGÍVEL é a prioridade absoluta. Layout clean, hierarquia simples, contraste máximo. NÃO INCLUIR CAMPO 'cta' no JSON. Force template 'pessoa_centro'.",
+};
+
+const TYPES_WITHOUT_CTA: CreativeTypeKey[] = ["data_comemorativa", "institucional", "aviso_comunicado"];
+const TYPES_FORCE_CENTRO: CreativeTypeKey[] = ["data_comemorativa", "aviso_comunicado"];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
