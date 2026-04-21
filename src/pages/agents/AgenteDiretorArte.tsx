@@ -1559,7 +1559,7 @@ export default function AgenteDiretorArte() {
                       onClick={() => setProjectPickerOpen(true)}
                       className="min-h-[44px]"
                     >
-                      <FolderKanban className="w-4 h-4 mr-1" />
+                      <FolderOpen className="w-4 h-4 mr-1" />
                       {currentProjectId ? "Trocar projeto" : "Selecionar projeto"}
                     </Button>
                     {currentProjectId && (
