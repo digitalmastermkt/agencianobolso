@@ -1552,6 +1552,16 @@ export default function AgenteDiretorArte() {
                         setSelectedFormat(format as BannerFormat);
                       }}
                     />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setProjectPickerOpen(true)}
+                      className="min-h-[44px]"
+                    >
+                      <FolderKanban className="w-4 h-4 mr-1" />
+                      {currentProjectId ? "Trocar projeto" : "Selecionar projeto"}
+                    </Button>
                     {currentProjectId && (
                       <GenerationsGallery
                         projectId={currentProjectId}
