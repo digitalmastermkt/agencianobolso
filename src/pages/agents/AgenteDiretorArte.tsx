@@ -73,6 +73,8 @@ import { BannerTextPreview } from "@/components/banner/BannerTextPreview";
 import { CreditsBalanceDisplay } from "@/components/CreditsBalanceDisplay";
 import { CREDIT_COSTS } from "@/lib/credits-config";
 import { toPng } from 'html-to-image';
+import { CreativeTypeSelector } from "@/components/banner/CreativeTypeSelector";
+import { DEFAULT_CREATIVE_TYPE, type CreativeType } from "@/lib/creativeTypes";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -220,6 +222,7 @@ export default function AgenteDiretorArte() {
   const [selectedFormat, setSelectedFormat] = useState<BannerFormat>('quadrado');
   const [creativeStyle, setCreativeStyle] = useState<'brand' | 'generic'>('brand');
   const [theme, setTheme] = useState<'promocao' | 'lancamento' | 'data_comemorativa' | 'institucional' | 'servico'>('institucional');
+  const [creativeType, setCreativeType] = useState<CreativeType>(DEFAULT_CREATIVE_TYPE);
   const [generationMode, setGenerationMode] = useState<'person' | 'product' | 'text-only'>('person');
   const [variationsCount, setVariationsCount] = useState<1 | 2>(2);
   
@@ -673,6 +676,7 @@ export default function AgenteDiretorArte() {
           designOrientation: designOrientation.trim() || undefined,
           creativeStyle, // 'brand' | 'generic'
           theme,
+          creativeType,
           referenceImages: allReferenceImages.slice(0, 4), // Max 4 with types
           // Legacy fields for backward compat
           context: artTextTrimmed,
@@ -828,6 +832,7 @@ export default function AgenteDiretorArte() {
           personImageBase64: images[0],
           variationsCount: 1,
           theme,
+          creativeType,
         },
       });
 
@@ -1761,6 +1766,11 @@ export default function AgenteDiretorArte() {
                       )}
                     </div>
                   )}
+
+                  {/* Creative Type Selector */}
+                  <div className="mt-3">
+                    <CreativeTypeSelector value={creativeType} onChange={setCreativeType} />
+                  </div>
 
                   {/* Theme Selector */}
                   <div className="mt-3 space-y-1.5">

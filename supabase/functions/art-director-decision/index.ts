@@ -8,6 +8,13 @@ const corsHeaders = {
 };
 
 type ThemeKey = "promocao" | "lancamento" | "data_comemorativa" | "institucional" | "servico";
+type CreativeTypeKey =
+  | "trafego_pago"
+  | "live_evento"
+  | "data_comemorativa"
+  | "lancamento"
+  | "institucional"
+  | "aviso_comunicado";
 
 interface ArtDirectorDecision {
   template: "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda";
@@ -25,6 +32,18 @@ const THEME_GUIDELINES: Record<ThemeKey, string> = {
   institucional: "Tema INSTITUCIONAL: paleta sóbria e corporativa (azul, cinza, branco), estilo 'clean', atmosfera profissional e confiável, composição equilibrada e minimalista.",
   servico: "Tema SERVIÇO: paleta neutra com accent da marca, estilo 'minimal' ou 'clean', atmosfera clara e funcional, composição focada no benefício/transformação.",
 };
+
+const CREATIVE_TYPE_GUIDELINES: Record<CreativeTypeKey, string> = {
+  trafego_pago: "TIPO TRÁFEGO PAGO: hierarquia headline forte + subheadline de apoio + CTA destacado e clicável. Foco total em conversão. CTA OBRIGATÓRIO.",
+  live_evento: "TIPO LIVE/EVENTO: priorize DATA e HORÁRIO em tipografia grande (hierarquia: data/hora > tema > chamada). CTA deve ser 'Participe', 'Assista' ou similar (não venda). Atmosfera dinâmica e energética.",
+  data_comemorativa: "TIPO DATA COMEMORATIVA: mensagem afetiva CENTRALIZADA, logo da marca em destaque sutil. NÃO INCLUIR CAMPO 'cta' no JSON. Atmosfera emocional e calorosa. Force template 'pessoa_centro' quando houver pessoa.",
+  lancamento: "TIPO LANÇAMENTO: pouco texto, MUITO impacto visual. Pode usar suspense, contagem regressiva ou data de lançamento. CTA é opcional — se incluir, deve ser sutil ('Em breve', 'Saiba mais'). Estilo premium ou dramático.",
+  institucional: "TIPO INSTITUCIONAL: equilíbrio visual e tom sóbrio. Destaque para propósito, conquista ou mensagem de marca. NÃO INCLUIR CAMPO 'cta' no JSON. Sem urgência.",
+  aviso_comunicado: "TIPO AVISO/COMUNICADO: TEXTO GRANDE E LEGÍVEL é a prioridade absoluta. Layout clean, hierarquia simples, contraste máximo. NÃO INCLUIR CAMPO 'cta' no JSON. Force template 'pessoa_centro'.",
+};
+
+const TYPES_WITHOUT_CTA: CreativeTypeKey[] = ["data_comemorativa", "institucional", "aviso_comunicado"];
+const TYPES_FORCE_CENTRO: CreativeTypeKey[] = ["data_comemorativa", "aviso_comunicado"];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -61,9 +80,14 @@ serve(async (req) => {
   console.log(`[ArtDirector] Authenticated user: ${userId}`);
 
   try {
-    const { images, bannerText, ctaText, theme } = await req.json();
+    const { images, bannerText, ctaText, theme, creativeType } = await req.json();
     const themeKey = (theme && THEME_GUIDELINES[theme as ThemeKey]) ? (theme as ThemeKey) : null;
-    
+    const ctKey = (creativeType && CREATIVE_TYPE_GUIDELINES[creativeType as CreativeTypeKey])
+      ? (creativeType as CreativeTypeKey)
+      : null;
+    const omitCta = ctKey ? TYPES_WITHOUT_CTA.includes(ctKey) : false;
+    const forceCentro = ctKey ? TYPES_FORCE_CENTRO.includes(ctKey) : false;
+
     if (!images || !Array.isArray(images) || images.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Pelo menos uma imagem de referência é necessária' }), 
@@ -83,7 +107,7 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log(`[ArtDirector] Analyzing ${images.length} images for design decisions...`);
+    console.log(`[ArtDirector] Analyzing ${images.length} images. creativeType=${ctKey ?? 'default'} theme=${themeKey ?? 'none'}`);
 
     const systemPrompt = `Você é um DIRETOR DE ARTE especializado em design de banners para Instagram.
 
@@ -103,19 +127,17 @@ ESTRUTURA OBRIGATÓRIA DO JSON:
   "template": "pessoa_direita" | "pessoa_centro" | "pessoa_esquerda",
   "headline": "texto curto e impactante (máximo 8 palavras)",
   "subheadline": "texto de apoio opcional (máximo 12 palavras)",
-  "cta": "chamada para ação curta opcional (máximo 4 palavras)",
-  "colors": ["#HEX1", "#HEX2", "#HEX3"],
+${omitCta ? '  // NÃO INCLUA o campo "cta" — este tipo de criativo não usa CTA\n' : '  "cta": "chamada para ação curta opcional (máximo 4 palavras)",\n'}  "colors": ["#HEX1", "#HEX2", "#HEX3"],
   "style": "clean" | "minimal" | "premium" | "dynamic" | "festive"
 }
 
 CRITÉRIOS DE DECISÃO:
-- template: baseado no equilíbrio visual e espaço para texto
+- template: baseado no equilíbrio visual e espaço para texto${forceCentro ? ' — OBRIGATORIAMENTE use "pessoa_centro" para este tipo de criativo' : ''}
 - headline: extraído ou adaptado do texto fornecido pelo usuário
 - colors: extraídas da identidade visual dos prints (paleta dominante), ajustadas ao tema quando informado
 - style: inferido a partir da estética geral dos prints e do tema da arte
 
-${themeKey ? `DIRETRIZES OBRIGATÓRIAS DE TEMA:\n${THEME_GUIDELINES[themeKey]}\n` : ''}
-RESPONDA APENAS O JSON. NADA MAIS.`;
+${ctKey ? `DIRETRIZES OBRIGATÓRIAS DE TIPO DE CRIATIVO:\n${CREATIVE_TYPE_GUIDELINES[ctKey]}\n` : ''}${themeKey ? `DIRETRIZES OBRIGATÓRIAS DE TEMA:\n${THEME_GUIDELINES[themeKey]}\n` : ''}RESPONDA APENAS O JSON. NADA MAIS.`;
 
     const userPrompt = `Analise estas imagens de referência do Instagram e retorne suas decisões de design.
 
@@ -206,7 +228,15 @@ Retorne APENAS o JSON com suas decisões. Nenhum texto adicional.`;
       } else {
         decision.colors = decision.colors.slice(0, 3);
       }
-      
+
+      // Apply creative type post-processing
+      if (omitCta) {
+        decision.cta = undefined;
+      }
+      if (forceCentro) {
+        decision.template = 'pessoa_centro';
+      }
+
     } catch (parseError) {
       console.error('[ArtDirector] Failed to parse decision JSON:', parseError);
       

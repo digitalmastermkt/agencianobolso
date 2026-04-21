@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { VisualIdentity } from "./IdentityVisualCard";
 import { PersonAnalysis } from "./PersonPhotoUpload";
+import { CreativeTypeSelector } from "./CreativeTypeSelector";
+import { DEFAULT_CREATIVE_TYPE, getCreativeTypeMeta, type CreativeType } from "@/lib/creativeTypes";
 
 interface BannerImage {
   style: string;
@@ -113,6 +115,7 @@ export function DesignGeneratorForm({
   const [selectedFormats, setSelectedFormats] = useState<string[]>(["quadrado"]);
   const [selectedStyle, setSelectedStyle] = useState("editorial_premium");
   const [selectedTheme, setSelectedTheme] = useState<string>("institucional");
+  const [creativeType, setCreativeType] = useState<CreativeType>(DEFAULT_CREATIVE_TYPE);
   const [formData, setFormData] = useState({
     bannerText: "",
     cta: "",
@@ -245,6 +248,7 @@ export function DesignGeneratorForm({
             creativeStyle: 'brand',
             referenceImages: personPhotoUrl ? [{ url: personPhotoUrl, type: 'person' }] : [],
             theme: selectedTheme,
+            creativeType,
             // Legacy compatibility fields still consumed by v2
             context: formData.bannerText,
             headline: formData.bannerText.substring(0, 50),
@@ -436,27 +440,31 @@ export function DesignGeneratorForm({
 
         {/* Form Fields */}
         <div className="space-y-4">
+          <CreativeTypeSelector value={creativeType} onChange={setCreativeType} />
+
           <div>
             <Label htmlFor="bannerText">Texto Principal do Banner *</Label>
             <Input
               id="bannerText"
               value={formData.bannerText}
               onChange={(e) => setFormData({ ...formData, bannerText: e.target.value })}
-              placeholder="Ex: Transforme sua vida em 30 dias"
+              placeholder={getCreativeTypeMeta(creativeType).textPlaceholder}
               className="mt-1.5"
             />
           </div>
 
-          <div>
-            <Label htmlFor="cta">Call-to-Action (CTA)</Label>
-            <Input
-              id="cta"
-              value={formData.cta}
-              onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
-              placeholder="Ex: Comece agora, Saiba mais, Inscreva-se"
-              className="mt-1.5"
-            />
-          </div>
+          {getCreativeTypeMeta(creativeType).showCta && (
+            <div>
+              <Label htmlFor="cta">Call-to-Action (CTA)</Label>
+              <Input
+                id="cta"
+                value={formData.cta}
+                onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
+                placeholder="Ex: Comece agora, Saiba mais, Inscreva-se"
+                className="mt-1.5"
+              />
+            </div>
+          )}
 
           {/* Multi-format toggle */}
           <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
