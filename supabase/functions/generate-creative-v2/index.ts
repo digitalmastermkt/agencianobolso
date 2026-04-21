@@ -783,6 +783,14 @@ serve(async (req) => {
     const userPrompt = `TEXTO DA ARTE (o usuário quer este conteúdo na arte):
 "${effectiveArtText.slice(0, 500)}"
 
+${imageContent ? `
+ANÁLISE DE CONTEÚDO DA IMAGEM:
+- Tipo: ${imageContent.contentType}
+- Pessoa: ${imageContent.personDetails?.present ? `${imageContent.personDetails.position}, vestindo ${imageContent.personDetails.clothing}, expressão ${imageContent.personDetails.expression}` : 'Nenhuma'}
+- Produto: ${imageContent.productDetails?.present ? `${imageContent.productDetails.category}: ${imageContent.productDetails.description}` : 'Nenhum'}
+- Cenário: ${imageContent.sceneDetails?.present ? `Ambiente: ${imageContent.sceneDetails.environment}` : 'Nenhum'}
+` : ''}
+
 ${designOrientation ? `ORIENTAÇÃO DE DESIGN E CENA: ${designOrientation.slice(0, 300)}` : ''}
 
 REFERÊNCIAS VISUAIS: ${referenceImages.length} imagem(ns) de referência fornecida(s).
