@@ -1648,8 +1648,10 @@ export default function AgenteDiretorArte() {
                     maxLength={500}
                   />
                   <div className="flex justify-between mt-1">
-                    <p className="text-xs text-muted-foreground">
-                      A IA vai criar automaticamente o melhor headline, subtítulo e CTA
+                    <p className={`text-xs ${limitReached ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                      {limitReached 
+                        ? "Limite de 10 artes atingido no plano gratuito. Faça upgrade para continuar." 
+                        : "A IA vai criar automaticamente o melhor headline, subtítulo e CTA"}
                     </p>
                     <span className="text-xs text-muted-foreground">
                       {artText.length}/500
@@ -2654,6 +2656,7 @@ export default function AgenteDiretorArte() {
                       variant="gradient"
                       size="lg"
                       disabled={loading || !artText.trim() || limitReached}
+                      title={limitReached ? "Limite de 10 artes atingido no plano gratuito" : ""}
                     >
                       {loading ? (
                         <div className="flex flex-col items-center gap-2 w-full">
