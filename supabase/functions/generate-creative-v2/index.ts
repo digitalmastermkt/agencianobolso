@@ -205,7 +205,7 @@ async function generateProfessionalPhoto(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-pro-image-preview",
+        model: "google/gemini-2.5-flash-image-preview",
         messages: [
           {
             role: "user",
@@ -550,7 +550,7 @@ COMPOSIÇÃO COM PESSOA:
 };
 
 // Master user email - secret with hardcoded fallback for resilience.
-const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "digitalmastermkt@gmail.com").toLowerCase();
+const MASTER_USER_EMAIL = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -1260,7 +1260,7 @@ SE QUALQUER TEXTO ESTIVER VISÍVEL NA IMAGEM = GERAÇÃO FALHOU
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-3-pro-image-preview",
+              model: "google/gemini-2.5-flash-image-preview",
               messages: [
                 {
                   role: "user",

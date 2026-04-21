@@ -683,7 +683,7 @@ export default function AgenteDiretorArte() {
           headline: artTextTrimmed.substring(0, 50),
           brandProfile: brandProfile || {}, 
           format: selectedFormat, 
-          personImageBase64: allReferenceImages[0] || undefined,
+          personImageBase64: allReferenceImages[0]?.url || undefined,
           generationMode: effectiveMode,
           variationsCount,
           renderTextOnImage: true,
