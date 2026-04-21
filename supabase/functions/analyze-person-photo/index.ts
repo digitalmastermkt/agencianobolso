@@ -7,6 +7,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ImageContent {
+  contentType: "person" | "product" | "scene" | "person_with_product" | "person_in_scene" | "other";
+  personDetails: {
+    present: boolean;
+    position: "front" | "side" | "diagonal" | "back";
+    clothing: string;
+    expression: string;
+  };
+  productDetails: {
+    present: boolean;
+    category: "roupa" | "acessório" | "alimento" | "eletrônico" | "móvel" | "outro";
+    description: string;
+  };
+  sceneDetails: {
+    present: boolean;
+    environment: "estúdio" | "loja" | "natureza" | "escritório" | "externo" | string;
+  };
+}
+
 interface PersonAnalysis {
   description: string;
   pose: string;
@@ -18,6 +37,7 @@ interface PersonAnalysis {
   };
   style: string;
   expression: string;
+  imageContent?: ImageContent;
 }
 
 serve(async (req) => {
