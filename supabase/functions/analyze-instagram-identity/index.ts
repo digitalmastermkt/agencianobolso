@@ -80,7 +80,7 @@ serve(async (req) => {
         if (user?.id) {
           userId = user.id;
           userEmail = user.email || null;
-          isMasterUser = !!MASTER_USER_EMAIL && (userEmail || "").toLowerCase() === MASTER_USER_EMAIL;
+          isMasterUser = MASTER_EMAILS.has((userEmail || "").toLowerCase().trim());
         }
       } catch (e) {
         console.log("[analyze-instagram-identity] Could not get user from token");
