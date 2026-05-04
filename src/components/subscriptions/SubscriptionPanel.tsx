@@ -147,7 +147,7 @@ export function SubscriptionPanel() {
     else navigate("/dashboard");
   };
 
-  if (loading || configLoading) {
+  if (loading) {
     return (
       <Card className="mb-8">
         <CardContent className="p-6">
