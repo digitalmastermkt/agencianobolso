@@ -218,7 +218,7 @@ export function SubscriptionPanel() {
                   annualNote={getAnnualNote(tier)}
                   features={PLAN_FEATURES[tier]}
                   isPopular={tier === "Premium"}
-                  onSelect={() => handleSubscribe(configPriceIds[billingCycle][tier])}
+                  onSelect={() => handleSubscribe(tier)}
                 />
               ))}
             </div>
