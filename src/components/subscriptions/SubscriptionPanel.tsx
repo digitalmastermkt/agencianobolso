@@ -96,25 +96,16 @@ export function SubscriptionPanel() {
     return null;
   };
 
-  const handleSubscribe = async (priceId: string) => {
+  const handleSubscribe = async (tier: PlanTierLocal) => {
     if (!user) {
       toast({ title: "Faça login para assinar", description: "Entre na sua conta para continuar o checkout." });
       navigate("/auth");
       return;
     }
 
-    if (!priceId) {
-      toast({ 
-        title: "Erro de configuração", 
-        description: "Price ID não configurado. Entre em contato com o suporte.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { price_id: priceId },
+        body: { tier, billing_cycle: billingCycle },
       });
       if (error) throw error;
       if (data?.url) {
