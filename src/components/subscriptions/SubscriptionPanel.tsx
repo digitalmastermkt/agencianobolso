@@ -51,7 +51,6 @@ const PLAN_FEATURES: Record<PlanTierLocal, PlanFeatures> = {
 export function SubscriptionPanel() {
   const { subscribed, subscription_tier, subscription_end, loading, refresh } = useSubscription();
   const { user } = useAuth();
-  const { priceIds: configPriceIds, loading: configLoading } = useStripePriceConfig();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
