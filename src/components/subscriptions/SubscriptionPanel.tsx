@@ -7,7 +7,7 @@ import { Crown, TrendingUp, Star, Sparkles, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useStripePriceConfig } from "@/hooks/useStripePriceConfig";
+
 import { Badge } from "@/components/ui/badge";
 
 type PlanTierLocal = "Essencial" | "Premium" | "Elite";
