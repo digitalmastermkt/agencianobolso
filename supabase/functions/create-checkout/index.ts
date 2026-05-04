@@ -28,31 +28,50 @@ serve(async (req) => {
 
   try {
     const origin = req.headers.get("origin") || "http://localhost:5173";
-    const { price_id } = await req.json();
+    const body = await req.json();
+    const { price_id, tier: requestedTier, billing_cycle: requestedCycle } = body ?? {};
 
-    if (!price_id) {
+    let priceConfig: { plan_tier: string; billing_cycle: string; price_id: string } | null = null;
+
+    if (requestedTier && requestedCycle) {
+      // Preferred: look up price server-side by tier + cycle (no client exposure)
+      const { data, error } = await supabaseClient
+        .from("stripe_price_config")
+        .select("plan_tier, billing_cycle, price_id")
+        .eq("plan_tier", requestedTier)
+        .eq("billing_cycle", requestedCycle)
+        .single();
+      if (error || !data) {
+        console.error("[CREATE-CHECKOUT] Tier/cycle not found:", requestedTier, requestedCycle, error);
+        return new Response(
+          JSON.stringify({ error: "Plano inválido ou não configurado" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+      priceConfig = data;
+    } else if (price_id) {
+      const { data, error } = await supabaseClient
+        .from("stripe_price_config")
+        .select("plan_tier, billing_cycle, price_id")
+        .eq("price_id", price_id)
+        .single();
+      if (error || !data) {
+        console.error("[CREATE-CHECKOUT] Price not found in config:", price_id, error);
+        return new Response(
+          JSON.stringify({ error: "Preço inválido ou não configurado" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+      priceConfig = data;
+    } else {
       return new Response(
-        JSON.stringify({ error: "Price ID é obrigatório" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-
-    // Fetch tier from database using price_id
-    const { data: priceConfig, error: priceError } = await supabaseClient
-      .from("stripe_price_config")
-      .select("plan_tier, billing_cycle")
-      .eq("price_id", price_id)
-      .single();
-
-    if (priceError || !priceConfig) {
-      console.error("[CREATE-CHECKOUT] Price not found in config:", price_id, priceError);
-      return new Response(
-        JSON.stringify({ error: "Preço inválido ou não configurado" }),
+        JSON.stringify({ error: "Informe tier e billing_cycle (ou price_id)" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
     const tier = priceConfig.plan_tier as "Essencial" | "Premium" | "Elite";
+    const resolvedPriceId = priceConfig.price_id;
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
