@@ -1,129 +1,70 @@
-# Welcome to your Lovable project
+# Agência no Bolso
 
-## Project info
+A agência completa no bolso do empresário. Marketing, vendas e automação aplicados ao seu negócio.
 
-**URL**: https://lovable.dev/projects/782109cd-82c6-41d1-8008-24c1d844fd1f
+URL produção: https://agencianobolso.com.br
 
-## How can I edit this code?
+## Stack
 
-There are several ways of editing your application.
+- Vite
+- React 18 + TypeScript
+- Tailwind CSS + shadcn-ui
+- Supabase (auth, banco, edge functions)
+- PWA (vite-plugin-pwa)
 
-**Use Lovable**
+## Desenvolvimento local
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/782109cd-82c6-41d1-8008-24c1d844fd1f) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requer Node.js 18+ e npm.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+git clone https://github.com/digitalmastermkt/agencianobolso.git
+cd agencianobolso
+npm install --legacy-peer-deps
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Servidor sobe em `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Build de produção
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Saída em `dist/`. Deploy via Vercel (auto-deploy do `main`).
 
-## What technologies are used for this project?
+## Estrutura
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/782109cd-82c6-41d1-8008-24c1d844fd1f) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- `src/` — código React/TS
+- `public/` — assets estáticos (favicon, ícones PWA, og-image)
+- `supabase/functions/` — edge functions serverless
+- `supabase/migrations/` — migrações SQL
 
 ---
 
-## 🔒 Security & Compliance
+## Segurança e Conformidade
 
-### Critical Security Features Implemented
+### RBAC e auditoria
 
-#### ✅ Phase 1: Critical Security (COMPLETED)
+- User roles em tabela separada `user_roles` com RLS
+- Audit log de admin em `admin_access_audit` (data, ação, alvo, IP)
+- RLS habilitado em todas as tabelas com PII
+- Rate limiting em endpoints sensíveis
 
-1. **Secure Role-Based Access Control (RBAC)**
-   - User roles stored in separate `user_roles` table with proper RLS policies
-   - Users can only view their own roles
-   - Admins have elevated privileges with audit logging
+### LGPD/GDPR
 
-2. **Comprehensive Admin Audit Logging**
-   - All administrative access to sensitive data is logged in `admin_access_audit` table
-   - Tracks: admin actions, target users, timestamps, IP addresses, and metadata
-   - Accessible via Admin Panel > Logs de Auditoria
-   - Helps with LGPD/GDPR compliance
+- Audit logs cobrem acesso a dados pessoais
+- Conexões 100% HTTPS
+- JWT com auto-refresh
 
-3. **Row-Level Security (RLS)**
-   - All tables have proper RLS policies enabled
-   - PII data protected with access controls
-   - Rate limiting on sensitive operations
+### Boas práticas para administradores
 
-### ⚠️ IMPORTANT: PostgreSQL Upgrade Required
+1. Revisar audit logs em `/admin/audit-logs` semanalmente
+2. Princípio do menor privilégio — só elevar admin quando necessário
+3. Monitorar tentativas de login que falharem
+4. Manter dependências npm atualizadas
+5. Backup regular do banco Supabase
 
-**Current Status:** PostgreSQL version needs upgrade to latest security patches.
+### Reportar vulnerabilidades
 
-**Action Required:**
-1. Access Supabase dashboard: [Database Settings](https://supabase.com/dashboard/project/mqzbuctebbyryptmprkc/settings/infrastructure)
-2. Follow upgrade guide: [Supabase Upgrade Documentation](https://supabase.com/docs/guides/platform/migrating-and-upgrading-projects)
-3. **CRITICAL:** Create full database backup before upgrade
-4. Test all functionality after upgrade (especially RLS policies and triggers)
-5. Verify audit logging continues to work properly
-
-### Compliance & Data Protection
-
-- **LGPD/GDPR Ready**: Audit logs track all access to personal data
-- **Rate Limiting**: Protection against brute force and abuse
-- **Encrypted Connections**: All data transmitted over HTTPS
-- **Session Management**: Secure JWT-based authentication with auto-refresh
-
-### Security Best Practices for Administrators
-
-1. **Review Audit Logs Regularly**: Check `/admin/audit-logs` weekly for suspicious activity
-2. **Principle of Least Privilege**: Only grant admin access when absolutely necessary
-3. **Monitor Failed Login Attempts**: Watch for patterns indicating attacks
-4. **Keep Dependencies Updated**: Regularly update npm packages
-5. **Backup Strategy**: Maintain regular database backups
-
-### Reporting Security Issues
-
-If you discover a security vulnerability, please email: [your-security-email@example.com]
-
-Do not disclose security issues publicly until they have been addressed.
+Não divulgue publicamente. Contato direto via canais oficiais.
