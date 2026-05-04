@@ -113,7 +113,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : email,
       line_items: [
         {
-          price: price_id,
+          price: resolvedPriceId,
           quantity: 1,
         },
       ],
