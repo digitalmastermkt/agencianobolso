@@ -14,10 +14,10 @@ const STORAGE_KEY = 'ai_generation_history';
 export function useGenerationHistory() {
   const [history, setHistory] = useState<GenerationHistoryItem[]>([]);
 
-  // Load history from localStorage on mount
+  // Load history from sessionStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = sessionStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         setHistory(Array.isArray(parsed) ? parsed : []);
@@ -53,9 +53,9 @@ export function useGenerationHistory() {
       // Combine: other agents + trimmed agent history + new item
       const updated = [...otherHistory, ...trimmedAgentHistory, newItem];
 
-      // Save to localStorage
+      // Save to sessionStorage
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } catch (error) {
         console.error('Erro ao salvar histórico:', error);
       }
@@ -98,7 +98,7 @@ export function useGenerationHistory() {
     setHistory(prev => {
       const updated = prev.filter(item => item.id !== id);
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } catch (error) {
         console.error('Erro ao deletar item:', error);
       }
@@ -110,7 +110,7 @@ export function useGenerationHistory() {
   const clearHistory = useCallback(() => {
     setHistory([]);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     } catch (error) {
       console.error('Erro ao limpar histórico:', error);
     }
@@ -121,7 +121,7 @@ export function useGenerationHistory() {
     setHistory(prev => {
       const updated = prev.filter(item => item.agentType !== agentType);
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } catch (error) {
         console.error('Erro ao limpar histórico do agente:', error);
       }

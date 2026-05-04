@@ -7,7 +7,7 @@ import { Crown, TrendingUp, Star, Sparkles, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useStripePriceConfig } from "@/hooks/useStripePriceConfig";
+
 import { Badge } from "@/components/ui/badge";
 
 type PlanTierLocal = "Essencial" | "Premium" | "Elite";
@@ -51,7 +51,6 @@ const PLAN_FEATURES: Record<PlanTierLocal, PlanFeatures> = {
 export function SubscriptionPanel() {
   const { subscribed, subscription_tier, subscription_end, loading, refresh } = useSubscription();
   const { user } = useAuth();
-  const { priceIds: configPriceIds, loading: configLoading } = useStripePriceConfig();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -97,25 +96,16 @@ export function SubscriptionPanel() {
     return null;
   };
 
-  const handleSubscribe = async (priceId: string) => {
+  const handleSubscribe = async (tier: PlanTierLocal) => {
     if (!user) {
       toast({ title: "Faça login para assinar", description: "Entre na sua conta para continuar o checkout." });
       navigate("/auth");
       return;
     }
 
-    if (!priceId) {
-      toast({ 
-        title: "Erro de configuração", 
-        description: "Price ID não configurado. Entre em contato com o suporte.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { price_id: priceId },
+        body: { tier, billing_cycle: billingCycle },
       });
       if (error) throw error;
       if (data?.url) {
@@ -157,7 +147,7 @@ export function SubscriptionPanel() {
     else navigate("/dashboard");
   };
 
-  if (loading || configLoading) {
+  if (loading) {
     return (
       <Card className="mb-8">
         <CardContent className="p-6">
@@ -228,7 +218,7 @@ export function SubscriptionPanel() {
                   annualNote={getAnnualNote(tier)}
                   features={PLAN_FEATURES[tier]}
                   isPopular={tier === "Premium"}
-                  onSelect={() => handleSubscribe(configPriceIds[billingCycle][tier])}
+                  onSelect={() => handleSubscribe(tier)}
                 />
               ))}
             </div>

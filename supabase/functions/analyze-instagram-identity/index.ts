@@ -7,12 +7,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Master user email - secret with hardcoded fallback for resilience.
+// Master user email - configured exclusively via MASTER_USER_EMAIL secret.
 const MASTER_EMAIL_SECRET = (Deno.env.get("MASTER_USER_EMAIL") ?? "").toLowerCase().trim();
-const MASTER_EMAILS = new Set<string>([
-  "digitalmastermkt@gmail.com",
-  ...(MASTER_EMAIL_SECRET.includes("@") ? [MASTER_EMAIL_SECRET] : []),
-]);
+const MASTER_EMAILS = new Set<string>(
+  MASTER_EMAIL_SECRET.includes("@") ? [MASTER_EMAIL_SECRET] : []
+);
 
 // Credit costs
 const CREDITS_CREATE_BRAND = 2;
@@ -71,20 +70,24 @@ serve(async (req) => {
       supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     }
 
-    // Get user ID and email from auth header
+    // Require authentication - reject anonymous calls
     const authHeader = req.headers.get("Authorization");
-    if (authHeader && supabaseClient) {
-      try {
-        const token = authHeader.replace("Bearer ", "");
-        const { data: { user } } = await supabaseClient.auth.getUser(token);
-        if (user?.id) {
-          userId = user.id;
-          userEmail = user.email || null;
-          isMasterUser = MASTER_EMAILS.has((userEmail || "").toLowerCase().trim());
-        }
-      } catch (e) {
-        console.log("[analyze-instagram-identity] Could not get user from token");
+    if (!authHeader?.startsWith("Bearer ") || !supabaseClient) {
+      return respond({ error: "Authentication required" }, 401);
+    }
+
+    try {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+      if (authError || !user?.id) {
+        return respond({ error: "Invalid authentication token" }, 401);
       }
+      userId = user.id;
+      userEmail = user.email || null;
+      isMasterUser = MASTER_EMAILS.has((userEmail || "").toLowerCase().trim());
+    } catch (e) {
+      console.log("[analyze-instagram-identity] Auth validation failed");
+      return respond({ error: "Authentication failed" }, 401);
     }
 
     // ============ CREDIT VERIFICATION AND DEBIT ============
