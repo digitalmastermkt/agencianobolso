@@ -475,6 +475,7 @@ body { padding-top: 64px; }
   margin: 24px 0;
   text-align: left;
 }
+.investment-card__payment h3,
 .investment-card__payment h4 {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.85rem;
@@ -500,10 +501,11 @@ body { padding-top: 64px; }
   margin-top: 24px;
   text-align: left;
 }
+.investment-card__whitelabel h3,
 .investment-card__whitelabel h4 {
   font-family: 'Playfair Display', serif;
   font-size: 1.1rem;
-  color: #D4AF37;
+  color: #8B6914;
   margin-bottom: 8px;
 }
 
@@ -943,7 +945,7 @@ body { padding-top: 64px; }
   justify-content: space-between;
   gap: 16px;
   font-size: 0.85rem;
-  color: #64748B;
+  color: #94A3B8;
 }
 @media (max-width: 768px) {
   .footer__grid { grid-template-columns: 1fr; gap: 32px; }
@@ -959,8 +961,8 @@ body { padding-top: 64px; }
   text-align: center;
 }
 .cross-link a {
-  color: #D4AF37;
-  font-weight: 600;
+  color: #8B6914;
+  font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 4px;
 }
