@@ -30,8 +30,8 @@
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Crimson+Pro:ital,wght@1,400;1,500&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Crimson+Pro:ital,wght@1,400;1,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Crimson+Pro:ital,wght@1,400;1,500&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Crimson+Pro:ital,wght@1,400;1,500&display=swap"></noscript>
 <link rel="stylesheet" href="/assets/style.css">
 
 <!-- Schema.org Organization + Product + FAQ -->
@@ -105,19 +105,21 @@
       <img src="/assets/logo-mark.svg" alt="Agência no Bolso">
       <span>Agência no Bolso</span>
     </a>
-    <a class="sticky-bar__cta" href="https://wa.me/5586981141438?text=Ol%C3%A1%20Salatiel%2C%20quero%20agendar%20conversa%20sobre%20a%20Naia%20Enterprise">
+    <a class="sticky-bar__cta" aria-label="Falar com o Salatiel no WhatsApp sobre Naia Enterprise" href="https://wa.me/5586981141438?text=Ol%C3%A1%20Salatiel%2C%20quero%20agendar%20conversa%20sobre%20a%20Naia%20Enterprise">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zM6.597 20.13a9.86 9.86 0 0 0 5.452 1.65c5.448 0 9.886-4.434 9.889-9.885a9.86 9.86 0 0 0-2.892-7.005 9.825 9.825 0 0 0-6.991-2.901C6.602 1.99 2.165 6.425 2.163 11.876a9.86 9.86 0 0 0 1.513 5.262l.36.572-1.005 3.671 3.566-1.252z"/></svg>
       <span>Conversar com o Salatiel</span>
     </a>
   </div>
 </div>
 
+<main id="conteudo">
+
 <!-- BLOCO 1 — HERO -->
-<header class="hero">
+<section class="hero" aria-labelledby="hero-title">
   <div class="container">
     <div class="hero__content">
       <span class="eyebrow">Naia Enterprise — Sistema operacional de IA</span>
-      <h1>Mais do que IA. <em>Uma operação inteira</em> no seu CNPJ.</h1>
+      <h1 id="hero-title">Mais do que IA. <em>Uma operação inteira</em> no seu CNPJ.</h1>
       <p class="hero__lead">
         A Naia coordena 5 agentes especialistas no seu negócio. Atendimento que não dorme, copy que não seca, pesquisa que não para, dev que executa, operação que não trava.
       </p>
@@ -131,7 +133,7 @@
       <p class="hero__micro">Implantação em 30 dias · Consultoria humana mensal · ROI medido em caixa</p>
     </div>
   </div>
-</header>
+</section>
 
 <!-- BLOCO 2 — A DOR -->
 <section class="section section--light">
@@ -144,17 +146,17 @@
     <div class="feature-list">
       <article class="feature-item">
         <div class="feature-item__num">01</div>
-        <h4>Atendimento de DM não escala</h4>
+        <h3>Atendimento de DM não escala</h3>
         <p>Você contrata SDR humano, treina por 90 dias, ele entrega 6 meses bons e pede aumento ou vai embora. Recomeça o ciclo.</p>
       </article>
       <article class="feature-item">
         <div class="feature-item__num">02</div>
-        <h4>Copy não sai do papel</h4>
+        <h3>Copy não sai do papel</h3>
         <p>Você sabe que precisa postar mais, fazer email, escrever página de vendas. A equipe demora 3 dias por peça e nem sempre fica bom.</p>
       </article>
       <article class="feature-item">
         <div class="feature-item__num">03</div>
-        <h4>Operação entope o dia</h4>
+        <h3>Operação entope o dia</h3>
         <p>Pesquisa, dossiê, briefing, ajuste de site, calendário. Coisas que você não deveria fazer, mas faz porque o time está no limite.</p>
       </article>
     </div>
@@ -183,31 +185,31 @@
     <div class="agents" style="margin-top:32px">
       <article class="agent" style="background:#1E293B;border-color:#334155">
         <div class="agent__icon">D</div>
-        <h4 style="color:#FFFFFF">Davi</h4>
+        <h3 style="color:#FFFFFF">Davi</h3>
         <div class="agent__role">SDR de IA</div>
         <p style="color:#94A3B8">Atende DMs do Instagram @salatielbatistaoficial e @digitalmastermkt. Qualifica BANT-light.</p>
       </article>
       <article class="agent" style="background:#1E293B;border-color:#334155">
         <div class="agent__icon">J</div>
-        <h4 style="color:#FFFFFF">Jonathan</h4>
+        <h3 style="color:#FFFFFF">Jonathan</h3>
         <div class="agent__role">Copywriter de IA</div>
         <p style="color:#94A3B8">Páginas de vendas, roteiros de Reels, emails de marketing, pesquisa de mercado.</p>
       </article>
       <article class="agent" style="background:#1E293B;border-color:#334155">
         <div class="agent__icon">P</div>
-        <h4 style="color:#FFFFFF">Paulo</h4>
+        <h3 style="color:#FFFFFF">Paulo</h3>
         <div class="agent__role">Dev Full-stack de IA</div>
         <p style="color:#94A3B8">Código, deploy, integrações Meta/OpenAI/Stripe. Sites no GitHub Pages com domínio próprio.</p>
       </article>
       <article class="agent" style="background:#1E293B;border-color:#334155">
         <div class="agent__icon">J</div>
-        <h4 style="color:#FFFFFF">Juliana</h4>
+        <h3 style="color:#FFFFFF">Juliana</h3>
         <div class="agent__role">Operação de IA</div>
         <p style="color:#94A3B8">Coordena entregas, prazos, briefings, follow-up de fornecedores, design ops.</p>
       </article>
       <article class="agent" style="background:#1E293B;border-color:#334155">
         <div class="agent__icon">R</div>
-        <h4 style="color:#FFFFFF">Rafael</h4>
+        <h3 style="color:#FFFFFF">Rafael</h3>
         <div class="agent__role">Gestão de Projetos</div>
         <p style="color:#94A3B8">Roadmap, priorização semanal, memória de pendências, relatório executivo mensal.</p>
       </article>
@@ -268,32 +270,32 @@
     <div class="feature-list">
       <article class="feature-item">
         <div class="feature-item__num">01 · Davi</div>
-        <h4>Atendimento</h4>
+        <h3>Atendimento</h3>
         <p>SDR de IA treinado com dossiê de 13 blocos. Atende Instagram, WhatsApp, até 3 contas, 24/7. Qualifica BANT-light. Escala pro humano quando o lead está quente.</p>
       </article>
       <article class="feature-item">
         <div class="feature-item__num">02 · Jonathan</div>
-        <h4>Copy</h4>
+        <h3>Copy</h3>
         <p>Páginas de vendas completas (PASTOR + Hormozi + Brunson + Bencivenga). Roteiros de Reels em 7 atos. Emails. Carrosséis. Pesquisa de concorrência. Personas com 30 dimensões.</p>
       </article>
       <article class="feature-item">
         <div class="feature-item__num">03 · Paulo</div>
-        <h4>Desenvolvimento</h4>
+        <h3>Desenvolvimento</h3>
         <p>Sites no GitHub Pages com domínio próprio. Integrações Meta API, OpenAI, Anthropic, Stripe. Automações Python. Deploy em VPS.</p>
       </article>
       <article class="feature-item">
         <div class="feature-item__num">04 · Juliana</div>
-        <h4>Operação</h4>
+        <h3>Operação</h3>
         <p>Coordenação de entregas, gestão de prazos, organização de arquivos, design ops, briefings, follow-up de fornecedores.</p>
       </article>
       <article class="feature-item">
         <div class="feature-item__num">05 · Rafael</div>
-        <h4>Gestão</h4>
+        <h3>Gestão</h3>
         <p>Roadmap de projetos. Priorização semanal. Memória de pendências. Cobrança proativa de tarefas atrasadas. Relatório executivo mensal.</p>
       </article>
       <article class="feature-item" style="background:#0F172A;color:#F1F5F9;border-color:#D4AF37">
         <div class="feature-item__num" style="color:#F4D784">COORDENAÇÃO</div>
-        <h4 style="color:#FFFFFF">Naia (orquestradora)</h4>
+        <h3 style="color:#FFFFFF">Naia (orquestradora)</h3>
         <p style="color:#CBD5E1">Recebe sua demanda, ativa os subagentes certos, mantém memória persistente, te devolve a entrega pronta. Você é o CEO. Ela é a operação.</p>
       </article>
     </div>
@@ -311,32 +313,32 @@
     <div class="cases">
       <article class="case">
         <div class="case__num">CASO 01</div>
-        <h4>Esta página de vendas</h4>
+        <h3>Esta página de vendas</h3>
         <p>Briefing em áudio na sexta. Página pronta em 4 horas com copy completo, paleta visual, 14 blocos, CTAs específicos, FAQ. Deploy + DNS + HTTPS automatizados.</p>
       </article>
       <article class="case">
         <div class="case__num">CASO 02</div>
-        <h4>Dossiê SDR Instagram</h4>
+        <h3>Dossiê SDR Instagram</h3>
         <p>13 blocos, 1.137 linhas, 10 objeções mapeadas. Reduziu em 80% o tempo gasto respondendo DM frio. Salatiel parou de operar atendimento e foca em produto.</p>
       </article>
       <article class="case">
         <div class="case__num">CASO 03</div>
-        <h4>Site joelvisgueira.com.br</h4>
+        <h3>Site joelvisgueira.com.br</h3>
         <p>Da decisão à produção em 8 horas. Domínio configurado, Cloudflare proxy, GitHub Pages, HTTPS, copy + design completos. Cliente externo no ar no mesmo dia.</p>
       </article>
       <article class="case">
         <div class="case__num">CASO 04</div>
-        <h4>Lembrete diário via Telegram</h4>
+        <h3>Lembrete diário via Telegram</h3>
         <p>Cron 8h e 15h, integração com API de foco, fallback se offline, log persistente. Construído em 2 horas. Aciona a rotina do empresário todo dia útil.</p>
       </article>
       <article class="case">
         <div class="case__num">CASO 05</div>
-        <h4>Memória persistente Naia</h4>
+        <h3>Memória persistente Naia</h3>
         <p>PostgreSQL + pgvector + 24 tabelas. Naia "se lembra" de tudo que você falou com ela, mesmo entre sessões. Memória infinita para sua operação.</p>
       </article>
       <article class="case" style="border-color:#0F172A;background:#0F172A;color:#F1F5F9">
         <div class="case__num" style="color:#D4AF37">UMA OPERAÇÃO</div>
-        <h4 style="color:#FFFFFF">Zero pessoas no lugar</h4>
+        <h3 style="color:#FFFFFF">Zero pessoas no lugar</h3>
         <p style="color:#CBD5E1">5 cases acima. 0 humanos contratados. Tudo coordenado pela Naia. Você pode operar assim a partir de 30 dias.</p>
       </article>
     </div>
@@ -366,7 +368,7 @@
       <div class="investment-card__badge">12 meses de fidelidade</div>
 
       <div class="investment-card__payment">
-        <h4>Pagamento do setup</h4>
+        <h3>Pagamento do setup</h3>
         <div class="investment-card__pix">
           <div>
             <strong>PIX à vista</strong>
@@ -384,12 +386,12 @@
       </div>
 
       <div class="investment-card__whitelabel">
-        <h4>White-label (opcional) — +R$ 3.000 no setup</h4>
+        <h3>White-label (opcional) — +R$ 3.000 no setup</h3>
         <p style="font-size:0.95rem;color:#475569;margin:0">Os agentes operam com o nome que você definir, sua identidade visual, seu domínio. Ninguém vê que é Naia por trás.</p>
       </div>
 
       <div style="margin-top:32px;text-align:left;background:#F8FAFC;border-radius:12px;padding:24px">
-        <h4 style="font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#475569;margin-bottom:16px">Incluído na mensalidade</h4>
+        <h3 style="font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#475569;margin-bottom:16px">Incluído na mensalidade</h3>
         <ul class="plan__features" style="margin:0">
           <li>5 agentes coordenados operando todo dia</li>
           <li>Atendimento 24/7 em até 3 contas</li>
@@ -602,6 +604,8 @@
   </div>
 </section>
 
+</main>
+
 <!-- FOOTER -->
 <footer class="footer">
   <div class="container">
@@ -611,14 +615,14 @@
         <p style="color:#94A3B8;max-width:380px;margin-top:8px">Sistema operacional de IA pra empresários que querem liderar o negócio sem operar o que deveria estar terceirizado.</p>
       </div>
       <div>
-        <h4>Produtos</h4>
+        <h3>Produtos</h3>
         <ul>
           <li><a href="/">Naia Enterprise</a></li>
           <li><a href="/sdr/">SDR Starter & Premium</a></li>
         </ul>
       </div>
       <div>
-        <h4>Contato</h4>
+        <h3>Contato</h3>
         <ul>
           <li><a href="https://wa.me/5586981141438">WhatsApp</a></li>
           <li><a href="https://instagram.com/digitalmastermkt">Instagram</a></li>

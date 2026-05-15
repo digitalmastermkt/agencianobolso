@@ -35,13 +35,17 @@ strong { font-weight: 600; color: #0F172A; }
 .eyebrow {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #D4AF37;
+  color: #8B6914;
   margin-bottom: 1rem;
   display: inline-block;
 }
+/* Em fundo escuro mantemos o dourado claro */
+.section--dark .eyebrow,
+.hero .eyebrow,
+.cta-final .eyebrow { color: #F4D784; }
 .mono { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
 
 /* ----- LAYOUT ----- */
@@ -545,8 +549,8 @@ body { padding-top: 64px; }
   margin-bottom: 8px;
 }
 .author__role {
-  color: #D4AF37;
-  font-weight: 600;
+  color: #8B6914;
+  font-weight: 700;
   margin-bottom: 16px;
   font-size: 0.9rem;
   text-transform: uppercase;
@@ -689,9 +693,12 @@ body { padding-top: 64px; }
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   font-size: 1.1rem;
-  color: #D4AF37;
+  color: #8B6914;
   margin-bottom: 8px;
 }
+.feature-item--dark .feature-item__num,
+.section--dark .feature-item__num { color: #F4D784; }
+.feature-item h3,
 .feature-item h4 {
   font-family: 'Playfair Display', serif;
   margin-bottom: 8px;
@@ -782,15 +789,16 @@ body { padding-top: 64px; }
   font-weight: 800;
   font-size: 1.4rem;
 }
-.agent h4 { font-family: 'Playfair Display', serif; margin-bottom: 4px; }
+.agent h3, .agent h4 { font-family: 'Playfair Display', serif; margin-bottom: 4px; font-size: 1.15rem; }
 .agent__role {
   font-size: 0.8rem;
-  color: #D4AF37;
+  color: #8B6914;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 12px;
 }
+.section--dark .agent__role { color: #F4D784; }
 .agent p { font-size: 0.9rem; color: #475569; margin: 0; }
 
 /* cases reais */
@@ -810,12 +818,14 @@ body { padding-top: 64px; }
 .case__num {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
-  color: #D4AF37;
-  font-weight: 600;
+  color: #8B6914;
+  font-weight: 700;
   letter-spacing: 0.1em;
   margin-bottom: 8px;
 }
-.case h4 { font-family: 'Playfair Display', serif; font-size: 1.15rem; margin-bottom: 8px; }
+.section--dark .case__num,
+.case--dark .case__num { color: #F4D784; }
+.case h3, .case h4 { font-family: 'Playfair Display', serif; font-size: 1.15rem; margin-bottom: 8px; }
 .case p { color: #475569; font-size: 0.95rem; margin: 0; }
 
 /* costs table */
