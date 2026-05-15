@@ -3,11 +3,30 @@
    Paleta Navy + Dourado · B2B Enterprise
    ===================================================== */
 
+/* Fallback metric-compatible com Playfair Display (reduz CLS) */
+@font-face {
+  font-family: 'Playfair Fallback';
+  src: local('Georgia'), local('Times New Roman');
+  size-adjust: 110%;
+  ascent-override: 92%;
+  descent-override: 23%;
+  line-gap-override: 0%;
+}
+/* Fallback metric-compatible com IBM Plex Sans */
+@font-face {
+  font-family: 'PlexSans Fallback';
+  src: local('Segoe UI'), local('Roboto'), local('Helvetica Neue'), local('Arial');
+  size-adjust: 100%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
 /* ----- RESET ----- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
-  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'IBM Plex Sans', 'PlexSans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 17px;
   line-height: 1.65;
   color: #0F172A;
@@ -21,7 +40,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ----- TIPOGRAFIA ----- */
 h1, h2, h3, h4 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Playfair Display', 'Playfair Fallback', Georgia, serif;
   color: #0F172A;
   line-height: 1.2;
   letter-spacing: -0.01em;
