@@ -1023,3 +1023,211 @@ body { padding-top: 64px; }
   body { padding-top: 60px; }
   .container { padding: 0 20px; }
 }
+
+/* =========================================================
+   IMAGENS CONTEXTUAIS (round 2 — visual upgrade 2026-05-15)
+   ========================================================= */
+
+/* Hero com imagem de fundo cinematica (sobrepoe gradient existente) */
+.hero--with-image {
+  background-image:
+    linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(15,23,42,0.78) 55%, rgba(15,23,42,0.55) 100%),
+    var(--hero-bg, none);
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+}
+@media (max-width: 768px) {
+  .hero--with-image {
+    background-image:
+      linear-gradient(180deg, rgba(15,23,42,0.92) 0%, rgba(15,23,42,0.78) 55%, rgba(15,23,42,0.6) 100%),
+      var(--hero-bg, none);
+    background-position: center center;
+  }
+}
+
+/* Figura responsiva generica */
+.figure {
+  margin: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.18);
+}
+.figure img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.figure--wide {
+  aspect-ratio: 16 / 9;
+  max-width: 960px;
+  margin: 48px auto 0;
+}
+.figure--card {
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+}
+.figure--soft {
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(212,175,55,0.18);
+}
+.figure--frame-dark {
+  border: 1px solid rgba(212,175,55,0.35);
+}
+
+/* foto do agente (card 1:1 dentro de .agent) */
+.agent__photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25);
+}
+.agent--with-photo { padding-top: 20px; }
+.agent--with-photo .agent__icon { display: none; }
+
+/* Banner secundario (entre blocos, half-bleed) */
+.banner {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  max-width: 960px;
+  margin: 0 auto 48px;
+  aspect-ratio: 16 / 9;
+}
+.banner img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.banner__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15,23,42,0.15) 0%, rgba(15,23,42,0.55) 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 32px;
+}
+.banner__overlay p {
+  color: #FFFFFF;
+  font-family: 'Crimson Pro', serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  margin: 0;
+  max-width: 560px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+
+/* Section background image (subtle ambient backdrop) */
+.section--with-bg-image {
+  position: relative;
+  isolation: isolate;
+}
+.section--with-bg-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-image: var(--section-bg, none);
+  opacity: 0.18;
+  z-index: -1;
+}
+
+/* Investment card com imagem ao topo */
+.investment-card__visual {
+  margin: -56px -48px 32px;
+  aspect-ratio: 21 / 9;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+}
+.investment-card__visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (max-width: 600px) {
+  .investment-card__visual { margin: -32px -24px 24px; }
+}
+
+/* SDR hero — imagem ao lado direito (desktop) */
+.hero--sdr-split {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0F172A 100%);
+}
+.hero--sdr-split .container {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.hero--sdr-split .hero__visual {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+}
+.hero--sdr-split .hero__visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (max-width: 900px) {
+  .hero--sdr-split .container {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .hero--sdr-split .hero__visual {
+    order: -1;
+    aspect-ratio: 16 / 9;
+    max-width: 100%;
+  }
+}
+
+/* Feature grid com icones-imagem pequenos */
+.feature-item--with-thumb { display: flex; gap: 20px; align-items: flex-start; }
+.feature-item__thumb {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0F172A;
+}
+.feature-item__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (max-width: 480px) {
+  .feature-item--with-thumb { flex-direction: column; gap: 12px; }
+}
+
+/* Carrega imagens com fade-in suave (reduz CLS percebido) */
+img[loading="lazy"] {
+  transition: opacity 0.3s;
+}
+
+/* Override: CTA final com bg image (sobrepoe gradient sem conflito com ::before original) */
+.cta-final.section--with-bg-image::before {
+  background-image: var(--section-bg, none);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.22;
+  z-index: 0;
+}
+.cta-final.section--with-bg-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.18) 0%, transparent 60%),
+              linear-gradient(180deg, rgba(15,23,42,0.65) 0%, rgba(15,23,42,0.85) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+.cta-final.section--with-bg-image .cta-final__content { z-index: 2; }

@@ -29,7 +29,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Crimson+Pro:ital,wght@1,400;1,500&display=swap">
-<link rel="stylesheet" href="/assets/style.css?v=20260515h">
+<link rel="stylesheet" href="/assets/style.css?v=20260515i">
+<link rel="preload" as="image" href="/assets/img/sdr/sdr_hero_whatsapp.webp" fetchpriority="high">
 
 <script type="application/ld+json">
 {
@@ -118,7 +119,7 @@
 <main id="conteudo">
 
 <!-- BLOCO 1 — HERO -->
-<section class="hero" aria-labelledby="hero-title">
+<section class="hero hero--sdr-split" aria-labelledby="hero-title">
   <div class="container">
     <div class="hero__content">
       <span class="eyebrow">SDR de IA · Agência no Bolso</span>
@@ -134,6 +135,9 @@
         <a class="btn btn--ghost" style="color:#F4D784;border-color:rgba(244,215,132,0.3)" href="https://wa.me/5586981141438?text=Ol%C3%A1%20Salatiel%2C%20quero%20conhecer%20o%20plano%20Starter">Começar com Starter</a>
       </div>
       <p class="hero__micro">7 dias de garantia depois da cobrança · Sem fidelidade · Setup PIX 10% OFF</p>
+    </div>
+    <div class="hero__visual" aria-hidden="true">
+      <img src="/assets/img/sdr/sdr_hero_whatsapp.webp" alt="DMs do Instagram chegando em alta frequência" width="1600" height="1000" fetchpriority="high" decoding="async">
     </div>
   </div>
 </section>
@@ -163,6 +167,9 @@
       <p>E não é culpa sua. Você é dono. Atende cliente presencial, gerencia equipe, paga fornecedor, vai ao banco, dorme. Você não pode ficar grudado no celular.</p>
       <p>Mas seu concorrente também não pode. Por isso quem ganha a venda hoje não é quem tem o melhor produto. <strong>É quem responde primeiro.</strong></p>
     </div>
+    <figure class="figure figure--wide figure--soft" aria-hidden="true" style="margin-top:48px">
+      <img src="/assets/img/sdr/sdr_pain_blackhole.webp" alt="Notificações esquecidas no escritório vazio" width="1600" height="900" loading="lazy" decoding="async">
+    </figure>
   </div>
 </section>
 
@@ -259,6 +266,9 @@
       <p style="font-size:1.2rem;color:#0F172A"><strong>Você economiza <span class="mono">R$ 69.636 por ano</span></strong> e ainda atende 24h, sem rotatividade.</p>
       <p style="margin-top:16px;font-family:'Crimson Pro',serif;font-style:italic;font-size:1.05rem;margin-bottom:0">O SDR de IA não é substituto do humano. É um upgrade do que o humano não consegue entregar.</p>
     </div>
+    <figure class="figure figure--wide figure--soft" aria-hidden="true" style="margin-top:48px">
+      <img src="/assets/img/sdr/sdr_human_vs_ai.webp" alt="SDR humano vs SDR de IA" width="1600" height="900" loading="lazy" decoding="async">
+    </figure>
   </div>
 </section>
 
@@ -289,6 +299,9 @@
       <span class="eyebrow">Sem mistério</span>
       <h2>Como funciona, em 3 passos</h2>
     </div>
+    <figure class="figure figure--wide figure--soft" aria-hidden="true" style="margin-top:0;margin-bottom:48px">
+      <img src="/assets/img/sdr/sdr_how_it_works.webp" alt="Diagrama de como o SDR de IA funciona" width="1600" height="900" loading="lazy" decoding="async">
+    </figure>
     <div class="steps">
       <article class="step">
         <div class="step__num">01</div>
@@ -319,6 +332,9 @@
       <span class="eyebrow">Capacidades</span>
       <h2>O que seu SDR de IA faz, todo dia, sem você pedir</h2>
     </div>
+    <figure class="figure figure--wide figure--soft" aria-hidden="true" style="margin-top:0;margin-bottom:48px">
+      <img src="/assets/img/sdr/sdr_features_grid.webp" alt="Recursos do SDR de IA" width="1600" height="900" loading="lazy" decoding="async">
+    </figure>
     <div class="feature-list">
       <article class="feature-item">
         <div class="feature-item__num">01</div>
@@ -365,7 +381,7 @@
 </section>
 
 <!-- BLOCO 7 — PLANOS -->
-<section class="section section--light" id="planos">
+<section class="section section--light section--with-bg-image" id="planos" style="--section-bg:url('/assets/img/sdr/sdr_plan_background.webp')">
   <div class="container">
     <div class="section__intro">
       <span class="eyebrow">Escolha o tamanho</span>
@@ -570,6 +586,9 @@
 <!-- BLOCO 11 — GARANTIA -->
 <section class="section section--light">
   <div class="container">
+    <figure class="figure figure--wide figure--soft" aria-hidden="true" style="margin-top:0;margin-bottom:48px;max-width:760px">
+      <img src="/assets/img/sdr/sdr_guarantee_seal.webp" alt="Selo de garantia premium" width="1600" height="900" loading="lazy" decoding="async">
+    </figure>
     <div class="guarantee">
       <span class="guarantee__seal">GARANTIA · 7 DIAS SEM PERDA</span>
       <h2>O risco é nosso. Não é seu.</h2>
@@ -651,7 +670,7 @@
 </section>
 
 <!-- BLOCO 13 — CTA FINAL -->
-<section class="section cta-final">
+<section class="section cta-final section--with-bg-image" style="--section-bg:url('/assets/img/sdr/sdr_cta_final.webp')">
   <div class="container">
     <div class="cta-final__content">
       <span class="eyebrow" style="color:#F4D784">É hora de decidir</span>

@@ -31,7 +31,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Crimson+Pro:ital,wght@1,400;1,500&display=swap">
-<link rel="stylesheet" href="/assets/style.css?v=20260515h">
+<link rel="stylesheet" href="/assets/style.css?v=20260515i">
+<link rel="preload" as="image" href="/assets/img/home/home_hero.webp" fetchpriority="high">
 
 <!-- Schema.org Organization + Product + FAQ -->
 <script type="application/ld+json">
@@ -114,7 +115,7 @@
 <main id="conteudo">
 
 <!-- BLOCO 1 — HERO -->
-<section class="hero" aria-labelledby="hero-title">
+<section class="hero hero--with-image" aria-labelledby="hero-title" style="--hero-bg:url('/assets/img/home/home_hero.webp')">
   <div class="container">
     <div class="hero__content">
       <span class="eyebrow">Naia Enterprise — Sistema operacional de IA</span>
@@ -162,6 +163,9 @@
     <p style="text-align:center;margin-top:48px;font-size:1.2rem;font-family:'Crimson Pro',serif;font-style:italic;color:#0F172A;">
       Você trabalha 12 horas por dia operando o que deveria estar liderando.
     </p>
+    <figure class="figure figure--wide figure--soft" aria-hidden="true">
+      <img src="/assets/img/home/home_team_network.webp" alt="Cinco agentes de IA orquestrados em rede" width="1600" height="900" loading="lazy" decoding="async">
+    </figure>
   </div>
 </section>
 
@@ -182,32 +186,32 @@
       <h3 style="color:#FFFFFF;margin-top:32px;margin-bottom:16px">A Naia coordena 5 agentes especialistas no negócio dele:</h3>
     </div>
     <div class="agents" style="margin-top:32px">
-      <article class="agent" style="background:#1E293B;border-color:#334155">
-        <div class="agent__icon">D</div>
+      <article class="agent agent--with-photo" style="background:#1E293B;border-color:#334155">
+        <img class="agent__photo" src="/assets/img/home/home_agent_davi.webp" alt="Davi — SDR de IA" width="600" height="600" loading="lazy" decoding="async">
         <h3 style="color:#FFFFFF">Davi</h3>
         <div class="agent__role">SDR de IA</div>
         <p style="color:#94A3B8">Atende DMs do Instagram @salatielbatistaoficial e @digitalmastermkt. Qualifica BANT-light.</p>
       </article>
-      <article class="agent" style="background:#1E293B;border-color:#334155">
-        <div class="agent__icon">J</div>
+      <article class="agent agent--with-photo" style="background:#1E293B;border-color:#334155">
+        <img class="agent__photo" src="/assets/img/home/home_agent_jonathan.webp" alt="Jonathan — Copywriter de IA" width="600" height="600" loading="lazy" decoding="async">
         <h3 style="color:#FFFFFF">Jonathan</h3>
         <div class="agent__role">Copywriter de IA</div>
         <p style="color:#94A3B8">Páginas de vendas, roteiros de Reels, emails de marketing, pesquisa de mercado.</p>
       </article>
-      <article class="agent" style="background:#1E293B;border-color:#334155">
-        <div class="agent__icon">P</div>
+      <article class="agent agent--with-photo" style="background:#1E293B;border-color:#334155">
+        <img class="agent__photo" src="/assets/img/home/home_agent_paulo.webp" alt="Paulo — Dev Full-stack de IA" width="600" height="600" loading="lazy" decoding="async">
         <h3 style="color:#FFFFFF">Paulo</h3>
         <div class="agent__role">Dev Full-stack de IA</div>
         <p style="color:#94A3B8">Código, deploy, integrações Meta/OpenAI/Stripe. Sites no GitHub Pages com domínio próprio.</p>
       </article>
-      <article class="agent" style="background:#1E293B;border-color:#334155">
-        <div class="agent__icon">J</div>
+      <article class="agent agent--with-photo" style="background:#1E293B;border-color:#334155">
+        <img class="agent__photo" src="/assets/img/home/home_agent_juliana.webp" alt="Juliana — Operação de IA" width="600" height="600" loading="lazy" decoding="async">
         <h3 style="color:#FFFFFF">Juliana</h3>
         <div class="agent__role">Operação de IA</div>
         <p style="color:#94A3B8">Coordena entregas, prazos, briefings, follow-up de fornecedores, design ops.</p>
       </article>
-      <article class="agent" style="background:#1E293B;border-color:#334155">
-        <div class="agent__icon">R</div>
+      <article class="agent agent--with-photo" style="background:#1E293B;border-color:#334155">
+        <img class="agent__photo" src="/assets/img/home/home_agent_rafael.webp" alt="Rafael — Gestão de Projetos" width="600" height="600" loading="lazy" decoding="async">
         <h3 style="color:#FFFFFF">Rafael</h3>
         <div class="agent__role">Gestão de Projetos</div>
         <p style="color:#94A3B8">Roadmap, priorização semanal, memória de pendências, relatório executivo mensal.</p>
@@ -309,6 +313,10 @@
       <h2>O que a Naia já construiu (2026)</h2>
       <p class="muted">Operação real. Cada caso desses foi construído por uma equipe humana de 0 pessoas.</p>
     </div>
+    <div class="banner" aria-hidden="true">
+      <img src="/assets/img/home/home_orchestra.webp" alt="Maestro coordenando orquestra como metáfora da Naia" width="1600" height="900" loading="lazy" decoding="async">
+      <div class="banner__overlay"><p>Uma orquestra inteira coordenada por uma só batuta. É assim que a Naia opera.</p></div>
+    </div>
     <div class="cases">
       <article class="case">
         <div class="case__num">CASO 01</div>
@@ -354,6 +362,9 @@
     </div>
 
     <div class="investment-card">
+      <div class="investment-card__visual" aria-hidden="true">
+        <img src="/assets/img/home/home_investment_vault.webp" alt="Investimento Naia Enterprise" width="1600" height="686" loading="lazy" decoding="async">
+      </div>
       <div style="margin-bottom:24px">
         <span style="color:#475569;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600">Setup único</span>
         <div class="investment-card__hero mono">R$ 19.997</div>
@@ -460,6 +471,9 @@
       <span class="eyebrow">Implantação</span>
       <h2>Como implantamos a Naia na sua empresa em 30 dias</h2>
     </div>
+    <figure class="figure figure--wide figure--soft" aria-hidden="true" style="margin-top:0;margin-bottom:48px">
+      <img src="/assets/img/home/home_calendar_30days.webp" alt="Cronograma de 30 dias de implantação" width="1600" height="900" loading="lazy" decoding="async">
+    </figure>
     <div class="steps">
       <article class="step">
         <div class="step__num">S1</div>
@@ -531,7 +545,7 @@
 </section>
 
 <!-- BLOCO 12 — FAQ -->
-<section class="section section--light">
+<section class="section section--light section--with-bg-image" style="--section-bg:url('/assets/img/home/home_faq_depth.webp')">
   <div class="container">
     <div class="section__intro">
       <span class="eyebrow">FAQ Enterprise</span>
