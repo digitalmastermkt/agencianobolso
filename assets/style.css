@@ -228,14 +228,17 @@ body { padding-top: 64px; }
   color: #FFFFFF;
   margin-bottom: 1.5rem;
   /* reserva espaço pra evitar CLS quando Playfair carrega.
-     Considera worst-case: 5 linhas em mobile, 3 em desktop. */
+     Considera worst-case: 7 linhas em mobile, 3 em desktop. */
   min-height: calc(1.2em * 3.2);
 }
 @media (max-width: 900px) {
-  .hero h1 { min-height: calc(1.2em * 4.2); }
+  .hero h1 { min-height: calc(1.2em * 5.2); }
 }
 @media (max-width: 500px) {
-  .hero h1 { min-height: calc(1.2em * 6); }
+  .hero h1 {
+    min-height: calc(1.2em * 7);
+    font-size: clamp(1.6rem, 7vw, 2.2rem);
+  }
 }
 .hero h1 em { font-style: italic; color: #F4D784; font-weight: 700; }
 .hero__lead {
