@@ -433,6 +433,53 @@ section > .container, section > .container-narrow { position: relative; z-index:
 }
 .agent-desc { color: var(--text-2); font-size: 0.97rem; line-height: 1.55; }
 
+/* Retratos dos agentes (substituem o ícone-letra) */
+.agent-portrait {
+  display: block;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 18px;
+  border: 1px solid rgba(0,212,255,0.30);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35), 0 0 0 4px rgba(0,212,255,0.05);
+  background: var(--bg-3);
+}
+.agent-card:hover .agent-portrait {
+  border-color: rgba(0,212,255,0.55);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.45), 0 0 0 4px rgba(0,212,255,0.10);
+}
+.agent-card-featured {
+  background: var(--grad-primary-soft);
+  border-color: rgba(0,212,255,0.30);
+}
+.agent-portrait-featured {
+  width: 96px;
+  height: 96px;
+  border-color: rgba(0,212,255,0.55);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.45), 0 0 0 4px rgba(0,212,255,0.18);
+}
+@media (max-width: 640px) {
+  .agent-portrait { width: 72px; height: 72px; margin-bottom: 14px; }
+  .agent-portrait-featured { width: 80px; height: 80px; }
+}
+
+/* Badge do agente no hero (ex: Hermes em /sdr) */
+.hero-agent-badge {
+  display: block;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 20px;
+  border: 2px solid rgba(0,212,255,0.50);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.50), 0 0 0 6px rgba(0,212,255,0.08), 0 0 40px rgba(0,212,255,0.25);
+  background: var(--bg-3);
+}
+@media (max-width: 640px) {
+  .hero-agent-badge { width: 96px; height: 96px; margin-bottom: 16px; }
+}
+
 /* ---------- CASE NARRATIVE ---------- */
 .case-narrative {
   position: relative;
