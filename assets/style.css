@@ -1711,3 +1711,57 @@ section > .container, section > .container-narrow { position: relative; z-index:
   .mobile-only { display: block; }
   .desktop-only { display: none; }
 }
+
+/* ---------- CASE-CTA (card final "Próximo case: você") ---------- */
+.case-narrative.case-cta {
+  background: linear-gradient(135deg, rgba(0,212,255,0.07) 0%, rgba(168,85,247,0.07) 100%);
+  border: 1px solid rgba(0,212,255,0.30);
+  text-align: left;
+}
+.case-narrative.case-cta::before {
+  width: 4px;
+}
+.case-narrative.case-cta .case-name {
+  font-size: 1.65rem;
+}
+.case-narrative.case-cta .case-block p { color: var(--text-1); }
+
+/* ---------- CROSS-LINK SDR (abaixo do for-whom) ---------- */
+.cross-link-sdr {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+}
+.cross-link-inner {
+  max-width: 760px;
+  width: 100%;
+  padding: 28px 32px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-2);
+  border: 1px dashed rgba(0,212,255,0.35);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.cross-link-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+}
+.cross-link-inner p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 620px;
+}
+.cross-link-inner p strong { color: var(--text-1); }
+@media (max-width: 600px) {
+  .cross-link-inner { padding: 24px 20px; }
+  .cross-link-inner p { font-size: 0.95rem; }
+}
