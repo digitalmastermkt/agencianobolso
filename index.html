@@ -27,7 +27,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=optional">
 <link rel="preload" as="image" href="/assets/img/brand/salatiel_hero.jpg" fetchpriority="high">
 
-<link rel="stylesheet" href="/assets/style.css?v=20260516">
+<link rel="stylesheet" href="/assets/style.css?v=20260516b">
 
 <!-- JSON-LD -->
 <script type="application/ld+json">
@@ -199,6 +199,88 @@
         <div class="agent-role">Orquestradora</div>
         <p class="agent-desc">Você fala só com ela. Ela aciona quem precisa, coordena execução, mantém memória do seu negócio inteiro. Uma interface. Sete especialistas.</p>
       </article>
+    </div>
+  </div>
+</section>
+
+<!-- DIAGRAMA DE ORQUESTRAÇÃO (rede neural viva) -->
+<section id="orquestracao">
+  <div class="grid-bg"></div>
+  <div class="container">
+    <div class="section-header">
+      <span class="eyebrow">Orquestração em tempo real</span>
+      <h2>A MAIA coordena.<br>Os agentes executam.</h2>
+      <p>Cada agente especialista, cada interação coordenada pela MAIA. Você vê uma única operação. Por trás, 7 inteligências falando entre si em tempo real.</p>
+    </div>
+
+    <div class="orchestration-wrap">
+      <div class="orchestration-diagram" role="img" aria-label="Diagrama de rede: MAIA no centro conectada aos 7 agentes Hermes, Apolo, Hefesto, Atena, Hera, Ares e Cronos por linhas pulsantes de dados.">
+
+        <!-- Linhas SVG (atrás dos retratos) -->
+        <svg class="orchestration-svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"  stop-color="#00D4FF" stop-opacity="0.85"/>
+              <stop offset="100%" stop-color="#A855F7" stop-opacity="0.85"/>
+            </linearGradient>
+            <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <!-- 7 linhas do centro (300,300) até cada agente -->
+          <line class="orchestration-line" data-line="hermes"  x1="300" y1="300" x2="300"    y2="80"/>
+          <line class="orchestration-line" data-line="apolo"   x1="300" y1="300" x2="471.97" y2="162.87"/>
+          <line class="orchestration-line" data-line="hefesto" x1="300" y1="300" x2="514.51" y2="349.05"/>
+          <line class="orchestration-line" data-line="atena"   x1="300" y1="300" x2="395.30" y2="498.18"/>
+          <line class="orchestration-line" data-line="hera"    x1="300" y1="300" x2="204.70" y2="498.18"/>
+          <line class="orchestration-line" data-line="ares"    x1="300" y1="300" x2="85.49"  y2="349.05"/>
+          <line class="orchestration-line" data-line="cronos"  x1="300" y1="300" x2="128.03" y2="162.87"/>
+        </svg>
+
+        <!-- MAIA central -->
+        <div class="orchestration-node orchestration-node-center" data-tip="MAIA — Orquestradora central">
+          <img src="/assets/img/agentes/maia.webp" alt="MAIA — Orquestradora central da esteira" loading="lazy" decoding="async" width="360" height="360">
+          <span class="orchestration-label">MAIA</span>
+        </div>
+
+        <!-- 7 agentes em órbita -->
+        <div class="orchestration-node" style="--x:50%;--y:13.33%"   data-line="hermes"  data-tip="MAIA &harr; Hermes — SDR / Atendimento 24/7">
+          <img src="/assets/img/agentes/hermes.webp" alt="Hermes — SDR" loading="lazy" decoding="async" width="200" height="200">
+          <span class="orchestration-label">Hermes</span>
+        </div>
+        <div class="orchestration-node" style="--x:78.66%;--y:27.14%" data-line="apolo"   data-tip="MAIA &harr; Apolo — Copy, conteúdo e persona">
+          <img src="/assets/img/agentes/apolo.webp" alt="Apolo — Copy" loading="lazy" decoding="async" width="200" height="200">
+          <span class="orchestration-label">Apolo</span>
+        </div>
+        <div class="orchestration-node" style="--x:85.75%;--y:58.17%" data-line="hefesto" data-tip="MAIA &harr; Hefesto — Dev, deploy e infra">
+          <img src="/assets/img/agentes/hefesto.webp" alt="Hefesto — Dev" loading="lazy" decoding="async" width="200" height="200">
+          <span class="orchestration-label">Hefesto</span>
+        </div>
+        <div class="orchestration-node" style="--x:65.88%;--y:83.03%" data-line="atena"   data-tip="MAIA &harr; Atena — Operações e coordenação">
+          <img src="/assets/img/agentes/atena.webp" alt="Atena — Operações" loading="lazy" decoding="async" width="200" height="200">
+          <span class="orchestration-label">Atena</span>
+        </div>
+        <div class="orchestration-node" style="--x:34.12%;--y:83.03%" data-line="hera"    data-tip="MAIA &harr; Hera — CRM e pós-venda">
+          <img src="/assets/img/agentes/hera.webp" alt="Hera — CRM" loading="lazy" decoding="async" width="200" height="200">
+          <span class="orchestration-label">Hera</span>
+        </div>
+        <div class="orchestration-node" style="--x:14.25%;--y:58.17%" data-line="ares"    data-tip="MAIA &harr; Ares — Tráfego pago e mídia">
+          <img src="/assets/img/agentes/ares.webp" alt="Ares — Tráfego" loading="lazy" decoding="async" width="200" height="200">
+          <span class="orchestration-label">Ares</span>
+        </div>
+        <div class="orchestration-node" style="--x:21.34%;--y:27.14%" data-line="cronos"  data-tip="MAIA &harr; Cronos — Projetos e roadmap">
+          <img src="/assets/img/agentes/cronos.webp" alt="Cronos — Projetos" loading="lazy" decoding="async" width="200" height="200">
+          <span class="orchestration-label">Cronos</span>
+        </div>
+
+      </div>
+
+      <p class="orchestration-caption"><span class="orchestration-dot"></span>Sinais trafegando agora entre os 8 agentes. Memória persistente. Skills próprias. Uma única interface.</p>
     </div>
   </div>
 </section>

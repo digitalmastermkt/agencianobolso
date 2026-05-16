@@ -1207,6 +1207,211 @@ section > .container, section > .container-narrow { position: relative; z-index:
   letter-spacing: 0.06em;
 }
 
+/* ---------- ORQUESTRAÇÃO (rede neural viva) ---------- */
+.orchestration-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+.orchestration-diagram {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;          /* mantém quadrado em qualquer largura — zero CLS */
+  max-width: 640px;
+  margin: 0 auto;
+}
+.orchestration-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;          /* eventos vão para os nós (retratos) */
+  overflow: visible;
+}
+
+/* Linhas: gradient ciano->púrpura + fluxo de dados via dash-offset */
+.orchestration-line {
+  stroke: url(#lineGrad);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.55;
+  stroke-dasharray: 6 10;
+  filter: url(#lineGlow);
+  animation: orchFlow 5.5s linear infinite;
+  transition: stroke-width .3s ease, opacity .3s ease;
+}
+@keyframes orchFlow {
+  to { stroke-dashoffset: -160; }
+}
+
+/* Hover: agente acende SUA linha */
+.orchestration-node[data-line]:hover ~ .orchestration-svg .orchestration-line,
+.orchestration-diagram:has(.orchestration-node[data-line="hermes"]:hover)  .orchestration-line[data-line="hermes"],
+.orchestration-diagram:has(.orchestration-node[data-line="apolo"]:hover)   .orchestration-line[data-line="apolo"],
+.orchestration-diagram:has(.orchestration-node[data-line="hefesto"]:hover) .orchestration-line[data-line="hefesto"],
+.orchestration-diagram:has(.orchestration-node[data-line="atena"]:hover)   .orchestration-line[data-line="atena"],
+.orchestration-diagram:has(.orchestration-node[data-line="hera"]:hover)    .orchestration-line[data-line="hera"],
+.orchestration-diagram:has(.orchestration-node[data-line="ares"]:hover)    .orchestration-line[data-line="ares"],
+.orchestration-diagram:has(.orchestration-node[data-line="cronos"]:hover)  .orchestration-line[data-line="cronos"] {
+  opacity: 1;
+  stroke-width: 2.6;
+}
+/* Hover na MAIA: TODAS as linhas acendem */
+.orchestration-diagram:has(.orchestration-node-center:hover) .orchestration-line {
+  opacity: 1;
+  stroke-width: 2.4;
+}
+
+/* Nós (retratos) */
+.orchestration-node {
+  position: absolute;
+  left: var(--x, 50%);
+  top:  var(--y, 50%);
+  transform: translate(-50%, -50%);
+  width: clamp(64px, 16.5%, 100px);
+  text-align: center;
+  cursor: default;
+  transition: transform .3s ease;
+}
+.orchestration-node img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  background: var(--bg-3);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.45),
+    0 0 0 4px rgba(0, 212, 255, 0.06),
+    0 0 18px rgba(0, 212, 255, 0.18);
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.orchestration-node:hover {
+  z-index: 3;
+  transform: translate(-50%, -50%) scale(1.10);
+}
+.orchestration-node:hover img {
+  border-color: rgba(0, 212, 255, 0.7);
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.55),
+    0 0 0 5px rgba(0, 212, 255, 0.12),
+    0 0 30px rgba(0, 212, 255, 0.45);
+}
+.orchestration-label {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  transition: color .3s ease;
+}
+.orchestration-node:hover .orchestration-label { color: var(--cyan); }
+
+/* MAIA centro: maior, glow púrpura forte com pulse */
+.orchestration-node-center {
+  width: clamp(120px, 30%, 180px);
+  z-index: 2;
+}
+.orchestration-node-center img {
+  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.55),
+    0 0 0 6px rgba(168, 85, 247, 0.12),
+    0 0 38px rgba(168, 85, 247, 0.45);
+  animation: orchPulse 3.6s ease-in-out infinite;
+}
+.orchestration-node-center .orchestration-label {
+  color: var(--text-0);
+  font-weight: 700;
+  font-size: 12px;
+}
+@keyframes orchPulse {
+  0%, 100% {
+    box-shadow:
+      0 12px 32px rgba(0, 0, 0, 0.55),
+      0 0 0 6px rgba(168, 85, 247, 0.12),
+      0 0 30px rgba(168, 85, 247, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 14px 36px rgba(0, 0, 0, 0.6),
+      0 0 0 8px rgba(168, 85, 247, 0.18),
+      0 0 56px rgba(168, 85, 247, 0.65);
+  }
+}
+
+/* Tooltip via data-tip (aparece no hover, sem JS) */
+.orchestration-node[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(15, 15, 23, 0.96);
+  color: var(--text-0);
+  border: 1px solid var(--border-strong);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 5;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+.orchestration-node[data-tip]:hover::after,
+.orchestration-node[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* Caption embaixo */
+.orchestration-caption {
+  margin-top: 1.6rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+.orchestration-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan-glow);
+  margin-right: 8px;
+  vertical-align: middle;
+  animation: orchDot 1.6s ease-in-out infinite;
+}
+@keyframes orchDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Mobile: encolhe e esconde labels secundárias pra não poluir */
+@media (max-width: 640px) {
+  .orchestration-diagram { max-width: 420px; }
+  .orchestration-node { width: clamp(48px, 17%, 72px); }
+  .orchestration-node-center { width: clamp(96px, 30%, 132px); }
+  .orchestration-label { font-size: 9px; letter-spacing: 0.08em; margin-top: 5px; }
+  .orchestration-node-center .orchestration-label { font-size: 10px; }
+  .orchestration-line { stroke-width: 1.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orchestration-line { animation: none; opacity: 0.6; }
+  .orchestration-node-center img { animation: none; }
+  .orchestration-dot { animation: none; }
+}
+
 /* ---------- ANIMATIONS ---------- */
 @keyframes floatY {
   0%, 100% { transform: translateY(0); }
