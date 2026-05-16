@@ -286,6 +286,7 @@ section > .container, section > .container-narrow { position: relative; z-index:
   border: 1px solid transparent;
   white-space: nowrap;
   line-height: 1;
+  min-height: 44px; /* estabiliza altura antes de Inter carregar */
 }
 .btn-primary {
   background: var(--grad-primary);
@@ -327,7 +328,7 @@ section > .container, section > .container-narrow { position: relative; z-index:
   font-size: 14px;
 }
 .btn-ghost:hover { color: var(--cyan); }
-.btn-lg { padding: 18px 32px; font-size: 16px; }
+.btn-lg { padding: 18px 32px; font-size: 16px; min-height: 56px; }
 
 .cta-row {
   display: flex;
