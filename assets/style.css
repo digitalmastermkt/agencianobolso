@@ -31,9 +31,9 @@
   --grad-primary-soft: linear-gradient(135deg, rgba(0,212,255,0.18) 0%, rgba(168,85,247,0.18) 100%);
 
   /* Tipografia */
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --font-display: 'Inter', 'Inter-fallback', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-body: 'Inter', 'Inter-fallback', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'PlexMono-fallback', 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
 
   /* Radii */
   --radius-sm: 8px;
@@ -49,6 +49,21 @@
   --container: 1200px;
   --container-narrow: 920px;
   --section-pad: clamp(72px, 10vw, 140px);
+}
+
+/* ---------- FONT FALLBACK METRICS (reduz CLS) ---------- */
+@font-face {
+  font-family: 'Inter-fallback';
+  src: local('Arial');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'PlexMono-fallback';
+  src: local('Menlo'), local('Consolas');
+  size-adjust: 100%;
 }
 
 /* ---------- RESET ---------- */

@@ -20,11 +20,12 @@
 
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 
-<!-- Fonts -->
+<!-- Fonts (preload critical weights to reduce CLS) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="preload" as="image" href="/assets/img/brand/salatiel_hero.jpg" fetchpriority="high">
 
 <link rel="stylesheet" href="/assets/style.css?v=20260516">
 
@@ -51,7 +52,7 @@
 <nav class="navbar">
   <div class="nav-inner">
     <a href="/" class="nav-logo" aria-label="Agência no Bolso">
-      <img src="/assets/img/brand/logo-horizontal-ondark.png" alt="Agência no Bolso">
+      <img src="/assets/img/brand/logo-horizontal-ondark.png" alt="Agência no Bolso" width="240" height="50">
     </a>
     <div class="nav-links">
       <a href="#maia">MAIA</a>
@@ -128,7 +129,7 @@
     </div>
 
     <div class="maia-feature">
-      <img src="/assets/img/brand/maia-symbol.png" alt="Símbolo MAIA — orquestradora de IA" loading="lazy">
+      <img src="/assets/img/brand/maia-symbol.png" alt="Símbolo MAIA — orquestradora de IA" loading="lazy" width="2000" height="2000">
       <div>
         <span class="maia-acronym">M.A.I.A.</span>
         <h3>Multiagentes Articulados de Inteligência Aplicada</h3>
@@ -217,7 +218,7 @@
         </div>
       </div>
       <div class="about-hero-img">
-        <img src="/assets/img/brand/salatiel_hero.jpg" alt="Salatiel Batista, estrategista da esteira MAIA" loading="lazy">
+        <img src="/assets/img/brand/salatiel_hero.jpg" alt="Salatiel Batista, estrategista da esteira MAIA" loading="lazy" width="864" height="1184">
       </div>
     </div>
   </div>
@@ -438,19 +439,19 @@
     </div>
     <div class="founders-grid">
       <article class="founder-card">
-        <img class="founder-photo" src="/assets/img/fundadores/raquel_coelho.jpg" alt="Raquel Coelho, Founder da Agência no Bolso" loading="lazy">
+        <img class="founder-photo" src="/assets/img/fundadores/raquel_coelho.jpg" alt="Raquel Coelho, Founder da Agência no Bolso" loading="lazy" width="320" height="400">
         <div class="founder-name">Raquel Coelho</div>
         <div class="founder-role">Founder da Agência no Bolso</div>
         <p class="founder-bio">Especialista em estrutura visual, posicionamento digital e bio estratégica pra Instagram. Transforma perfil comum em página que comunica valor, autoridade e vendas. Constrói presença digital com clareza, organização e estratégia.</p>
       </article>
       <article class="founder-card">
-        <img class="founder-photo" src="/assets/img/brand/salatiel_hero.jpg" alt="Salatiel Batista, Co-fundador AnB + Estrategista + Founder Digital Master" loading="lazy">
+        <img class="founder-photo" src="/assets/img/brand/salatiel_hero.jpg" alt="Salatiel Batista, Co-fundador AnB + Estrategista + Founder Digital Master" loading="lazy" width="864" height="1184">
         <div class="founder-name">Salatiel Batista</div>
         <div class="founder-role">Co-fundador AnB + Estrategista<br>Founder Digital Master</div>
         <p class="founder-bio">Founder da Digital Master, escola que ensina empresário a usar IA pra vender mais e automatizar operação. Estrategista por trás da esteira MAIA — ecossistema de 7 agentes IA agora disponibilizado via Agência no Bolso. Treina empresário PME no Brasil inteiro.</p>
       </article>
       <article class="founder-card">
-        <img class="founder-photo" src="/assets/img/fundadores/joel_visgueira.jpg" alt="Joel Visgueira, Co-fundador AnB + Founder grupo Master Point" loading="lazy">
+        <img class="founder-photo" src="/assets/img/fundadores/joel_visgueira.jpg" alt="Joel Visgueira, Co-fundador AnB + Founder grupo Master Point" loading="lazy" width="324" height="400">
         <div class="founder-name">Joel Visgueira</div>
         <div class="founder-role">Co-fundador AnB<br>Founder grupo Master Point</div>
         <p class="founder-bio">Founder do grupo Master Point e co-fundador da Agência no Bolso. Responsável pela experiência do cliente, UX e estruturação administrativa — organização jurídica, contábil, operacional e validação da solução.</p>
@@ -619,7 +620,7 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <img src="/assets/img/brand/logo-horizontal-ondark.png" alt="Agência no Bolso">
+        <img src="/assets/img/brand/logo-horizontal-ondark.png" alt="Agência no Bolso" width="240" height="50">
         <p>Sistema operacional de IA pra empresário que quer liderar o negócio sem operar o que deveria estar terceirizado.</p>
       </div>
       <div>
