@@ -758,6 +758,24 @@ section > .container, section > .container-narrow { position: relative; z-index:
 .mock-bar.w3 { max-width: 56%; }
 .mock-bar.w4 { max-width: 88%; }
 
+/* Mobile: mocks deixam de ser absolutos e fluem antes do titulo,
+   evitando sobreposicao do h4 "Atendimento 24/7" / label / p sobre o chat */
+@media (max-width: 600px) {
+  .gallery-item {
+    justify-content: flex-start;
+    min-height: 0;
+    gap: 16px;
+  }
+  .mock-chat,
+  .mock-dash,
+  .mock-report {
+    position: relative;
+    inset: auto;
+    opacity: 1;
+  }
+  .mock-chat { padding: 4px 0; }
+}
+
 /* ---------- FOUNDERS ---------- */
 .founders-grid {
   display: grid;
