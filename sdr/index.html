@@ -24,7 +24,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=optional">
 <link rel="preload" as="image" href="/assets/img/brand/salatiel_hero.jpg" fetchpriority="high">
 
-<link rel="stylesheet" href="/assets/style.css?v=20260525-rename-agentes">
+<link rel="stylesheet" href="/assets/style.css?v=20260524-roi-calc">
 </head>
 <body>
 
@@ -38,6 +38,7 @@
       <a href="#planos">Planos</a>
       <a href="#lis">Como funciona</a>
       <a href="#cases">Cases</a>
+      <a href="#roi-calc-sdr">Calculadora</a>
       <a href="#faq">FAQ</a>
       <a href="/" class="btn-ghost">MAIA Enterprise ↗</a>
     </div>
@@ -308,6 +309,186 @@
     </article>
   </div>
 </section>
+
+<!-- CALCULADORA DE ROI · Lis SDR -->
+<section id="roi-calc-sdr">
+  <div class="container">
+    <div class="section-header">
+      <span class="eyebrow">Calculadora de ROI</span>
+      <h2>Quanto custa um <span class="gradient-text">SDR humano</span> hoje?</h2>
+      <p>Lis trabalha 24/7, não falta, não pede férias, não tem turnover. Faça a conta.</p>
+    </div>
+
+    <div class="roi-calc" id="roiCalcSdr">
+      <!-- INPUTS -->
+      <div class="roi-inputs">
+        <h3>Seu time humano hoje</h3>
+
+        <div class="roi-field">
+          <div class="roi-field-label">
+            <label for="roiSdrQtde">Nº de SDRs humanos hoje</label>
+            <div class="roi-input-wrap">
+              <input type="number" id="roiSdrQtdeNum" min="1" max="20" step="1" value="3" inputmode="numeric" aria-label="Número de SDRs humanos">
+              <span class="roi-prefix">pessoas</span>
+            </div>
+          </div>
+          <input type="range" id="roiSdrQtde" class="roi-slider" min="1" max="20" step="1" value="3" aria-label="Número de SDRs (slider)">
+        </div>
+
+        <div class="roi-field">
+          <div class="roi-field-label">
+            <label for="roiSdrSalario">Salário base por SDR (sem encargos)</label>
+            <div class="roi-input-wrap">
+              <span class="roi-prefix">R$</span>
+              <input type="number" id="roiSdrSalarioNum" min="1518" max="10000" step="50" value="2000" inputmode="numeric" aria-label="Salário base por SDR">
+              <span class="roi-prefix">/mês</span>
+            </div>
+          </div>
+          <input type="range" id="roiSdrSalario" class="roi-slider" min="1518" max="10000" step="50" value="2000" aria-label="Salário base por SDR (slider)">
+          <div class="roi-derived">Custo CLT real ≈ <strong id="roiSdrCustoCLT">R$ 3.400</strong>/mês por SDR (×1,7: INSS + FGTS + férias + 13º + provisões + VT/VR).</div>
+        </div>
+
+        <div class="roi-field">
+          <div class="roi-field-label">
+            <label for="roiSdrHoras">Horas de cobertura necessária por dia</label>
+            <div class="roi-input-wrap">
+              <input type="number" id="roiSdrHorasNum" min="4" max="24" step="1" value="8" inputmode="numeric" aria-label="Horas de cobertura por dia">
+              <span class="roi-prefix">h/dia</span>
+            </div>
+          </div>
+          <input type="range" id="roiSdrHoras" class="roi-slider" min="4" max="24" step="1" value="8" aria-label="Horas de cobertura (slider)">
+          <div class="roi-derived">Humanos: 5 dias úteis × N horas. Lis: <strong>168h/semana</strong> (24×7), sem férias, sem atestado.</div>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="roi-output">
+        <h3>Comparação anual</h3>
+
+        <div class="roi-cards">
+          <div class="roi-card is-current" aria-live="polite">
+            <div class="roi-card-label">SDRs humanos</div>
+            <div class="roi-card-headline">Time humano CLT por ano:</div>
+            <div class="roi-card-value" id="roiSdrAtualTotal">R$ 0</div>
+            <ul class="roi-card-breakdown">
+              <li><span>Custo/SDR (CLT)</span><span id="roiSdrBdCusto">R$ 0</span></li>
+              <li><span>Qtde × 12 meses</span><span id="roiSdrBdQtde">0</span></li>
+              <li><span>Cobertura/semana</span><span id="roiSdrBdCobertura">0h</span></li>
+            </ul>
+          </div>
+
+          <div class="roi-card is-maia" aria-live="polite">
+            <div class="roi-card-label">Lis Premium</div>
+            <div class="roi-card-headline">SDR de IA 24/7 no seu CNPJ:</div>
+            <div class="roi-card-value" id="roiSdrTotalLis">R$ 13.961</div>
+            <ul class="roi-card-breakdown">
+              <li><span>Setup único</span><span>R$ 1.997</span></li>
+              <li><span>Mensal × 12</span><span>R$ 11.964</span></li>
+              <li><span>Cobertura</span><span>168h/sem</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="roi-savings" aria-live="polite">
+          <div class="roi-savings-label">Você economiza por ano</div>
+          <div class="roi-savings-value" id="roiSdrEconomia">R$ 0</div>
+          <div class="roi-savings-meta">
+            <span>Lis equivale a <strong id="roiSdrEquivalencia">— SDRs</strong> em cobertura</span>
+            <span>Payback em <strong id="roiSdrPayback">— meses</strong></span>
+          </div>
+        </div>
+
+        <div class="roi-cta-wrap">
+          <a href="https://wa.me/5586981141438?text=Ol%C3%A1%20Salatiel%2C%20rodei%20a%20calculadora%20e%20quero%20a%20Lis%20no%20meu%20time" class="btn glow-cta btn-lg" target="_blank" rel="noopener">Quero a Lis no meu time</a>
+        </div>
+        <p class="roi-fineprint">Lis Premium R$ 997/mês + setup R$ 1.997. Custos externos (mensageria + IA) somam R$ 60 a R$ 290/mês (cobertos no seu cartão).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var fmtBR = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  function brl(n){ if (!isFinite(n)) n = 0; return fmtBR.format(Math.round(n)); }
+
+  var MULTIPLICADOR_CLT = 1.7;
+  var LIS_SETUP   = 1997;
+  var LIS_MENSAL  = 997;
+  var LIS_ANUAL   = LIS_SETUP + LIS_MENSAL * 12; // 13.961
+  var LIS_HORAS_SEMANA = 168; // 24×7
+
+  var pairs = [
+    { s: 'roiSdrQtde',    n: 'roiSdrQtdeNum'    },
+    { s: 'roiSdrSalario', n: 'roiSdrSalarioNum' },
+    { s: 'roiSdrHoras',   n: 'roiSdrHorasNum'   }
+  ];
+  function bindPair(p){
+    var s = document.getElementById(p.s);
+    var n = document.getElementById(p.n);
+    if (!s || !n) return;
+    s.addEventListener('input', function(){ n.value = s.value; recompute(); });
+    n.addEventListener('input', function(){
+      var v = Number(n.value || 0);
+      var min = Number(s.min), max = Number(s.max);
+      if (v < min) v = min; if (v > max) v = max;
+      s.value = v;
+      recompute();
+    });
+    n.addEventListener('blur', function(){
+      var v = Number(n.value || 0);
+      var min = Number(s.min), max = Number(s.max);
+      if (v < min) v = min; if (v > max) v = max;
+      n.value = v;
+      s.value = v;
+      recompute();
+    });
+  }
+  pairs.forEach(bindPair);
+
+  var lastEconomia = null;
+  function recompute(){
+    var qtde    = Number(document.getElementById('roiSdrQtde').value)    || 0;
+    var salario = Number(document.getElementById('roiSdrSalario').value) || 0;
+    var horas   = Number(document.getElementById('roiSdrHoras').value)   || 0;
+
+    var custoCLT      = salario * MULTIPLICADOR_CLT;
+    var custoSdrMes   = qtde * custoCLT;
+    var custoAnual    = custoSdrMes * 12;
+
+    var coberturaSem  = qtde * horas * 5; // 5 dias úteis
+    var equivalencia  = (qtde * horas * 5) > 0 ? (LIS_HORAS_SEMANA / (horas * 5)) : 0;
+
+    var economia      = custoAnual - LIS_ANUAL;
+    var payback       = custoSdrMes > 0 ? (LIS_ANUAL / custoSdrMes) : 0;
+
+    document.getElementById('roiSdrCustoCLT').textContent     = brl(custoCLT);
+    document.getElementById('roiSdrBdCusto').textContent      = brl(custoCLT);
+    document.getElementById('roiSdrBdQtde').textContent       = qtde + ' × 12';
+    document.getElementById('roiSdrBdCobertura').textContent  = coberturaSem + 'h';
+    document.getElementById('roiSdrAtualTotal').textContent   = brl(custoAnual);
+    document.getElementById('roiSdrTotalLis').textContent     = brl(LIS_ANUAL);
+
+    var econEl = document.getElementById('roiSdrEconomia');
+    econEl.textContent = economia >= 0 ? brl(economia) : '— ' + brl(Math.abs(economia));
+    if (lastEconomia !== null && economia !== lastEconomia){
+      econEl.classList.remove('is-pulse');
+      void econEl.offsetWidth;
+      econEl.classList.add('is-pulse');
+    }
+    lastEconomia = economia;
+
+    document.getElementById('roiSdrEquivalencia').textContent = (isFinite(equivalencia) && equivalencia > 0)
+      ? (equivalencia.toFixed(1).replace('.', ',') + ' SDRs')
+      : '— SDRs';
+
+    document.getElementById('roiSdrPayback').textContent = (payback > 0 && isFinite(payback))
+      ? (payback < 1 ? '< 1 mês' : (payback.toFixed(1).replace('.', ',') + ' meses'))
+      : '—';
+  }
+  recompute();
+})();
+</script>
 
 <!-- PLANOS -->
 <section id="planos">
