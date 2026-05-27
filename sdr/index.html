@@ -24,7 +24,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=optional">
 <link rel="preload" as="image" href="/assets/img/brand/salatiel_hero.jpg" fetchpriority="high">
 
-<link rel="stylesheet" href="/assets/style.css?v=20260524-roi-calc">
+<link rel="stylesheet" href="/assets/style.css?v=20260527-dor-desejo-calc">
 </head>
 <body>
 
@@ -309,6 +309,173 @@
     </article>
   </div>
 </section>
+
+<!-- CALCULADORA DOR + DESEJO (Buraco Negro WhatsApp + Ganho +30%) -->
+<section id="calc-dor-desejo-sec">
+  <div class="container">
+    <div class="section-header">
+      <span class="eyebrow">Antes da economia, a perda</span>
+      <h2>Você sabe quanto está <span style="color:var(--red); text-shadow:0 0 24px var(--red-glow)">perdendo agora</span>?<br>E quanto <span style="color:var(--gold); text-shadow:0 0 24px var(--gold-glow)">poderia ganhar</span>?</h2>
+      <p>Conte um pouco do seu cenário. A página recalcula em tempo real.</p>
+    </div>
+
+    <div class="calc-dor-desejo" id="calcDorDesejo">
+
+      <!-- INPUTS COMPARTILHADOS -->
+      <div class="calc-shared-inputs">
+        <h3>Seu cenário atual</h3>
+        <div class="calc-inputs-grid">
+
+          <div class="roi-field">
+            <div class="roi-field-label">
+              <label for="ddLeads">Leads por mês no WhatsApp</label>
+              <div class="roi-input-wrap">
+                <input type="number" id="ddLeadsNum" min="50" max="2000" step="10" value="200" inputmode="numeric" aria-label="Quantidade de leads por mês no WhatsApp">
+                <span class="roi-prefix">leads</span>
+              </div>
+            </div>
+            <input type="range" id="ddLeads" class="roi-slider" min="50" max="2000" step="10" value="200" aria-label="Leads por mês (slider)">
+          </div>
+
+          <div class="roi-field">
+            <div class="roi-field-label">
+              <label for="ddHoras">Tempo médio de resposta hoje</label>
+              <div class="roi-input-wrap">
+                <input type="number" id="ddHorasNum" min="0.5" max="24" step="0.5" value="4" inputmode="decimal" aria-label="Tempo médio de resposta em horas">
+                <span class="roi-prefix">h</span>
+              </div>
+            </div>
+            <input type="range" id="ddHoras" class="roi-slider" min="0.5" max="24" step="0.5" value="4" aria-label="Tempo de resposta (slider)">
+            <div class="roi-derived">Lis responde em <strong>30 segundos</strong> — qualquer hora, qualquer dia.</div>
+          </div>
+
+          <div class="roi-field">
+            <div class="roi-field-label">
+              <label for="ddTicket">Ticket médio de venda</label>
+              <div class="roi-input-wrap">
+                <span class="roi-prefix">R$</span>
+                <input type="number" id="ddTicketNum" min="100" max="10000" step="50" value="800" inputmode="numeric" aria-label="Ticket médio de venda em reais">
+              </div>
+            </div>
+            <input type="range" id="ddTicket" class="roi-slider" min="100" max="10000" step="50" value="800" aria-label="Ticket médio (slider)">
+          </div>
+
+          <div class="roi-field">
+            <div class="roi-field-label">
+              <label for="ddConv">Taxa de conversão atual</label>
+              <div class="roi-input-wrap">
+                <input type="number" id="ddConvNum" min="1" max="50" step="1" value="15" inputmode="numeric" aria-label="Taxa de conversão atual em porcentagem">
+                <span class="roi-prefix">%</span>
+              </div>
+            </div>
+            <input type="range" id="ddConv" class="roi-slider" min="1" max="50" step="1" value="15" aria-label="Taxa de conversão (slider)">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CARD A — DOR (PERDA) -->
+      <article class="calc-impact-card is-loss" aria-live="polite">
+        <div class="calc-impact-label">O buraco negro do WhatsApp</div>
+        <div class="calc-impact-headline">Você perde <strong>todo mês</strong> em vendas que <strong>já chegaram</strong> no seu WhatsApp:</div>
+        <div class="calc-impact-value" id="ddPerdaMes">R$ 0</div>
+        <div class="calc-impact-sub">Em 12 meses: <strong id="ddPerdaAno">R$ 0</strong> que escorrem pelo ralo</div>
+        <p class="calc-impact-credibility">Estudo Harvard Business Review (Lead Response Management): cada hora de espera reduz em até 10% a taxa de conversão. Lead que espera mais de 5 minutos cai 80%.</p>
+      </article>
+
+      <!-- CARD B — DESEJO (GANHO POTENCIAL +30%) -->
+      <article class="calc-impact-card is-gain" aria-live="polite">
+        <div class="calc-impact-label">O ganho que você ainda não tem</div>
+        <div class="calc-impact-headline">Com a Lis atendendo 24/7, você passaria a <strong>faturar a mais</strong>:</div>
+        <div class="calc-impact-value" id="ddGanhoMes">R$ 0</div>
+        <div class="calc-impact-sub">Em 12 meses: <strong id="ddGanhoAno">R$ 0</strong> a mais no caixa</div>
+        <p class="calc-impact-credibility">Atendimento instantâneo 24/7 aumenta conversão em média 30% (estudos de retail SaaS e e-commerce: Drift, HubSpot, Salesforce State of Service).</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var fmtBR = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  function brl(n){ if (!isFinite(n) || n < 0) n = 0; return fmtBR.format(Math.round(n)); }
+
+  var FATOR_PERDA_POR_HORA = 0.08;   // Harvard: ~8% por hora (média 7-10%)
+  var FATOR_AUMENTO_LIS    = 0.30;   // +30% com atendimento instantâneo 24/7
+
+  var pairs = [
+    { s: 'ddLeads',  n: 'ddLeadsNum'  },
+    { s: 'ddHoras',  n: 'ddHorasNum'  },
+    { s: 'ddTicket', n: 'ddTicketNum' },
+    { s: 'ddConv',   n: 'ddConvNum'   }
+  ];
+  function bindPair(p){
+    var s = document.getElementById(p.s);
+    var n = document.getElementById(p.n);
+    if (!s || !n) return;
+    s.addEventListener('input', function(){ n.value = s.value; recompute(); });
+    n.addEventListener('input', function(){
+      var v = Number(n.value || 0);
+      var min = Number(s.min), max = Number(s.max);
+      if (v < min) v = min; if (v > max) v = max;
+      s.value = v;
+      recompute();
+    });
+    n.addEventListener('blur', function(){
+      var v = Number(n.value || 0);
+      var min = Number(s.min), max = Number(s.max);
+      if (v < min) v = min; if (v > max) v = max;
+      n.value = v;
+      s.value = v;
+      recompute();
+    });
+  }
+  pairs.forEach(bindPair);
+
+  var lastPerda = null, lastGanho = null;
+  function pulse(elId, last, current){
+    if (last === null || current === last) return current;
+    var el = document.getElementById(elId);
+    if (!el) return current;
+    el.classList.remove('is-pulse');
+    void el.offsetWidth;
+    el.classList.add('is-pulse');
+    return current;
+  }
+
+  function recompute(){
+    var leads  = Number(document.getElementById('ddLeads').value)  || 0;
+    var horas  = Number(document.getElementById('ddHoras').value)  || 0;
+    var ticket = Number(document.getElementById('ddTicket').value) || 0;
+    var conv   = Number(document.getElementById('ddConv').value)   || 0;
+
+    var conversaoOtima   = conv / 100;
+    var fatorEfetivo     = Math.max(0, 1 - FATOR_PERDA_POR_HORA * horas);
+    var conversaoEfetiva = conversaoOtima * fatorEfetivo;
+
+    var vendasOtimas    = leads * conversaoOtima;
+    var vendasReais     = leads * conversaoEfetiva;
+    var vendasPerdidas  = Math.max(0, vendasOtimas - vendasReais);
+    var receitaPerdidaMes = vendasPerdidas * ticket;
+    var receitaPerdidaAno = receitaPerdidaMes * 12;
+
+    var receitaAtual      = leads * ticket * conversaoEfetiva; // receita real hoje (já com gargalo)
+    var receitaComLis     = receitaAtual * (1 + FATOR_AUMENTO_LIS);
+    var ganhoAdicionalMes = Math.max(0, receitaComLis - receitaAtual);
+    var ganhoAdicionalAno = ganhoAdicionalMes * 12;
+
+    document.getElementById('ddPerdaMes').textContent  = brl(receitaPerdidaMes);
+    document.getElementById('ddPerdaAno').textContent  = brl(receitaPerdidaAno);
+    document.getElementById('ddGanhoMes').textContent  = brl(ganhoAdicionalMes);
+    document.getElementById('ddGanhoAno').textContent  = brl(ganhoAdicionalAno);
+
+    lastPerda = pulse('ddPerdaMes', lastPerda, Math.round(receitaPerdidaMes));
+    lastGanho = pulse('ddGanhoMes', lastGanho, Math.round(ganhoAdicionalMes));
+  }
+  recompute();
+})();
+</script>
 
 <!-- CALCULADORA DE ROI · Lis SDR -->
 <section id="roi-calc-sdr">
