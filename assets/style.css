@@ -1107,6 +1107,13 @@ section > .container, section > .container-narrow { position: relative; z-index:
   color: var(--text-3);
   font-family: var(--font-mono);
 }
+.footer-legal {
+  margin-top: 14px;
+  font-size: 0.78rem;
+  color: var(--text-3);
+  opacity: 0.7;
+  font-family: var(--font-mono);
+}
 
 /* ---------- WHATSAPP FLOAT ---------- */
 .wa-float {
