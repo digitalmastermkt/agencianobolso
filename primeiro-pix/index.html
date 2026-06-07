@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0F">
+<title>Projeto Primeiro Pix · Documento de estratégia — Agência no Bolso</title>
+<meta name="description" content="Análise do modelo PixRápido/Criart e plano operacional do projeto Primeiro Pix: desafio gamificado grátis de 7 dias que vira canal de aquisição da Agência no Bolso. Documento interno pros sócios.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="author" content="Agência no Bolso">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Projeto Primeiro Pix — Documento de estratégia">
+<meta property="og:description" content="Análise do modelo de referência + plano de execução do desafio Primeiro Pix. Uso interno (sócios).">
+<meta property="og:locale" content="pt_BR">
+
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=optional">
+
+<!-- Reaproveita design system da Agência no Bolso -->
+<link rel="stylesheet" href="/assets/style.css?v=20260607-pp">
+
+<style>
+/* ===== Página interna Primeiro Pix — estende o design system ===== */
+:root{
+  --pp-max: 940px;
+}
+body{ scroll-behavior:smooth; }
+
+/* Barra de aviso "documento interno" */
+.pp-ribbon{
+  position:sticky; top:0; z-index:50;
+  background:linear-gradient(90deg, rgba(255,90,90,.16), rgba(255,138,61,.16));
+  border-bottom:1px solid var(--border-strong);
+  backdrop-filter:blur(10px);
+  font-family:var(--font-mono); font-size:.74rem; letter-spacing:.04em;
+  color:var(--text-1); text-align:center; padding:9px 16px;
+}
+.pp-ribbon strong{ color:var(--gold); }
+
+/* Hero */
+.pp-hero{
+  position:relative; overflow:hidden;
+  padding:clamp(56px,9vw,110px) 0 clamp(40px,6vw,64px);
+  border-bottom:1px solid var(--border);
+}
+.pp-hero .mesh-gradient-bg,.pp-hero .grid-bg,.pp-hero .noise-bg{position:absolute;inset:0;}
+.pp-wrap{ max-width:var(--pp-max); margin:0 auto; padding:0 22px; position:relative; z-index:2; }
+.pp-kicker{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--font-mono); font-size:.78rem; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--cyan); border:1px solid var(--border-strong); background:var(--cyan-soft);
+  padding:6px 14px; border-radius:999px; margin-bottom:22px;
+}
+.pp-hero h1{ font-size:clamp(2.1rem,6.2vw,3.7rem); line-height:1.04; font-weight:800; letter-spacing:-.02em; margin-bottom:18px; }
+.pp-hero .pp-sub{ font-size:clamp(1.02rem,2.4vw,1.28rem); color:var(--text-2); max-width:680px; line-height:1.55; }
+.pp-meta-row{ display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:28px; font-family:var(--font-mono); font-size:.8rem; color:var(--text-3); }
+.pp-meta-row span{ display:inline-flex; align-items:center; gap:7px; }
+.pp-meta-row b{ color:var(--text-1); font-weight:600; }
+
+/* Sumário / TOC */
+.pp-toc{
+  max-width:var(--pp-max); margin:36px auto 0; padding:0 22px;
+}
+.pp-toc-card{
+  background:var(--bg-glass); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:22px 24px; backdrop-filter:blur(12px);
+}
+.pp-toc-card h4{ font-family:var(--font-mono); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); margin-bottom:14px; }
+.pp-toc-list{ list-style:none; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px 22px; margin:0; padding:0; }
+.pp-toc-list a{ display:flex; gap:10px; align-items:baseline; color:var(--text-1); text-decoration:none; padding:7px 0; border-bottom:1px solid transparent; transition:.18s; }
+.pp-toc-list a:hover{ color:var(--cyan); border-bottom-color:var(--border-strong); }
+.pp-toc-list .n{ font-family:var(--font-mono); color:var(--cyan); font-size:.82rem; min-width:22px; }
+
+/* Seções de conteúdo */
+.pp-section{ max-width:var(--pp-max); margin:0 auto; padding:clamp(48px,7vw,82px) 22px; border-top:1px solid var(--border); }
+.pp-section:first-of-type{ border-top:none; }
+.pp-eyebrow{ font-family:var(--font-mono); font-size:.8rem; letter-spacing:.08em; text-transform:uppercase; color:var(--purple); display:block; margin-bottom:12px; }
+.pp-section h2{ font-size:clamp(1.6rem,4.2vw,2.5rem); line-height:1.12; font-weight:800; letter-spacing:-.015em; margin-bottom:8px; }
+.pp-section h2 .num{ color:var(--text-3); font-weight:700; margin-right:.4em; }
+.pp-section h3{ font-size:clamp(1.12rem,2.6vw,1.42rem); font-weight:700; margin:34px 0 12px; color:var(--text-0); }
+.pp-section p{ color:var(--text-1); line-height:1.7; margin-bottom:1rem; font-size:1.02rem; }
+.pp-section p.pp-intro{ font-size:1.12rem; color:var(--text-2); }
+.pp-section ul,.pp-section ol{ margin:0 0 1.2rem 1.1rem; color:var(--text-1); line-height:1.7; }
+.pp-section li{ margin-bottom:.5rem; padding-left:4px; }
+.pp-section strong{ color:var(--text-0); font-weight:700; }
+.pp-section em{ color:var(--cyan); font-style:normal; }
+.pp-section a.inline{ color:var(--cyan); }
+
+/* Callouts */
+.pp-call{ border-radius:var(--radius-md); padding:18px 20px; margin:22px 0; border:1px solid var(--border-strong); background:var(--bg-2); }
+.pp-call .tag{ font-family:var(--font-mono); font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; display:block; margin-bottom:8px; }
+.pp-call.insight{ background:var(--grad-gain-soft); border-color:var(--green-glow); }
+.pp-call.insight .tag{ color:var(--green); }
+.pp-call.risk{ background:var(--grad-loss-soft); border-color:var(--red-glow); }
+.pp-call.risk .tag{ color:var(--orange); }
+.pp-call.note{ background:var(--cyan-soft); border-color:var(--cyan-glow); }
+.pp-call.note .tag{ color:var(--cyan); }
+.pp-call p:last-child{ margin-bottom:0; }
+
+/* Tabelas */
+.pp-table-wrap{ overflow-x:auto; margin:22px 0; border:1px solid var(--border); border-radius:var(--radius-md); }
+table.pp-table{ width:100%; border-collapse:collapse; font-size:.94rem; min-width:520px; }
+table.pp-table th{ background:var(--bg-2); color:var(--text-1); text-align:left; font-weight:600; padding:13px 16px; font-family:var(--font-mono); font-size:.78rem; letter-spacing:.03em; text-transform:uppercase; border-bottom:1px solid var(--border-strong); }
+table.pp-table td{ padding:13px 16px; border-bottom:1px solid var(--border); color:var(--text-1); vertical-align:top; line-height:1.5; }
+table.pp-table tr:last-child td{ border-bottom:none; }
+table.pp-table td strong{ color:var(--gold); }
+
+/* Funil em passos */
+.pp-funnel{ display:grid; gap:14px; margin:26px 0; }
+.pp-step{ display:flex; gap:16px; align-items:flex-start; background:var(--bg-1); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px 20px; }
+.pp-step .pp-step-n{ flex:0 0 auto; width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-family:var(--font-mono); font-weight:600; background:var(--grad-primary-soft); color:var(--cyan); border:1px solid var(--cyan-glow); }
+.pp-step h4{ font-size:1.05rem; margin:0 0 4px; color:var(--text-0); }
+.pp-step p{ margin:0; color:var(--text-2); font-size:.96rem; line-height:1.55; }
+
+/* Cards de fase (orientações) */
+.pp-phases{ display:grid; gap:18px; margin:26px 0; }
+.pp-phase{ background:var(--bg-1); border:1px solid var(--border); border-radius:var(--radius-lg); padding:22px 24px; position:relative; }
+.pp-phase .pp-phase-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:6px; }
+.pp-phase .pp-phase-tag{ font-family:var(--font-mono); font-size:.74rem; letter-spacing:.05em; text-transform:uppercase; color:var(--cyan); }
+.pp-phase h3{ margin:0; font-size:1.22rem; }
+.pp-phase .pp-when{ margin-left:auto; font-family:var(--font-mono); font-size:.74rem; color:var(--text-3); }
+.pp-phase ul{ margin:12px 0 0 1.1rem; }
+.pp-phase .pp-owner{ margin-top:14px; font-family:var(--font-mono); font-size:.8rem; color:var(--text-2); display:flex; flex-wrap:wrap; gap:6px 14px; }
+.pp-phase .pp-owner b{ color:var(--gold); }
+
+/* Equipe quem-faz-o-que */
+.pp-team{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin:26px 0; }
+.pp-member{ background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px 20px; }
+.pp-member .pp-role{ font-family:var(--font-mono); font-size:.72rem; letter-spacing:.05em; text-transform:uppercase; color:var(--cyan); }
+.pp-member h4{ margin:4px 0 8px; font-size:1.08rem; }
+.pp-member p{ margin:0; color:var(--text-2); font-size:.92rem; line-height:1.5; }
+
+/* Decisões em aberto */
+.pp-decision{ background:var(--bg-1); border:1px solid var(--border); border-left:3px solid var(--gold); border-radius:var(--radius-md); padding:20px 22px; margin:16px 0; }
+.pp-decision .pp-q{ font-family:var(--font-mono); font-size:.74rem; letter-spacing:.05em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:8px; }
+.pp-decision h4{ margin:0 0 8px; font-size:1.12rem; }
+.pp-decision p{ margin:0 0 .6rem; color:var(--text-2); font-size:.97rem; }
+.pp-decision p:last-child{ margin-bottom:0; }
+.pp-decision .pp-rec{ color:var(--text-1); }
+.pp-decision .pp-rec b{ color:var(--green); }
+
+/* Footer */
+.pp-foot{ border-top:1px solid var(--border); padding:40px 22px 64px; text-align:center; }
+.pp-foot .pp-wrap{ max-width:var(--pp-max); }
+.pp-foot .logo{ font-weight:800; font-size:1.05rem; letter-spacing:-.01em; }
+.pp-foot .logo span{ background:var(--grad-primary); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.pp-foot p{ color:var(--text-3); font-size:.86rem; margin:8px 0 0; font-family:var(--font-mono); }
+
+.pp-anchor{ position:relative; top:-72px; visibility:hidden; }
+@media (max-width:640px){
+  .pp-step{ padding:16px; }
+  .pp-phase .pp-when{ margin-left:0; width:100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="pp-ribbon">DOCUMENTO INTERNO · ESTRATÉGIA · uso restrito aos sócios <strong>Joel · Salatiel · Raquel · Yan</strong> — não indexado, não divulgar</div>
+
+<!-- HERO -->
+<header class="pp-hero">
+  <div class="mesh-gradient-bg"></div>
+  <div class="grid-bg"></div>
+  <div class="noise-bg"></div>
+  <div class="pp-wrap">
+    <span class="pp-kicker">● Projeto Primeiro Pix</span>
+    <h1>Do desafio grátis ao Pix.<br>Do Pix à <span class="gradient-text">assinatura recorrente</span>.</h1>
+    <p class="pp-sub">Um desafio gamificado e gratuito de 7 dias que ensina o jovem a vender serviço de IA pro comércio local e tirar o primeiro Pix — e usa esse resultado pra ativar a <strong style="color:var(--text-0)">Agência no Bolso</strong> como a ferramenta recorrente que ele assina pra entregar o serviço. Modelo B2B2C: o desafio é o canal de aquisição; a AnB é o ativo de receita.</p>
+    <div class="pp-meta-row">
+      <span><b>Base:</b> engenharia reversa do PixRápido / Criart</span>
+      <span><b>Atualizado:</b> 07/06/2026</span>
+      <span><b>Decisão:</b> validar com os sócios</span>
+    </div>
+  </div>
+</header>
+
+<!-- SUMÁRIO -->
+<nav class="pp-toc">
+  <div class="pp-toc-card">
+    <h4>O que tem nesta página</h4>
+    <ul class="pp-toc-list">
+      <li><a href="#visao"><span class="n">01</span> Visão geral do projeto</a></li>
+      <li><a href="#referencia"><span class="n">02</span> O modelo de referência (PixRápido)</a></li>
+      <li><a href="#nosso-modelo"><span class="n">03</span> Nosso modelo — o funil + a AnB</a></li>
+      <li><a href="#orientacoes"><span class="n">04</span> Orientações — como fazer rodar</a></li>
+      <li><a href="#decisoes"><span class="n">05</span> Decisões em aberto pros sócios</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- 01 VISÃO GERAL -->
+<span id="visao" class="pp-anchor"></span>
+<section class="pp-section">
+  <span class="pp-eyebrow">Seção 01</span>
+  <h2><span class="num">01</span>Visão geral do projeto</h2>
+  <p class="pp-intro">O <strong>Primeiro Pix</strong> é um desafio gratuito e gamificado de 7 dias. O participante começa do zero e termina a semana tendo prestado um micro-serviço real de IA pra um comércio local — e recebido o primeiro Pix por isso.</p>
+
+  <h3>O que é</h3>
+  <p>Uma jornada diária travada em sequência (cada dia destrava o próximo), com vídeo-aula curta, missão prática e prova social numa comunidade. No fim dos 7 dias, o participante não levou só "aula" — levou um resultado tangível: dinheiro na conta.</p>
+
+  <h3>Pra quem</h3>
+  <ul>
+    <li><strong>Jovem/adulto iniciante sem renda online</strong>, que quer ganhar dinheiro com IA mas não sabe por onde começar, não tem audiência e não tem o que vender.</li>
+    <li>Dor central: <em>"quero ganhar dinheiro com IA, mas não tenho seguidores, não tenho produto e não sei prestar serviço."</em></li>
+  </ul>
+
+  <h3>A promessa</h3>
+  <p>"Seu primeiro Pix com IA em 7 dias, mesmo começando do zero." A âncora é o <strong>Pix</strong>: resultado tangível e rápido (dinheiro na conta), não "conhecimento". O foco em <strong>serviço pra comércio local</strong> encurta o caminho até o primeiro Pix real — comércio local paga rápido.</p>
+
+  <div class="pp-call insight">
+    <span class="tag">● O ponto-chave do projeto</span>
+    <p>O desafio não é o produto. O desafio é o <strong>canal de aquisição</strong>. O ativo de receita é a <strong>Agência no Bolso</strong> — a ferramenta que o jovem precisa assinar pra conseguir entregar o serviço. Quem aprende a prestar serviço de IA no desafio vira assinante da AnB e, no futuro, micro-agência (lead B2B da casa).</p>
+  </div>
+</section>
+
+<!-- 02 MODELO DE REFERÊNCIA -->
+<span id="referencia" class="pp-anchor"></span>
+<section class="pp-section">
+  <span class="pp-eyebrow">Seção 02</span>
+  <h2><span class="num">02</span>O modelo de referência: PixRápido / Criart</h2>
+  <p class="pp-intro">Fizemos engenharia reversa do <strong>pixrapido.iairon.ai</strong> — inclusive por dentro, percorrendo o funil real com conta de teste. O que descobrimos muda a leitura: eles não vendem curso nem comunidade. Vendem uma <strong>ferramenta recorrente</strong>, e usam o desafio grátis só como funil de ativação dela.</p>
+
+  <h3>Como monetiza — de graça até R$197/mês</h3>
+  <p>A entrada é <strong>100% grátis, sem cartão, sem confirmação de e-mail, sem telefone</strong>. Atrito zero pra maximizar cadastro. Não há tripwire de R$27 (isso era de um funil-irmão). O dinheiro está num lugar só:</p>
+
+  <div class="pp-table-wrap">
+    <table class="pp-table">
+      <thead><tr><th>Etapa</th><th>O que é</th><th>Preço</th><th>Função</th></tr></thead>
+      <tbody>
+        <tr><td>Isca</td><td>Desafio "Primeiro Pix" — 7 aulas + missões</td><td><strong>R$0</strong></td><td>Captura lead e entrega micro-resultado</td></tr>
+        <tr><td>Backend</td><td>Assinatura da ferramenta SaaS <strong>Criart</strong> (geração de criativos por IA)</td><td><strong>R$197/mês</strong></td><td>Carrega 100% do faturamento (recorrência pura)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:var(--text-3);font-size:.9rem;">Plano Creator: R$197/mês = 100 créditos (100 artes). "Pix Rápido by Criart" no topo de toda tela — a Criart é a marca/ativo real; o funil é só ativação.</p>
+
+  <h3>A gamificação (e ela funciona de verdade)</h3>
+  <ul>
+    <li><strong>7 dias travados em sequência</strong> — Dia 2 a 7 começam cadeadeados; cada missão concluída destrava a próxima. Anel de progresso "X/7" visível. Efeito Zeigarnik / sunk cost.</li>
+    <li><strong>Onboarding em 3 passos:</strong> "Assista → Faça a missão → Receba". Bordão: <em>"Bora fazer acontecer."</em></li>
+    <li><strong>Recompensas progressivas travadas:</strong> o CRM ("Meus Clientes") só libera ao concluir o Dia 5; um bônus ("Sites com IA") fica sob countdown ao vivo de 7 dias pra segurar engajamento a semana inteira.</li>
+    <li><strong>Calculadora de lucro ao vivo</strong> na página de oferta: "Você fatura R$760 / custo R$197 / lucro R$563 — 3,9× o que pagou."</li>
+  </ul>
+
+  <h3>O trojan horse da ferramenta</h3>
+  <p>Esse é o insight mais forte. A partir do <strong>Dia 2</strong>, a missão só é executável dentro da ferramenta paga: <em>"Acesse o Criart e crie 3 exemplos…"</em>. Os 8 serviços vendáveis que eles ensinam (thumbnails, artes pra redes, criativos de anúncio, fotos de produto, carrossel, mascote 3D etc.) são <strong>todos produzidos dentro da Criart</strong>. As aulas continuam grátis pra sempre — barato de manter; <strong>a IA, que é o que faz a missão acontecer, é o que vira pago</strong>. O grátis te ensina a depender do pago.</p>
+
+  <div class="pp-call note">
+    <span class="tag">● Tradução pro nosso caso</span>
+    <p><strong>Ferramenta &gt; curso</strong> como motor de LTV nesse público. O desafio gamificado converte porque cria dependência da ferramenta, não porque "ensina". A pergunta deixa de ser "que curso vender?" e vira "<strong>qual ferramenta recorrente é o nosso backend?</strong>". Pra nós, a resposta já existe: a Agência no Bolso.</p>
+  </div>
+</section>
+
+<!-- 03 NOSSO MODELO -->
+<span id="nosso-modelo" class="pp-anchor"></span>
+<section class="pp-section">
+  <span class="pp-eyebrow">Seção 03</span>
+  <h2><span class="num">03</span>Nosso modelo — o funil com a AnB como backend</h2>
+  <p class="pp-intro">Copiamos a engenharia que funciona (isca grátis → micro-resultado → ferramenta recorrente) e trocamos a Criart pela <strong>Agência no Bolso</strong>: os 8 agentes de IA da casa que geram arte, legenda, roteiro e criativo. O jovem aprende a vender o serviço no desafio e assina a AnB pra conseguir entregar.</p>
+
+  <h3>O funil, passo a passo</h3>
+  <div class="pp-funnel">
+    <div class="pp-step"><div class="pp-step-n">1</div><div><h4>Desafio grátis (aquisição)</h4><p>Landing com a promessa "seu primeiro Pix com IA em 7 dias". Captura e-mail/WhatsApp → entra na comunidade. Sem fricção, igual ao modelo de referência.</p></div></div>
+    <div class="pp-step"><div class="pp-step-n">2</div><div><h4>7 dias gamificados (ativação)</h4><p>Escolher serviço → montar exemplos → precificar → propor → prospectar comércio local → contornar objeção → fechar. Missões travadas, comunidade pra prova social e accountability.</p></div></div>
+    <div class="pp-step"><div class="pp-step-n">3</div><div><h4>Primeiro Pix (resultado)</h4><p>O participante presta o micro-serviço e recebe. Mural de "primeiros Pix" na comunidade — prova social que vira o melhor criativo de anúncio que existe, gerado de graça pelos próprios alunos.</p></div></div>
+    <div class="pp-step"><div class="pp-step-n">4</div><div><h4>Assina a Agência no Bolso (receita)</h4><p>Pra entregar o serviço em escala — gerar as artes, legendas e roteiros — ele precisa dos agentes da AnB. A assinatura mensal (R$67–297/mês) é o backend recorrente. Aqui mora o LTV.</p></div></div>
+  </div>
+
+  <h3>A AnB como a ferramenta / o backend</h3>
+  <p>No modelo deles, a ferramenta (Criart) é de outra empresa. <strong>No nosso, a ferramenta é nossa</strong> — a Agência no Bolso, com os 8 agentes de IA. Isso é uma vantagem estrutural: a margem da assinatura fica em casa, e o desafio vira o topo de funil que abastece a AnB.</p>
+
+  <div class="pp-table-wrap">
+    <table class="pp-table">
+      <thead><tr><th>Nível</th><th>Produto</th><th>Preço (a definir)</th><th>Papel</th></tr></thead>
+      <tbody>
+        <tr><td>Isca</td><td>Desafio 7 dias "Primeiro Pix"</td><td><strong>R$0</strong> (ou R$9–19 simbólico anti-curioso)</td><td>Captura + entrega micro-resultado</td></tr>
+        <tr><td>Backend principal</td><td><strong>Assinatura da Agência no Bolso</strong> (8 agentes de IA)</td><td><strong>R$67–297/mês</strong></td><td>Carrega o faturamento — recorrência (LTV)</td></tr>
+        <tr><td>Order bump (opcional)</td><td>"Kit do Prestador" (prompts + templates de proposta + scripts)</td><td>R$27–47</td><td>Cobre tráfego, qualifica comprador</td></tr>
+        <tr><td>High-ticket (poucos)</td><td>Mentoria "Vire prestador IA profissional"</td><td>R$1,5k–5k</td><td>Margem alta, poucos alunos</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pp-call insight">
+    <span class="tag">● Esteira cruzada (o que o modelo deles não tem)</span>
+    <p>O jovem que vira prestador de serviço de IA é <strong>lead futuro da casa inteira</strong>: hoje assina a AnB pra entregar; amanhã vira micro-agência e cliente B2B (Digital Master / MAIA). O desafio B2C alimenta o topo do funil B2B. E a AnB ainda casa de público com o desafio: ambos miram o comércio local.</p>
+  </div>
+
+  <div class="pp-call risk">
+    <span class="tag">● Ajuste de produto necessário</span>
+    <p>Pra a AnB ser a ferramenta de quem <em>presta serviço pra terceiros</em>, ela precisa de um <strong>modo prestador/agência</strong> (multi-cliente): o assinante gerencia várias marcas/clientes dentro de uma conta. Hoje a AnB é mono-marca. Esse é um item de roadmap, não bloqueante pro MVP do desafio — mas precisa entrar.</p>
+  </div>
+</section>
+
+<!-- 04 ORIENTAÇÕES -->
+<span id="orientacoes" class="pp-anchor"></span>
+<section class="pp-section">
+  <span class="pp-eyebrow">Seção 04</span>
+  <h2><span class="num">04</span>Orientações — como fazer rodar</h2>
+  <p class="pp-intro">O que montar, quem faz o quê e em que sequência. As fases são incrementais: dá pra lançar um MVP manual e automatizar depois. Não precisa estar tudo pronto pra rodar o primeiro ciclo.</p>
+
+  <h3>Quem faz o quê</h3>
+  <div class="pp-team">
+    <div class="pp-member"><span class="pp-role">Orquestra</span><h4>Maia / Naia</h4><p>Coordena a esteira, delega cada bloco em background, mantém os sócios atualizados e traz só decisões reais pra aprovação.</p></div>
+    <div class="pp-member"><span class="pp-role">Copy</span><h4>Jonathan</h4><p>Copy da landing, roteiro das 7 aulas, scripts de WhatsApp, pitch do Dia 7, persona do jovem B2C e criativos de anúncio.</p></div>
+    <div class="pp-member"><span class="pp-role">Dev</span><h4>Paulo</h4><p>Landing + página de obrigado, gamificação, sequência diária automatizada, integração de checkout e o modo prestador na AnB.</p></div>
+    <div class="pp-member"><span class="pp-role">Tráfego</span><h4>Josiel</h4><p>Campanha Meta, criativos de prova de Pix / "do zero" / "sem aparecer", calibragem de público e custo por lead.</p></div>
+    <div class="pp-member"><span class="pp-role">Design</span><h4>Juliana</h4><p>Identidade do desafio, cards de prova de Pix, mural, artes da comunidade e criativos visuais dos anúncios.</p></div>
+    <div class="pp-member"><span class="pp-role">Autoridade</span><h4>Salatiel</h4><p>Rosto e voz das 7 aulas curtas. A marca pessoal é o diferencial frente aos funis genéricos de LTDA.</p></div>
+  </div>
+
+  <h3>As fases</h3>
+  <div class="pp-phases">
+
+    <div class="pp-phase">
+      <div class="pp-phase-head"><span class="pp-phase-tag">Fase 0</span><h3>Decisão e fundação</h3><span class="pp-when">antes de tudo</span></div>
+      <p style="color:var(--text-2)">Travar as 5 decisões em aberto (seção 05) — preço do backend, nível da promessa, isca grátis vs simbólica, nicho e modo prestador. Sem isso a copy e o produto não fecham.</p>
+      <ul>
+        <li>Definir nome de campanha e selo da comunidade.</li>
+        <li>Persona profunda do jovem B2C (Jonathan).</li>
+        <li>Mapear o gap técnico do "modo prestador" da AnB (Paulo).</li>
+      </ul>
+      <div class="pp-owner"><span><b>Decisão:</b> sócios</span><span><b>Apoio:</b> Maia, Jonathan, Paulo</span></div>
+    </div>
+
+    <div class="pp-phase">
+      <div class="pp-phase-head"><span class="pp-phase-tag">Fase 1</span><h3>MVP do desafio (manual-first)</h3><span class="pp-when">primeiro ciclo</span></div>
+      <ul>
+        <li><strong>Landing + página de obrigado</strong> no GitHub Pages (padrão da casa), mobile-first, captura e-mail/WhatsApp.</li>
+        <li><strong>Comunidade</strong> em WhatsApp/Telegram (gamificação manual no início: mural de Pix, ranking, selos no grupo).</li>
+        <li><strong>7 aulas curtas</strong> (5–10 min) gravadas pelo Salatiel + 1 checklist/PDF de missão por dia + prompts prontos.</li>
+        <li><strong>Sequência de WhatsApp/e-mail</strong> dos 7 dias (lembrete de tarefa, accountability) — pode ser semi-manual no piloto.</li>
+        <li><strong>Pitch do Dia 7</strong>: live de encerramento + oferta da AnB (mural de "primeiros Pix" como prova).</li>
+      </ul>
+      <div class="pp-owner"><span><b>Copy:</b> Jonathan</span><span><b>Dev:</b> Paulo</span><span><b>Aulas:</b> Salatiel</span><span><b>Design:</b> Juliana</span></div>
+    </div>
+
+    <div class="pp-phase">
+      <div class="pp-phase-head"><span class="pp-phase-tag">Fase 2</span><h3>Tráfego e validação</h3><span class="pp-when">rodar o piloto</span></div>
+      <ul>
+        <li>Criativos de anúncio (prova de Pix, "do zero", "sem aparecer") rodados pelo Josiel.</li>
+        <li>Medir: custo por lead, taxa de conclusão dos 7 dias, % que tira o primeiro Pix, % que assina a AnB.</li>
+        <li>Coletar provas de Pix reais da comunidade pra alimentar os próximos criativos (loop de prova social).</li>
+      </ul>
+      <div class="pp-owner"><span><b>Tráfego:</b> Josiel</span><span><b>Métrica:</b> Maia</span><span><b>Criativo:</b> Juliana + Jonathan</span></div>
+    </div>
+
+    <div class="pp-phase">
+      <div class="pp-phase-head"><span class="pp-phase-tag">Fase 3</span><h3>Automação e escala</h3><span class="pp-when">depois de validar</span></div>
+      <ul>
+        <li>Gamificação automatizada (progressão travada, selos, mural) — sair do manual do grupo.</li>
+        <li><strong>Modo prestador/agência na AnB</strong> (multi-cliente) entregue pelo Paulo — destrava o backend pra escala.</li>
+        <li>Disparos diários automatizados, área de membros e checkout integrado do order bump/high-ticket.</li>
+        <li>Escalar tráfego com os criativos validados; abrir trilha do high-ticket (mentoria) pros melhores alunos.</li>
+      </ul>
+      <div class="pp-owner"><span><b>Dev:</b> Paulo</span><span><b>Tráfego:</b> Josiel</span><span><b>Orquestra:</b> Maia</span></div>
+    </div>
+
+  </div>
+
+  <div class="pp-call risk">
+    <span class="tag">● Riscos a blindar (a marca é o Salatiel pessoa)</span>
+    <p><strong>Promessa de renda é área sensível.</strong> Usar linguagem de <em>método / passo a passo</em>, não "garantia de valor" (a Meta restringe promessa de ganho). <strong>Entregar resultado real no grátis</strong> e ser transparente que existe oferta paga — o custo reputacional de um funil agressivo demais é maior pra nós do que pra uma LTDA genérica. <strong>Saturação:</strong> "ganhar dinheiro com IA" está lotado; o diferencial não é a promessa (todos prometem Pix) — é a execução, a comunidade, a autoridade do Salatiel e o nicho local. <strong>Custo de suporte:</strong> comunidade ativa exige moderação; subestimar isso mata a retenção.</p>
+  </div>
+</section>
+
+<!-- 05 DECISÕES EM ABERTO -->
+<span id="decisoes" class="pp-anchor"></span>
+<section class="pp-section">
+  <span class="pp-eyebrow">Seção 05</span>
+  <h2><span class="num">05</span>Decisões em aberto pros sócios</h2>
+  <p class="pp-intro">Estas travam <strong>decisão</strong>, não execução. Cada uma muda a matemática da esteira ou o posicionamento. Recomendações marcadas, mas a chamada é dos sócios.</p>
+
+  <div class="pp-decision">
+    <span class="pp-q">Decisão 01 · Preço do backend</span>
+    <h4>Quanto cobra a assinatura da AnB pro público do desafio?</h4>
+    <p>O PixRápido cobra R$197/mês. Pro público B2C jovem/sem renda, recorrência acessível tende a ganhar de ticket alto.</p>
+    <p class="pp-rec"><b>Recomendação:</b> faixa acessível de entrada (R$67–97/mês) pro jovem do desafio, com planos maiores pra quem cresce. Define toda a matemática do funil.</p>
+  </div>
+
+  <div class="pp-decision">
+    <span class="pp-q">Decisão 02 · Nível da promessa</span>
+    <h4>"Primeiro Pix garantido" ou "método pra gerar seu primeiro Pix"?</h4>
+    <p>Garantido converte mais, mas tem risco reputacional e de plataforma (Meta). Método é honesto e sustentável.</p>
+    <p class="pp-rec"><b>Recomendação:</b> <b>método</b> — porque a marca é o Salatiel pessoa, e o dano de um funil agressivo demais recai sobre a autoridade dele.</p>
+  </div>
+
+  <div class="pp-decision">
+    <span class="pp-q">Decisão 03 · Isca grátis ou tripwire simbólico</span>
+    <h4>100% grátis ou R$9–19 de entrada?</h4>
+    <p>Grátis maximiza volume (modelo do PixRápido). Pago simbólico traz leads mais qualificados e menos no-show.</p>
+    <p class="pp-rec"><b>A pesar:</b> volume bruto vs qualidade de lead. O modelo de referência aposta em grátis total.</p>
+  </div>
+
+  <div class="pp-decision">
+    <span class="pp-q">Decisão 04 · Nicho do serviço</span>
+    <h4>Focar em "serviço pra comércio local" ou deixar amplo?</h4>
+    <p>Local paga rápido (encurta o caminho ao primeiro Pix) e conecta com o público da própria AnB. Amplo aumenta alcance mas dilui a mensagem.</p>
+    <p class="pp-rec"><b>Recomendação:</b> <b>focar no comércio local</b> — casa com a AnB e acelera o resultado real.</p>
+  </div>
+
+  <div class="pp-decision">
+    <span class="pp-q">Decisão 05 · Modo prestador na AnB</span>
+    <h4>Quando entra o multi-cliente na ferramenta?</h4>
+    <p>Pra o jovem prestar pra vários clientes, a AnB precisa do modo prestador/agência. É roadmap, não bloqueia o MVP do desafio — mas define investimento técnico do Paulo e prazo de escala.</p>
+    <p class="pp-rec"><b>Recomendação:</b> priorizar pra Fase 3, antes de escalar tráfego. Sem isso, o backend trava na hora de crescer.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="pp-foot">
+  <div class="pp-wrap">
+    <div class="logo">Agência no <span>Bolso</span></div>
+    <p>Projeto Primeiro Pix · documento de estratégia interno · 07/06/2026</p>
+    <p>SRJ — Batista &amp; Visgueira LTDA · CNPJ 12.472.917/0001-78</p>
+  </div>
+</footer>
+
+</body>
+</html>
