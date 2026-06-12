@@ -317,9 +317,39 @@
 #infraestrutura .infra-layer{
   position:relative; border:1px solid var(--border); border-radius:var(--radius-lg);
   background:var(--bg-glass); backdrop-filter:blur(8px);
-  padding:clamp(22px,3vw,34px);
+  padding:clamp(20px,2.6vw,30px);
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(20px,3vw,40px); align-items:center;
+  overflow:hidden;
 }
+/* alterna o lado da imagem pra dar ritmo visual */
+#infraestrutura .infra-layer.flip{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+#infraestrutura .infra-layer.flip .infra-media{ order:2; }
+#infraestrutura .infra-layer.flip .infra-body{ order:1; }
 #infraestrutura .infra-layer:hover{ border-color:var(--border-strong); }
+
+/* imagem-conceito protagonista de cada camada */
+#infraestrutura .infra-media{
+  position:relative; border-radius:var(--radius-md); overflow:hidden;
+  border:1px solid var(--border); background:#08080d;
+  box-shadow:0 18px 50px -22px rgba(0,212,255,.45), 0 10px 40px -28px rgba(168,85,247,.5);
+}
+#infraestrutura .infra-media img{
+  display:block; width:100%; height:100%; object-fit:cover; aspect-ratio:16/9;
+}
+#infraestrutura .infra-media::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(8,8,13,.55) 100%);
+}
+#infraestrutura .infra-body{ min-width:0; }
+
+/* camada full-width (skills): imagem-banner no topo, conteudo embaixo */
+#infraestrutura .infra-layer.infra-layer-full{ display:block; }
+#infraestrutura .infra-layer-full .infra-media{
+  margin-bottom:clamp(18px,2.4vw,26px); aspect-ratio:auto;
+}
+#infraestrutura .infra-layer-full .infra-media img{ max-height:340px; }
+
 #infraestrutura .infra-layer-head{
   display:flex; align-items:center; gap:14px; margin-bottom:14px;
 }
@@ -334,7 +364,7 @@
   font-family:var(--font-mono); font-size:.72rem; letter-spacing:.04em;
   text-transform:uppercase; color:var(--cyan); margin-top:3px;
 }
-#infraestrutura .infra-layer p{ color:var(--text-2); margin:0; max-width:62ch; }
+#infraestrutura .infra-layer p{ color:var(--text-2); margin:0; max-width:54ch; }
 #infraestrutura .infra-layer p strong{ color:var(--text-1); }
 
 /* Conectores verticais entre camadas */
@@ -395,6 +425,14 @@
   display:block; font-size:clamp(1.05rem,2.2vw,1.35rem); color:var(--text-0);
 }
 #infraestrutura .infra-result span{ color:var(--text-2); font-size:.95rem; }
+@media (max-width:860px){
+  #infraestrutura .infra-layer,
+  #infraestrutura .infra-layer.flip{ grid-template-columns:1fr; gap:18px; }
+  #infraestrutura .infra-layer .infra-media,
+  #infraestrutura .infra-layer.flip .infra-media{ order:0; }
+  #infraestrutura .infra-layer .infra-body,
+  #infraestrutura .infra-layer.flip .infra-body{ order:0; }
+}
 @media (max-width:560px){
   #infraestrutura .infra-layer-head{ flex-wrap:wrap; }
 }
@@ -411,25 +449,34 @@
 
       <!-- CAMADA 1: SERVIDOR (o corpo / a casa) -->
       <div class="infra-layer reveal">
-        <div class="infra-layer-head">
-          <div class="infra-ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/>
-              <line x1="7" y1="7" x2="7" y2="7"/><line x1="7" y1="17" x2="7" y2="17"/>
-            </svg>
-          </div>
-          <div>
-            <h3>O corpo · o servidor</h3>
-            <div class="infra-tag">VPS dedicada · 24/7</div>
-          </div>
+        <div class="infra-media" aria-hidden="true">
+          <img src="/assets/img/infra/corpo-servidor.webp" alt="Ilustração de um servidor dedicado em forma de casa, com contornos em néon ciano e roxo" loading="lazy" width="1280" height="698">
         </div>
-        <p>É onde a MAIA <strong>mora</strong>. Uma máquina dedicada, ligada o tempo todo, que nunca dorme. Enquanto a sua equipe descansa, ela continua atendendo, escrevendo e organizando. Sua operação não tem horário comercial.</p>
+        <div class="infra-body">
+          <div class="infra-layer-head">
+            <div class="infra-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/>
+                <line x1="7" y1="7" x2="7" y2="7"/><line x1="7" y1="17" x2="7" y2="17"/>
+              </svg>
+            </div>
+            <div>
+              <h3>O corpo · o servidor</h3>
+              <div class="infra-tag">VPS dedicada · 24/7</div>
+            </div>
+          </div>
+          <p>É onde a MAIA <strong>mora</strong>. Uma máquina dedicada, ligada o tempo todo, que nunca dorme. Enquanto a sua equipe descansa, ela continua atendendo, escrevendo e organizando. Sua operação não tem horário comercial.</p>
+        </div>
       </div>
 
       <div class="infra-connector" aria-hidden="true"></div>
 
       <!-- CAMADA 2: LLM (o cérebro plugável) -->
-      <div class="infra-layer reveal">
+      <div class="infra-layer flip reveal">
+        <div class="infra-media" aria-hidden="true">
+          <img src="/assets/img/infra/cerebro-llm.webp" alt="Ilustração de um cérebro neural luminoso com sinapses de luz em ciano e roxo, representando o modelo de IA" loading="lazy" width="1280" height="698">
+        </div>
+        <div class="infra-body">
         <div class="infra-layer-head">
           <div class="infra-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -454,12 +501,16 @@
           </div>
         </div>
         <p class="infra-plug">// modelo <em>intercambiável</em> — sua operação nunca fica refém de um fornecedor só</p>
+        </div>
       </div>
 
       <div class="infra-connector" aria-hidden="true"></div>
 
       <!-- CAMADA 3: SKILLS (as habilidades) -->
-      <div class="infra-layer reveal">
+      <div class="infra-layer infra-layer-full reveal">
+        <div class="infra-media" aria-hidden="true">
+          <img src="/assets/img/infra/skills.webp" alt="Ilustração de uma constelação de ferramentas conectadas por linhas de luz em ciano e roxo, representando as skills" loading="lazy" width="1280" height="698">
+        </div>
         <div class="infra-layer-head">
           <div class="infra-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
