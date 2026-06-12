@@ -57,6 +57,7 @@
     <div class="nav-links">
       <a href="#maia">MAIA</a>
       <a href="#agentes">Agentes</a>
+      <a href="#infraestrutura">Infraestrutura</a>
       <a href="#cases">Cases</a>
       <a href="#roi-calc-maia">Calculadora</a>
       <a href="#investimento">Investimento</a>
@@ -303,6 +304,192 @@
       <div class="about-hero-img">
         <img src="/assets/img/brand/salatiel_hero.jpg" alt="Salatiel Batista, estrategista da esteira MAIA" loading="lazy" width="864" height="1184">
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- INFRAESTRUTURA (como a MAIA funciona por dentro) -->
+<style>
+/* ===== Infraestrutura MAIA — scoped ===== */
+#infraestrutura .infra-diagram{
+  display:grid; gap:clamp(18px,2.4vw,30px); margin-top:clamp(36px,5vw,60px);
+}
+#infraestrutura .infra-layer{
+  position:relative; border:1px solid var(--border); border-radius:var(--radius-lg);
+  background:var(--bg-glass); backdrop-filter:blur(8px);
+  padding:clamp(22px,3vw,34px);
+}
+#infraestrutura .infra-layer:hover{ border-color:var(--border-strong); }
+#infraestrutura .infra-layer-head{
+  display:flex; align-items:center; gap:14px; margin-bottom:14px;
+}
+#infraestrutura .infra-ico{
+  flex:0 0 auto; width:46px; height:46px; border-radius:12px;
+  display:grid; place-items:center; background:var(--cyan-soft);
+  border:1px solid rgba(0,212,255,.28);
+}
+#infraestrutura .infra-ico svg{ width:24px; height:24px; }
+#infraestrutura .infra-layer h3{ font-size:clamp(1.15rem,2.2vw,1.5rem); margin:0; }
+#infraestrutura .infra-tag{
+  font-family:var(--font-mono); font-size:.72rem; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--cyan); margin-top:3px;
+}
+#infraestrutura .infra-layer p{ color:var(--text-2); margin:0; max-width:62ch; }
+#infraestrutura .infra-layer p strong{ color:var(--text-1); }
+
+/* Conectores verticais entre camadas */
+#infraestrutura .infra-connector{
+  width:2px; height:clamp(22px,3vw,34px); margin:0 auto;
+  background:linear-gradient(180deg, var(--cyan), var(--purple));
+  border-radius:2px; opacity:.55; position:relative;
+}
+#infraestrutura .infra-connector::after{
+  content:""; position:absolute; left:50%; bottom:-1px; transform:translateX(-50%);
+  width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent;
+  border-top:7px solid var(--purple);
+}
+
+/* Cérebro: opções de LLM plugáveis */
+#infraestrutura .infra-brains{
+  display:flex; flex-wrap:wrap; gap:12px; margin-top:18px;
+}
+#infraestrutura .infra-brain{
+  display:flex; align-items:center; gap:10px;
+  border:1px solid var(--border-strong); border-radius:var(--radius-md);
+  background:var(--bg-2); padding:10px 16px; font-weight:600; color:var(--text-1);
+}
+#infraestrutura .infra-brain svg{ width:22px; height:22px; flex:0 0 auto; }
+#infraestrutura .infra-brain .infra-brain-sub{
+  font-family:var(--font-mono); font-size:.68rem; color:var(--text-3);
+  font-weight:400; display:block; margin-top:1px;
+}
+#infraestrutura .infra-plug{
+  font-family:var(--font-mono); font-size:.74rem; color:var(--text-3);
+  margin-top:12px;
+}
+#infraestrutura .infra-plug em{ color:var(--purple); font-style:normal; }
+
+/* Skills: badges conectados */
+#infraestrutura .infra-skills{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px; margin-top:18px;
+}
+#infraestrutura .infra-skill{
+  border:1px solid var(--border); border-radius:var(--radius-md);
+  background:var(--bg-2); padding:14px 16px;
+}
+#infraestrutura .infra-skill .infra-skill-t{
+  font-weight:700; color:var(--text-0); font-size:.98rem;
+}
+#infraestrutura .infra-skill .infra-skill-d{
+  color:var(--text-3); font-size:.82rem; margin-top:3px;
+}
+
+/* Resultado final */
+#infraestrutura .infra-result{
+  text-align:center; border:1px solid rgba(0,212,255,.30);
+  border-radius:var(--radius-lg);
+  background:var(--grad-primary-soft); padding:clamp(20px,3vw,28px);
+}
+#infraestrutura .infra-result strong{
+  display:block; font-size:clamp(1.05rem,2.2vw,1.35rem); color:var(--text-0);
+}
+#infraestrutura .infra-result span{ color:var(--text-2); font-size:.95rem; }
+@media (max-width:560px){
+  #infraestrutura .infra-layer-head{ flex-wrap:wrap; }
+}
+</style>
+<section id="infraestrutura">
+  <div class="container container-narrow">
+    <div class="section-header">
+      <span class="eyebrow">Por dentro</span>
+      <h2>Como funciona a<br><span class="gradient-text">infraestrutura da MAIA</span></h2>
+      <p>Não é um chatbot que você abre num site. É uma operação viva, montada como um organismo: um corpo onde ela mora, um cérebro que pensa e habilidades que executam o trabalho de verdade dentro do seu CNPJ.</p>
+    </div>
+
+    <div class="infra-diagram">
+
+      <!-- CAMADA 1: SERVIDOR (o corpo / a casa) -->
+      <div class="infra-layer reveal">
+        <div class="infra-layer-head">
+          <div class="infra-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/>
+              <line x1="7" y1="7" x2="7" y2="7"/><line x1="7" y1="17" x2="7" y2="17"/>
+            </svg>
+          </div>
+          <div>
+            <h3>O corpo · o servidor</h3>
+            <div class="infra-tag">VPS dedicada · 24/7</div>
+          </div>
+        </div>
+        <p>É onde a MAIA <strong>mora</strong>. Uma máquina dedicada, ligada o tempo todo, que nunca dorme. Enquanto a sua equipe descansa, ela continua atendendo, escrevendo e organizando. Sua operação não tem horário comercial.</p>
+      </div>
+
+      <div class="infra-connector" aria-hidden="true"></div>
+
+      <!-- CAMADA 2: LLM (o cérebro plugável) -->
+      <div class="infra-layer reveal">
+        <div class="infra-layer-head">
+          <div class="infra-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-1 5.8A3 3 0 0 0 8 17a3 3 0 0 0 4 2 3 3 0 0 0 4-2 3 3 0 0 0 3-5.2A3 3 0 0 0 18 6a3 3 0 0 0-3-3 3 3 0 0 0-3 1.5A3 3 0 0 0 9 3Z"/>
+              <line x1="12" y1="4.5" x2="12" y2="19"/>
+            </svg>
+          </div>
+          <div>
+            <h3>O cérebro · o modelo de IA</h3>
+            <div class="infra-tag">LLM plugável</div>
+          </div>
+        </div>
+        <p>É a inteligência que pensa, decide e escreve. E o melhor: o cérebro é <strong>plugável</strong>. Você usa o modelo mais forte do momento e troca quando surge um melhor — sem refazer nada.</p>
+        <div class="infra-brains">
+          <div class="infra-brain">
+            <svg viewBox="0 0 24 24" fill="#D97757" aria-hidden="true"><path d="M12 2 4 21h3.4l1.6-4h6l1.6 4H20L12 2Zm-1.7 12L12 8.6 13.7 14h-3.4Z"/></svg>
+            <span>Claude<span class="infra-brain-sub">Anthropic</span></span>
+          </div>
+          <div class="infra-brain">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#E5E5E5" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17" stroke-width="1.2"/></svg>
+            <span>GPT · Codex<span class="infra-brain-sub">OpenAI</span></span>
+          </div>
+        </div>
+        <p class="infra-plug">// modelo <em>intercambiável</em> — sua operação nunca fica refém de um fornecedor só</p>
+      </div>
+
+      <div class="infra-connector" aria-hidden="true"></div>
+
+      <!-- CAMADA 3: SKILLS (as habilidades) -->
+      <div class="infra-layer reveal">
+        <div class="infra-layer-head">
+          <div class="infra-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2 3 7v6c0 5 3.8 8.3 9 9 5.2-.7 9-4 9-9V7l-9-5Z"/><path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <h3>As habilidades · as skills</h3>
+            <div class="infra-tag">Pacotes de execução</div>
+          </div>
+        </div>
+        <p>Pensar não basta. As <strong>skills</strong> são os pacotes de habilidade que transformam a inteligência em trabalho entregue: ela vende, produz conteúdo, atende seu cliente e automatiza processos — de ponta a ponta.</p>
+        <div class="infra-skills">
+          <div class="infra-skill"><div class="infra-skill-t">Vendas · SDR</div><div class="infra-skill-d">Qualifica, responde e agenda no automático</div></div>
+          <div class="infra-skill"><div class="infra-skill-t">Conteúdo</div><div class="infra-skill-d">Copy, roteiros e posts no seu tom de voz</div></div>
+          <div class="infra-skill"><div class="infra-skill-t">Atendimento</div><div class="infra-skill-d">Responde DMs e mensagens 24/7</div></div>
+          <div class="infra-skill"><div class="infra-skill-t">Automação</div><div class="infra-skill-d">Liga sistemas e elimina trabalho manual</div></div>
+          <div class="infra-skill"><div class="infra-skill-t">Relatórios</div><div class="infra-skill-d">CRM organizado e números na sua mão</div></div>
+          <div class="infra-skill"><div class="infra-skill-t">Tráfego</div><div class="infra-skill-d">Acompanha campanhas e otimiza investimento</div></div>
+        </div>
+      </div>
+
+      <div class="infra-connector" aria-hidden="true"></div>
+
+      <!-- RESULTADO -->
+      <div class="infra-result reveal">
+        <strong>Corpo + cérebro + habilidades = uma operação inteira rodando no seu CNPJ</strong>
+        <span>Sem contratar, sem treinar equipe, sem ficar refém de uma ferramenta só.</span>
+      </div>
+
     </div>
   </div>
 </section>
