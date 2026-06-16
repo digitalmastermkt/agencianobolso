@@ -904,6 +904,35 @@ section > .container, section > .container-narrow { position: relative; z-index:
   margin: 0 auto;
 }
 @media (max-width: 800px) { .plans-grid { grid-template-columns: 1fr; } }
+.plans-grid-single { grid-template-columns: 1fr; max-width: 620px; }
+.offer-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 560px) { .offer-split { grid-template-columns: 1fr; gap: 20px; } }
+.offer-split-head {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 8px;
+  letter-spacing: .01em;
+}
+.offer-split-head span {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  vertical-align: middle;
+}
+.offer-split-item p { color: var(--text-1); font-size: .92rem; margin: 0; line-height: 1.55; }
 .plan-card {
   position: relative;
   padding: 40px 32px;
