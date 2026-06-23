@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://agencianobolso.com.br/sitemap.xml
