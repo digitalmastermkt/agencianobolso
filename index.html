@@ -110,9 +110,19 @@ section{position:relative;padding:var(--pad) 0}
 @media(min-width:721px){.nav-logo-sub{display:block;border-left:1px solid var(--border);padding-left:11px}}
 .nav-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
 .nav-cta{padding:11px 22px;font-size:.92rem}
-.nav-links{display:flex;gap:30px}
+.nav-links{display:flex;align-items:center;gap:30px}
 .nav-links a{color:var(--text-2);font-size:.94rem;font-weight:500}
 .nav-links a:hover{color:var(--text-0)}
+/* SDR Lis pill no menu desktop */
+.nav-links a.nav-sdr{
+  color:var(--cyan);font-weight:600;white-space:nowrap;
+  padding:8px 16px;border-radius:100px;
+  border:1px solid var(--border-strong);background:rgba(0,212,255,.06);
+  transition:color .18s ease,border-color .18s ease,background .18s ease,transform .18s ease}
+.nav-links a.nav-sdr::before{content:"";width:6px;height:6px;border-radius:50%;
+  background:var(--cyan);box-shadow:0 0 9px var(--cyan);display:inline-block;margin-right:8px;vertical-align:middle}
+.nav-links a.nav-sdr:hover{color:var(--text-0);border-color:rgba(0,212,255,.5);
+  background:rgba(0,212,255,.12);transform:translateY(-1px)}
 
 /* Hamburger button (mobile only) */
 .nav-toggle{display:none;width:44px;height:44px;border-radius:12px;
@@ -137,6 +147,12 @@ section{position:relative;padding:var(--pad) 0}
   padding:15px 12px;border-radius:12px;border-bottom:1px solid var(--border)}
 .nav-drawer a:last-of-type{border-bottom:none}
 .nav-drawer a:hover{background:rgba(255,255,255,.05);color:var(--text-0)}
+/* SDR Lis no drawer mobile: destaque cyan */
+.nav-drawer a.nav-drawer-sdr{color:var(--cyan);font-weight:600;
+  display:flex;align-items:center;gap:8px}
+.nav-drawer a.nav-drawer-sdr::before{content:"";width:7px;height:7px;border-radius:50%;
+  background:var(--cyan);box-shadow:0 0 9px var(--cyan);flex:0 0 auto}
+.nav-drawer a.nav-drawer-sdr .ext-ic{margin-left:auto;color:var(--cyan);font-size:.95em}
 .nav-drawer .btn{margin-top:14px;width:100%}
 .nav-backdrop{position:fixed;inset:0;z-index:54;background:rgba(0,0,0,.55);
   opacity:0;pointer-events:none;transition:opacity .22s ease}
@@ -374,6 +390,8 @@ footer{border-top:1px solid var(--border);padding:50px 0 40px;background:var(--b
 .foot-col p{color:var(--text-3);font-size:.88rem;max-width:340px;line-height:1.6}
 .foot-meta{text-align:right;font-size:.84rem;color:var(--text-3);line-height:1.8}
 .foot-meta a:hover{color:var(--cyan)}
+.foot-meta a.foot-sdr{color:var(--cyan);font-weight:600;transition:color .18s ease}
+.foot-meta a.foot-sdr:hover{color:var(--text-0)}
 .foot-bottom{margin-top:34px;padding-top:24px;border-top:1px solid var(--border);
   display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--text-3);font-size:.82rem}
 @media(max-width:680px){.foot-meta{text-align:left}}
@@ -394,6 +412,7 @@ footer{border-top:1px solid var(--border);padding:50px 0 40px;background:var(--b
       <a href="#time">O time</a>
       <a href="#fundadores">Quem está por trás</a>
       <a href="#prova">Prova</a>
+      <a href="https://sdr.salatielbatista.com.br" target="_blank" rel="noopener" class="nav-sdr">SDR Lis</a>
     </div>
     <div class="nav-right">
       <a href="#agendar" class="btn btn-primary nav-cta">Agendar demonstração</a>
@@ -411,6 +430,7 @@ footer{border-top:1px solid var(--border);padding:50px 0 40px;background:var(--b
     <a href="#time">O time</a>
     <a href="#fundadores">Quem está por trás</a>
     <a href="#prova">Prova</a>
+    <a href="https://sdr.salatielbatista.com.br" target="_blank" rel="noopener" class="nav-drawer-sdr">SDR Lis <span class="ext-ic">↗</span></a>
     <a href="#agendar" class="btn btn-primary">Agendar demonstração</a>
   </div>
 </nav>
@@ -783,7 +803,8 @@ footer{border-top:1px solid var(--border);padding:50px 0 40px;background:var(--b
       <div class="foot-meta">
         <a href="#agendar">Agendar demonstração</a><br>
         <a href="#fazeres">O que a agência faz</a><br>
-        <a href="#time">O time de IA</a>
+        <a href="#time">O time de IA</a><br>
+        <a href="https://sdr.salatielbatista.com.br" target="_blank" rel="noopener" class="foot-sdr">Conheça a SDR Lis ↗</a>
       </div>
     </div>
     <div class="foot-bottom">
